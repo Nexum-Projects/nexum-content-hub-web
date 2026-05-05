@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getBannerDetail } from "@/app/actions/content/get-resource-detail";
 import { publishBadge } from "@/components/resource-lists/entity-badges";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function BannerDetailPage({
   params,
@@ -31,10 +31,10 @@ export default async function BannerDetailPage({
       <Card className="rounded-xl border border-border shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl">{b.title}</CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm leading-5 text-muted-foreground">
             {publishBadge(b.isPublished)}
             <span className="tabular-nums text-muted-foreground">Alta: {b.createdAt?.slice(0, 10) ?? "—"}</span>
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {b.imageUrl ? (

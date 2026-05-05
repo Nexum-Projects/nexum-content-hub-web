@@ -1,7 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { User } from "@/app/actions/content";
 import { deleteUser } from "@/app/actions/content/delete-entities";
@@ -60,17 +60,18 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
   const limit = coerceListLimit(searchParams.get("limit") ?? undefined);
 
   useEffect(() => {
-    setSearchDraft(query);
+    const timeout = setTimeout(() => setSearchDraft(query), 0);
+    return () => clearTimeout(timeout);
   }, [query]);
 
-  const applySearch = () => {
+  const applySearch = useCallback(() => {
     const next = searchDraft.trim();
     const current = query.trim();
     if (next === current) {
       return;
     }
     pushParams({ query: next ? searchDraft : null });
-  };
+  }, [pushParams, query, searchDraft]);
 
   useEffect(() => {
     const next = searchDraft.trim();
@@ -82,7 +83,7 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
       applySearch();
     }, 250);
     return () => clearTimeout(timeout);
-  }, [query, searchDraft]);
+  }, [applySearch, query, searchDraft]);
 
   useEffect(() => {
     if (document.activeElement !== searchInputRef.current) {

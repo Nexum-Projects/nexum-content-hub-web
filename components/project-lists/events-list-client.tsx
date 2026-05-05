@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarRange, ImageIcon, LayoutGrid, PanelLeft, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { EventItem } from "@/app/actions/content";
 import type { PaginatedPayload } from "@/app/actions/content/paginated-list-types";
@@ -60,17 +60,18 @@ export function EventsListClient({
   const currentOrder = searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
   useEffect(() => {
-    setSearchDraft(query);
+    const timeout = setTimeout(() => setSearchDraft(query), 0);
+    return () => clearTimeout(timeout);
   }, [query]);
 
-  const applySearch = () => {
+  const applySearch = useCallback(() => {
     const next = searchDraft.trim();
     const current = query.trim();
     if (next === current) {
       return;
     }
     pushParams({ query: next ? searchDraft : null });
-  };
+  }, [pushParams, query, searchDraft]);
 
   useEffect(() => {
     const next = searchDraft.trim();
@@ -82,7 +83,7 @@ export function EventsListClient({
       applySearch();
     }, 250);
     return () => clearTimeout(timeout);
-  }, [query, searchDraft]);
+  }, [applySearch, query, searchDraft]);
 
   useEffect(() => {
     if (document.activeElement !== searchInputRef.current) {

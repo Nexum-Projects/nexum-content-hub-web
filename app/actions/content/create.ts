@@ -6,6 +6,7 @@ import { isAxiosError } from "axios";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
+import { Storage } from "../storage";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
 function asString(formData: FormData, key: string) {
@@ -41,7 +42,7 @@ function asOffsetDateTime(formData: FormData, key: string) {
   return value.length === 16 ? `${value}:00Z` : value;
 }
 
-function asImageUrl(formData: FormData) {
+async function uploadBannerImage(projectId: string, formData: FormData) {
   const explicitUrl = asString(formData, "imageUrl");
   if (explicitUrl) {
     return explicitUrl;
@@ -49,15 +50,21 @@ function asImageUrl(formData: FormData) {
 
   const file = formData.get("imageFile");
   if (file instanceof File && file.name) {
-    // Supabase Storage se conectara aqui despues. Por ahora dejamos una URL
-    // estable de placeholder para satisfacer el contrato actual del backend.
-    return `/pending-uploads/${encodeURIComponent(file.name)}`;
+    const { path } = await Storage.upload({
+      file,
+      folder: "BANNERS",
+      name: asString(formData, "title") ?? file.name,
+      subFolder: projectId,
+    });
+    const { publicUrl } = await Storage.getPublicUrl(path);
+
+    return publicUrl;
   }
 
   return undefined;
 }
 
-function bannerPayload(formData: FormData) {
+async function bannerPayload(projectId: string, formData: FormData) {
   const buttonLabel = asString(formData, "buttonLabel");
   const buttonUrl = asString(formData, "buttonUrl");
   const buttonsJson = asString(formData, "buttonsJson");
@@ -88,7 +95,7 @@ function bannerPayload(formData: FormData) {
   return {
     title: asString(formData, "title"),
     description: asString(formData, "description"),
-    imageUrl: asImageUrl(formData),
+    imageUrl: await uploadBannerImage(projectId, formData),
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     sortOrder: asNumber(formData, "sortOrder") ?? 0,
@@ -111,7 +118,7 @@ export async function createProject(formData: FormData) {
 }
 
 export async function createBanner(projectId: string, formData: FormData) {
-  await baseAxios.post(`/admin/projects/${projectId}/banners`, bannerPayload(formData));
+  await baseAxios.post(`/admin/projects/${projectId}/banners`, await bannerPayload(projectId, formData));
 
   revalidatePath(`/dashboard/projects/${projectId}/banners`);
   redirect(`/dashboard/projects/${projectId}/banners`);
@@ -119,7 +126,7 @@ export async function createBanner(projectId: string, formData: FormData) {
 
 export async function createBannerFromForm(projectId: string, formData: FormData): ActionResponse<null> {
   try {
-    await baseAxios.post(`/admin/projects/${projectId}/banners`, bannerPayload(formData));
+    await baseAxios.post(`/admin/projects/${projectId}/banners`, await bannerPayload(projectId, formData));
     revalidatePath(`/dashboard/projects/${projectId}/banners`);
 
     return {
