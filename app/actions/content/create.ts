@@ -42,7 +42,9 @@ function asOffsetDateTime(formData: FormData, key: string) {
   return value.length === 16 ? `${value}:00Z` : value;
 }
 
-async function uploadBannerImage(projectId: string, formData: FormData) {
+type ImageStorageFolder = "BANNERS" | "PRODUCTS" | "EVENTS" | "AWARDS" | "PROJECTS" | "MEDIA";
+
+async function uploadImageFile(projectId: string, formData: FormData, folder: ImageStorageFolder, fallbackName?: string) {
   const explicitUrl = asString(formData, "imageUrl");
   if (explicitUrl) {
     return explicitUrl;
@@ -52,8 +54,8 @@ async function uploadBannerImage(projectId: string, formData: FormData) {
   if (file instanceof File && file.name) {
     const { path } = await Storage.upload({
       file,
-      folder: "BANNERS",
-      name: asString(formData, "title") ?? file.name,
+      folder,
+      name: fallbackName ?? asString(formData, "title") ?? asString(formData, "name") ?? file.name,
       subFolder: projectId,
     });
     const { publicUrl } = await Storage.getPublicUrl(path);
@@ -62,6 +64,14 @@ async function uploadBannerImage(projectId: string, formData: FormData) {
   }
 
   return undefined;
+}
+
+async function uploadBannerImage(projectId: string, formData: FormData) {
+  return uploadImageFile(projectId, formData, "BANNERS", asString(formData, "title"));
+}
+
+async function uploadProductImage(projectId: string, formData: FormData) {
+  return uploadImageFile(projectId, formData, "PRODUCTS", asString(formData, "name"));
 }
 
 async function bannerPayload(projectId: string, formData: FormData) {
@@ -157,22 +167,58 @@ export async function createBannerFromForm(projectId: string, formData: FormData
 }
 
 export async function createProduct(projectId: string, formData: FormData) {
-  await baseAxios.post(`/admin/projects/${projectId}/menu-products`, {
+  await baseAxios.post(`/admin/projects/${projectId}/menu-products`, await productPayload(projectId, formData));
+
+  revalidatePath(`/dashboard/projects/${projectId}/products`);
+  redirect(`/dashboard/projects/${projectId}/products`);
+}
+
+async function productPayload(projectId: string, formData: FormData) {
+  return {
     name: asString(formData, "name"),
     slug: asString(formData, "slug"),
     description: asString(formData, "description"),
-    imageUrl: asString(formData, "imageUrl"),
+    imageUrl: await uploadProductImage(projectId, formData),
     type: asString(formData, "type") ?? "DRINK",
     priceCents: asPriceCents(formData, "price"),
-    isAvailable: asBoolean(formData, "isAvailable"),
+    isAvailable: true,
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
     sortOrder: asNumber(formData, "sortOrder") ?? 0,
-  });
+  };
+}
 
-  revalidatePath(`/dashboard/projects/${projectId}/products`);
-  redirect(`/dashboard/projects/${projectId}/products`);
+export async function createProductFromForm(projectId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.post(`/admin/projects/${projectId}/menu-products`, await productPayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/products`);
+
+    return {
+      status: "success",
+      data: null,
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const humanizedError = parseApiError(error.response.data);
+      return {
+        status: "error",
+        errors: [
+          {
+            title: humanizedError.title,
+            message: humanizedError.description,
+            statusCode: error.response.status,
+          },
+        ],
+      };
+    }
+
+    const humanizedError = parseApiError(error);
+    return {
+      status: "error",
+      errors: [{ title: humanizedError.title, message: humanizedError.description }],
+    };
+  }
 }
 
 export async function createEvent(projectId: string, formData: FormData) {

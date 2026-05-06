@@ -57,7 +57,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-0 p-5 pb-4 text-center">
         <div className="flex justify-center">
-          <NexumLogo className="-mb-7" variant="login" />
+          <NexumLogo className="mb-3 max-h-[180px]" variant="login" />
         </div>
         <CardTitle className="mt-0 text-xl leading-tight">Bienvenido de vuelta</CardTitle>
         <CardDescription className="mt-1.5">Inicia sesion para continuar a Nexum Content Hub</CardDescription>
@@ -116,9 +116,6 @@ export function LoginForm() {
               />
               Recordarme
             </label>
-            <Link className="font-medium text-primary hover:underline" href="/reset-password">
-              ¿Olvidaste tu contrasena?
-            </Link>
           </div>
           <Button className="w-full" disabled={isLoading} type="submit">
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -3,7 +3,17 @@ import getProjectContent from "./get-project-content";
 import getProjectSummary from "./get-project-summary";
 import getProjects from "./get-projects";
 import getUsers from "./get-users";
-export { createAward, createBanner, createBannerFromForm, createEvent, createProduct, createProject, createUser, updateUser } from "./create";
+export {
+  createAward,
+  createBanner,
+  createBannerFromForm,
+  createEvent,
+  createProduct,
+  createProductFromForm,
+  createProject,
+  createUser,
+  updateUser,
+} from "./create";
 
 export { deleteAward, deleteBanner, deleteEvent, deleteMenuProduct, deleteUser } from "./delete-entities";
 export {

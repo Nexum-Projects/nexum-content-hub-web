@@ -25,7 +25,7 @@ export function NexumLogo({
       <div className={cn("flex w-full justify-center", className)}>
         <Image
           alt="Nexum Content Hub"
-          className="mx-auto block h-auto w-auto max-w-[min(100%,420px)] object-contain sm:max-w-[480px]"
+          className="mx-auto block h-auto w-auto max-h-[220px] max-w-[min(100%,420px)] object-contain sm:max-w-[480px]"
           height={200}
           loading="eager"
           priority
