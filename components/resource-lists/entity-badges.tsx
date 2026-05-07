@@ -25,14 +25,13 @@ export function productTypeBadge(type: MenuProduct["type"]) {
 
 export function eventStatusBadge(status?: EventItem["status"]) {
   switch (status) {
-    case "PUBLISHED":
-      return <Badge variant="success">Publicado</Badge>;
+    case "ACTIVE":
+      return <Badge variant="success">Activo</Badge>;
     case "CANCELLED":
       return <Badge variant="destructive">Cancelado</Badge>;
     case "FINISHED":
       return <Badge variant="inactive">Finalizado</Badge>;
-    case "DRAFT":
     default:
-      return <Badge variant="warning">Borrador</Badge>;
+      return <Badge variant="success">Activo</Badge>;
   }
 }

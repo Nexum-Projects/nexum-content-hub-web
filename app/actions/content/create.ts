@@ -250,7 +250,7 @@ async function eventPayload(projectId: string, formData: FormData) {
     location: asString(formData, "location"),
     capacity: asNumber(formData, "capacity"),
     priceCents: asPriceCents(formData, "price"),
-    status: asString(formData, "status") ?? "DRAFT",
+    status: asString(formData, "status") ?? "ACTIVE",
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),

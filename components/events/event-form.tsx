@@ -17,8 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
-import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { humanizeEventStatus } from "@/utils/helpers/humanize-enum";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -37,7 +37,7 @@ const eventSchema = z
     location: z.string().max(255, "Maximo 255 caracteres").optional(),
     capacity: z.number().int("La capacidad debe ser un numero entero").min(0, "La capacidad no puede ser negativa").optional(),
     price: z.number().min(0, "El precio no puede ser negativo").optional(),
-    status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "FINISHED"]),
+    status: z.enum(["ACTIVE", "CANCELLED", "FINISHED"]),
     sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
     isPublished: z.boolean(),
     isFeatured: z.boolean(),
@@ -107,7 +107,7 @@ export function EventForm({ projectId }: { projectId: string }) {
       location: "",
       capacity: undefined,
       price: undefined,
-      status: "DRAFT",
+      status: "ACTIVE",
       sortOrder: 0,
       isPublished: false,
       isFeatured: false,
@@ -152,7 +152,7 @@ export function EventForm({ projectId }: { projectId: string }) {
     if (data.location?.trim()) formData.append("location", data.location);
     if (typeof data.capacity === "number") formData.append("capacity", String(data.capacity));
     if (typeof data.price === "number") formData.append("price", String(data.price));
-    formData.append("status", data.status);
+    formData.append("status", "ACTIVE");
     formData.append("sortOrder", String(data.sortOrder));
     if (data.isPublished) formData.append("isPublished", "on");
     if (data.isFeatured) formData.append("isFeatured", "on");
@@ -339,18 +339,9 @@ export function EventForm({ projectId }: { projectId: string }) {
           <Card>
             <CardHeader>
               <CardTitle>Publicacion y orden</CardTitle>
-              <CardDescription>Controla el estado administrativo y visual del evento.</CardDescription>
+              <CardDescription>Controla visibilidad y orden del evento.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="status">Estado</label>
-                <Select id="status" {...register("status")}>
-                  <option value="DRAFT">Borrador</option>
-                  <option value="PUBLISHED">Publicado</option>
-                  <option value="CANCELLED">Cancelado</option>
-                  <option value="FINISHED">Finalizado</option>
-                </Select>
-              </div>
               <Controller
                 control={control}
                 name="sortOrder"
@@ -432,7 +423,7 @@ export function EventForm({ projectId }: { projectId: string }) {
                 <div className="space-y-3 p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={values.isPublished ? "success" : "warning"}>{values.isPublished ? "Publicado" : "Borrador"}</Badge>
-                    <Badge variant="secondary">{values.status}</Badge>
+                    <Badge variant="secondary">{humanizeEventStatus("ACTIVE")}</Badge>
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold">{previewTitle}</h2>

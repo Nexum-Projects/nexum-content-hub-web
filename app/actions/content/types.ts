@@ -58,7 +58,7 @@ export type EventItem = {
   startDate?: string;
   endDate?: string | null;
   location?: string | null;
-  status?: "DRAFT" | "PUBLISHED" | "CANCELLED" | "FINISHED";
+  status?: "ACTIVE" | "CANCELLED" | "FINISHED";
   isPublished?: boolean;
   isFeatured?: boolean;
   createdAt?: string;
