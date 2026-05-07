@@ -30,13 +30,11 @@ import {
   Trash2,
   UnderlineIcon,
   UploadCloud,
-  UtensilsCrossed,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { createProductFromForm } from "@/app/actions/content";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,6 +202,8 @@ function RichTextEditorInner({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
+        link: false,
+        underline: false,
       }),
       Underline,
       LinkExtension.configure({

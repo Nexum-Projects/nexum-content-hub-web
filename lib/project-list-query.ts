@@ -121,12 +121,13 @@ export const EVENT_SORT_FIELDS = ["title", "startDate", "endDate", "createdAt", 
 export type EventSortField = (typeof EVENT_SORT_FIELDS)[number];
 
 export function parseEventListQuery(raw: RawSearchParams) {
+  const rawOrder = spFirst(raw, "order");
   return {
     page: parsePositiveInt(spFirst(raw, "page"), 1),
     limit: coerceListLimit(spFirst(raw, "limit")),
     query: (spFirst(raw, "query") ?? "").trim() || undefined,
-    orderBy: pickOrderBy(spFirst(raw, "orderBy"), EVENT_SORT_FIELDS, "startDate"),
-    order: parseOrder(spFirst(raw, "order")),
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), EVENT_SORT_FIELDS, "createdAt"),
+    order: rawOrder ? parseOrder(rawOrder) : "DESC",
     publish: parsePublishFilter(raw),
     when: parseEventWhenFilter(raw),
   };
@@ -136,12 +137,13 @@ export const AWARD_SORT_FIELDS = ["title", "sortOrder", "createdAt", "updatedAt"
 export type AwardSortField = (typeof AWARD_SORT_FIELDS)[number];
 
 export function parseAwardListQuery(raw: RawSearchParams) {
+  const rawOrder = spFirst(raw, "order");
   return {
     page: parsePositiveInt(spFirst(raw, "page"), 1),
     limit: coerceListLimit(spFirst(raw, "limit")),
     query: (spFirst(raw, "query") ?? "").trim() || undefined,
-    orderBy: pickOrderBy(spFirst(raw, "orderBy"), AWARD_SORT_FIELDS, "sortOrder"),
-    order: parseOrder(spFirst(raw, "order")),
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), AWARD_SORT_FIELDS, "createdAt"),
+    order: rawOrder ? parseOrder(rawOrder) : "DESC",
     publish: parsePublishFilter(raw),
     award: parseAwardScopeFilter(raw),
   };

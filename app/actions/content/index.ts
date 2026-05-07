@@ -5,9 +5,11 @@ import getProjects from "./get-projects";
 import getUsers from "./get-users";
 export {
   createAward,
+  createAwardFromForm,
   createBanner,
   createBannerFromForm,
   createEvent,
+  createEventFromForm,
   createProduct,
   createProductFromForm,
   createProject,

@@ -24,7 +24,7 @@ import { AWARD_SORT_FIELDS } from "@/lib/project-list-query";
 import { SortHeaderButton } from "./sort-header-button";
 import { useProjectListNavigation } from "./use-project-list-navigation";
 
-const DEFAULT_ORDER_BY = "sortOrder";
+const DEFAULT_ORDER_BY = "createdAt";
 
 function subtitle(a: Award) {
   return a.sourceName?.trim() || a.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 90) || "Sin detalle";
@@ -57,7 +57,7 @@ export function AwardsListClient({
   const safeOrderBy = (AWARD_SORT_FIELDS as readonly string[]).includes(currentOrderBy)
     ? currentOrderBy
     : DEFAULT_ORDER_BY;
-  const currentOrder = searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+  const currentOrder = searchParams.get("order") ? (searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC") : "DESC";
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearchDraft(query), 0);
@@ -223,13 +223,14 @@ export function AwardsListClient({
                   </TableHead>
                   <TableHead>Fecha premio</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Destacado</TableHead>
                   <TableHead className="w-[120px] text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {awards.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={7}>
+                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={8}>
                       Sin resultados con los filtros actuales.
                     </TableCell>
                   </TableRow>
@@ -253,10 +254,12 @@ export function AwardsListClient({
                         <ListDateGT value={a.awardedAt} />
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap items-center gap-1">
-                          {publishBadge(a.isPublished)}
-                          {featuredBadge(a.isFeatured)}
-                        </div>
+                        {publishBadge(a.isPublished)}
+                      </TableCell>
+                      <TableCell>
+                        {featuredBadge(a.isFeatured) ?? (
+                          <span className="text-muted-foreground tabular-nums">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <ResourceRowActions

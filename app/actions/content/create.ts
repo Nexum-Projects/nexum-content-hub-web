@@ -39,6 +39,9 @@ function asOffsetDateTime(formData: FormData, key: string) {
     return undefined;
   }
 
+  if (value.length === 10) {
+    return `${value}T00:00:00Z`;
+  }
   return value.length === 16 ? `${value}:00Z` : value;
 }
 
@@ -72,6 +75,14 @@ async function uploadBannerImage(projectId: string, formData: FormData) {
 
 async function uploadProductImage(projectId: string, formData: FormData) {
   return uploadImageFile(projectId, formData, "PRODUCTS", asString(formData, "name"));
+}
+
+async function uploadEventImage(projectId: string, formData: FormData) {
+  return uploadImageFile(projectId, formData, "EVENTS", asString(formData, "title"));
+}
+
+async function uploadAwardImage(projectId: string, formData: FormData) {
+  return uploadImageFile(projectId, formData, "AWARDS", asString(formData, "title"));
 }
 
 async function bannerPayload(projectId: string, formData: FormData) {
@@ -222,11 +233,18 @@ export async function createProductFromForm(projectId: string, formData: FormDat
 }
 
 export async function createEvent(projectId: string, formData: FormData) {
-  await baseAxios.post(`/admin/projects/${projectId}/events`, {
+  await baseAxios.post(`/admin/projects/${projectId}/events`, await eventPayload(projectId, formData));
+
+  revalidatePath(`/dashboard/projects/${projectId}/events`);
+  redirect(`/dashboard/projects/${projectId}/events`);
+}
+
+async function eventPayload(projectId: string, formData: FormData) {
+  return {
     title: asString(formData, "title"),
     slug: asString(formData, "slug"),
     description: asString(formData, "description"),
-    imageUrl: asString(formData, "imageUrl"),
+    imageUrl: await uploadEventImage(projectId, formData),
     startDate: asOffsetDateTime(formData, "startDate"),
     endDate: asOffsetDateTime(formData, "endDate"),
     location: asString(formData, "location"),
@@ -237,17 +255,53 @@ export async function createEvent(projectId: string, formData: FormData) {
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
     sortOrder: asNumber(formData, "sortOrder") ?? 0,
-  });
+  };
+}
 
-  revalidatePath(`/dashboard/projects/${projectId}/events`);
-  redirect(`/dashboard/projects/${projectId}/events`);
+export async function createEventFromForm(projectId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.post(`/admin/projects/${projectId}/events`, await eventPayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/events`);
+
+    return {
+      status: "success",
+      data: null,
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const humanizedError = parseApiError(error.response.data);
+      return {
+        status: "error",
+        errors: [
+          {
+            title: humanizedError.title,
+            message: humanizedError.description,
+            statusCode: error.response.status,
+          },
+        ],
+      };
+    }
+
+    const humanizedError = parseApiError(error);
+    return {
+      status: "error",
+      errors: [{ title: humanizedError.title, message: humanizedError.description }],
+    };
+  }
 }
 
 export async function createAward(projectId: string, formData: FormData) {
-  await baseAxios.post(`/admin/projects/${projectId}/awards`, {
+  await baseAxios.post(`/admin/projects/${projectId}/awards`, await awardPayload(projectId, formData));
+
+  revalidatePath(`/dashboard/projects/${projectId}/awards`);
+  redirect(`/dashboard/projects/${projectId}/awards`);
+}
+
+async function awardPayload(projectId: string, formData: FormData) {
+  return {
     title: asString(formData, "title"),
     description: asString(formData, "description"),
-    imageUrl: asString(formData, "imageUrl"),
+    imageUrl: await uploadAwardImage(projectId, formData),
     sourceName: asString(formData, "sourceName"),
     sourceUrl: asString(formData, "sourceUrl"),
     awardedAt: asOffsetDateTime(formData, "awardedAt"),
@@ -255,10 +309,39 @@ export async function createAward(projectId: string, formData: FormData) {
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
     sortOrder: asNumber(formData, "sortOrder") ?? 0,
-  });
+  };
+}
 
-  revalidatePath(`/dashboard/projects/${projectId}/awards`);
-  redirect(`/dashboard/projects/${projectId}/awards`);
+export async function createAwardFromForm(projectId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.post(`/admin/projects/${projectId}/awards`, await awardPayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/awards`);
+
+    return {
+      status: "success",
+      data: null,
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const humanizedError = parseApiError(error.response.data);
+      return {
+        status: "error",
+        errors: [
+          {
+            title: humanizedError.title,
+            message: humanizedError.description,
+            statusCode: error.response.status,
+          },
+        ],
+      };
+    }
+
+    const humanizedError = parseApiError(error);
+    return {
+      status: "error",
+      errors: [{ title: humanizedError.title, message: humanizedError.description }],
+    };
+  }
 }
 
 export async function createUser(formData: FormData) {

@@ -1,8 +1,5 @@
 "use client";
 
-import { MinusIcon, PlusIcon } from "lucide-react";
-import { Button, Group, Input, Label, NumberField, Text } from "react-aria-components";
-
 import { cn } from "@/lib/utils";
 
 export type NumberInputProps = {
@@ -34,49 +31,36 @@ export function NumberInput({
   className,
   formatOptions,
 }: NumberInputProps) {
+  const formatter = formatOptions ? new Intl.NumberFormat(undefined, formatOptions) : null;
+  const displayValue = typeof value === "number" && formatter ? formatter.format(value) : value;
+
   return (
-    <NumberField
-      className={cn("w-full max-w-72 space-y-2", className)}
-      defaultValue={defaultValue}
-      formatOptions={formatOptions}
-      isDisabled={isDisabled}
-      isInvalid={Boolean(errorMessage)}
-      maxValue={maxValue}
-      minValue={minValue}
-      onChange={onChange}
-      step={step}
-      value={value}
-    >
+    <div className={cn("w-full max-w-72 space-y-2", className)}>
       {label ? (
-        <Label className="flex items-center gap-2 text-sm leading-none font-medium select-none">
+        <label className="flex items-center gap-2 text-sm leading-none font-medium select-none">
           {label}
-        </Label>
+        </label>
       ) : null}
-      <Group className="dark:bg-input/30 border-input data-focus-within:border-ring data-focus-within:ring-ring/50 data-focus-within:has-aria-invalid:ring-destructive/20 dark:data-focus-within:has-aria-invalid:ring-destructive/40 data-focus-within:has-aria-invalid:border-destructive relative inline-flex h-9 w-full min-w-0 items-center overflow-hidden rounded-lg border bg-background text-sm whitespace-nowrap shadow-sm transition-[color,box-shadow] outline-none data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50 data-focus-within:ring-[3px]">
-        <Input className="selection:bg-primary selection:text-primary-foreground w-full min-w-0 grow px-3 py-1.5 text-left tabular-nums outline-none" />
-        <div className="flex h-[calc(100%+2px)] flex-col">
-          <Button
-            slot="increment"
-            className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground -me-px flex h-1/2 w-6 flex-1 items-center justify-center border text-sm transition-[color,box-shadow] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <PlusIcon className="size-3" />
-            <span className="sr-only">Incrementar</span>
-          </Button>
-          <Button
-            slot="decrement"
-            className="border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground -me-px -mt-px flex h-1/2 w-6 flex-1 items-center justify-center border text-sm transition-[color,box-shadow] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <MinusIcon className="size-3" />
-            <span className="sr-only">Decrementar</span>
-          </Button>
-        </div>
-      </Group>
+      <input
+        className={cn(
+          "selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive h-9 w-full rounded-lg border bg-background px-3 py-1.5 text-left text-sm tabular-nums shadow-sm transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        )}
+        aria-invalid={Boolean(errorMessage)}
+        defaultValue={defaultValue}
+        disabled={isDisabled}
+        max={maxValue}
+        min={minValue}
+        onChange={(event) => onChange?.(event.currentTarget.valueAsNumber)}
+        step={step}
+        type="number"
+        value={displayValue}
+      />
       {description && !errorMessage ? (
-        <Text className="text-xs text-muted-foreground" slot="description">
+        <p className="text-xs text-muted-foreground">
           {description}
-        </Text>
+        </p>
       ) : null}
       {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
-    </NumberField>
+    </div>
   );
 }

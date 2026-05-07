@@ -1,0 +1,459 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, CalendarDays, ImagePlus, Loader2, MapPin, Star } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { createEventFromForm } from "@/app/actions/content";
+import { ContentImageUpload, FieldError, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const eventSchema = z
+  .object({
+    title: z.string().min(1, "El titulo es requerido").max(180, "Maximo 180 caracteres"),
+    slug: z.string().max(200, "Maximo 200 caracteres").optional(),
+    description: z.string().optional(),
+    imageFile: z
+      .custom<File>((file) => file instanceof File, "Selecciona una imagen")
+      .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
+      .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
+    startDate: z.string().min(1, "La fecha de inicio es requerida"),
+    endDate: z.string().optional(),
+    location: z.string().max(255, "Maximo 255 caracteres").optional(),
+    capacity: z.number().int("La capacidad debe ser un numero entero").min(0, "La capacidad no puede ser negativa").optional(),
+    price: z.number().min(0, "El precio no puede ser negativo").optional(),
+    status: z.enum(["DRAFT", "PUBLISHED", "CANCELLED", "FINISHED"]),
+    sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
+    isPublished: z.boolean(),
+    isFeatured: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.endDate || !data.startDate) {
+      return;
+    }
+
+    if (new Date(data.endDate).getTime() < new Date(data.startDate).getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "La fecha fin no puede ser anterior a la fecha inicio",
+        path: ["endDate"],
+      });
+    }
+  });
+
+type EventFormValues = z.infer<typeof eventSchema>;
+
+function formatPrice(value?: number) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "Entrada sin precio";
+  }
+
+  return `Q${value.toFixed(2)}`;
+}
+
+function formatDate(value?: string) {
+  return value ? value.replace("T", " ") : "Fecha por definir";
+}
+
+function splitDateTime(value?: string) {
+  if (!value) {
+    return { date: "", time: "" };
+  }
+  const [date = "", time = ""] = value.split("T");
+  return { date, time: time.slice(0, 5) };
+}
+
+function composeDateTime(date?: string, time?: string) {
+  if (!date) {
+    return "";
+  }
+  return `${date}T${time && time.trim() ? time : "00:00"}`;
+}
+
+export function EventForm({ projectId }: { projectId: string }) {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  const {
+    control,
+    formState: { errors, isDirty },
+    handleSubmit,
+    register,
+    reset,
+  } = useForm<EventFormValues>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      slug: "",
+      description: "",
+      startDate: "",
+      endDate: "",
+      location: "",
+      capacity: undefined,
+      price: undefined,
+      status: "DRAFT",
+      sortOrder: 0,
+      isPublished: false,
+      isFeatured: false,
+    },
+  });
+
+  const values = useWatch({ control });
+  const previewTitle = values.title?.trim() || "Titulo del evento";
+  const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del evento.</p>";
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty || isSubmitting) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty, isSubmitting]);
+
+  function onCancel() {
+    if (isDirty && !window.confirm("Tienes cambios sin guardar. ¿Quieres salir?")) {
+      return;
+    }
+
+    router.push(`/dashboard/projects/${projectId}/events`);
+  }
+
+  async function onSubmit(data: EventFormValues) {
+    setIsSubmitting(true);
+
+    const formData = new FormData();
+    formData.append("title", data.title);
+    if (data.slug?.trim()) formData.append("slug", data.slug);
+    formData.append("description", data.description ?? "");
+    formData.append("imageFile", data.imageFile);
+    formData.append("startDate", data.startDate);
+    if (data.endDate?.trim()) formData.append("endDate", data.endDate);
+    if (data.location?.trim()) formData.append("location", data.location);
+    if (typeof data.capacity === "number") formData.append("capacity", String(data.capacity));
+    if (typeof data.price === "number") formData.append("price", String(data.price));
+    formData.append("status", data.status);
+    formData.append("sortOrder", String(data.sortOrder));
+    if (data.isPublished) formData.append("isPublished", "on");
+    if (data.isFeatured) formData.append("isFeatured", "on");
+
+    const result = await createEventFromForm(projectId, formData);
+    setIsSubmitting(false);
+
+    if (result.status === "error") {
+      toast.error(result.errors[0]?.title ?? "No se pudo crear el evento", {
+        description: result.errors[0]?.message,
+      });
+      return;
+    }
+
+    toast.success("Evento creado", {
+      description: "El evento se guardo correctamente.",
+    });
+    reset(data);
+    router.push(`/dashboard/projects/${projectId}/events`);
+    router.refresh();
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/events`}>
+              Eventos
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">Nuevo evento</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold leading-7">Nuevo evento</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Configura eventos para la landing page con fechas, cupo, imagen y estado de publicacion.
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/events`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a eventos
+          </Link>
+        </Button>
+      </header>
+
+      <form className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]" onSubmit={handleSubmit(onSubmit)}>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informacion principal</CardTitle>
+              <CardDescription>Define el contenido base del evento.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="title">
+                    Titulo <span className="text-destructive">*</span>
+                  </label>
+                  <Input id="title" placeholder="Ej. Noche de jazz" {...register("title")} />
+                  <FieldError message={errors.title?.message} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="slug">Slug</label>
+                  <Input id="slug" placeholder="noche-de-jazz" {...register("slug")} />
+                  <FieldError message={errors.slug?.message} />
+                </div>
+              </div>
+
+              <Controller
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Descripcion</label>
+                    <RichTextEditor error={errors.description?.message} onChange={field.onChange} placeholder="Describe la experiencia del evento..." value={field.value} />
+                    <p className="text-xs text-muted-foreground">El contenido se guarda como HTML para mantener el formato en la landing page.</p>
+                  </div>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Imagen del evento</CardTitle>
+              <CardDescription>Sube una imagen clara del evento. Recomendado: 1600x900px o superior.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Controller
+                control={control}
+                name="imageFile"
+                render={({ field }) => (
+                  <ContentImageUpload error={errors.imageFile?.message} file={field.value} onChange={field.onChange} onPreviewUrlChange={setPreviewImageUrl} />
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Fecha, lugar y cupo</CardTitle>
+              <CardDescription>Define cuando ocurre y como se comunica al visitante.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="startDate">Fecha inicio</label>
+                <Controller
+                  control={control}
+                  name="startDate"
+                  render={({ field }) => {
+                    const { date, time } = splitDateTime(field.value);
+                    return (
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={date}
+                          onChange={(event) => field.onChange(composeDateTime(event.target.value, time))}
+                        />
+                        <Input
+                          aria-label="Hora de inicio"
+                          type="time"
+                          value={time}
+                          onChange={(event) => field.onChange(composeDateTime(date, event.target.value))}
+                        />
+                      </div>
+                    );
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Primero elige la fecha y luego la hora.</p>
+                <FieldError message={errors.startDate?.message} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="endDate">Fecha fin</label>
+                <Controller
+                  control={control}
+                  name="endDate"
+                  render={({ field }) => {
+                    const { date, time } = splitDateTime(field.value);
+                    return (
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={date}
+                          onChange={(event) => field.onChange(composeDateTime(event.target.value, time))}
+                        />
+                        <Input
+                          aria-label="Hora de fin"
+                          type="time"
+                          value={time}
+                          onChange={(event) => field.onChange(composeDateTime(date, event.target.value))}
+                        />
+                      </div>
+                    );
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Opcional. Si no la defines, el evento usa solo inicio.</p>
+                <FieldError message={errors.endDate?.message} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="location">Ubicacion</label>
+                <Input id="location" placeholder="Ej. Salon principal" {...register("location")} />
+                <FieldError message={errors.location?.message} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="capacity">Capacidad</label>
+                  <Input id="capacity" min="0" type="number" {...register("capacity", { setValueAs: (value) => (value === "" ? undefined : Number(value)) })} />
+                  <FieldError message={errors.capacity?.message} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="price">Precio</label>
+                  <Input id="price" min="0" placeholder="Q0.00" step="0.01" type="number" {...register("price", { setValueAs: (value) => (value === "" ? undefined : Number(value)) })} />
+                  <FieldError message={errors.price?.message} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Publicacion y orden</CardTitle>
+              <CardDescription>Controla el estado administrativo y visual del evento.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="status">Estado</label>
+                <Select id="status" {...register("status")}>
+                  <option value="DRAFT">Borrador</option>
+                  <option value="PUBLISHED">Publicado</option>
+                  <option value="CANCELLED">Cancelado</option>
+                  <option value="FINISHED">Finalizado</option>
+                </Select>
+              </div>
+              <Controller
+                control={control}
+                name="sortOrder"
+                render={({ field }) => (
+                  <NumberInput
+                    description="Menor numero = aparece primero."
+                    errorMessage={errors.sortOrder?.message}
+                    label="Orden"
+                    minValue={0}
+                    onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
+                    value={Number.isFinite(field.value) ? field.value : 0}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="isPublished"
+                render={({ field }) => (
+                  <div className="flex items-start justify-between gap-4 rounded-xl border p-4">
+                    <div>
+                      <p className="text-sm font-medium">Publicado</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Visible en la landing page.</p>
+                    </div>
+                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} />
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name="isFeatured"
+                render={({ field }) => (
+                  <div className="flex items-start justify-between gap-4 rounded-xl border p-4">
+                    <div>
+                      <p className="text-sm font-medium">Destacado</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Resalta este evento.</p>
+                    </div>
+                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} />
+                  </div>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="justify-end gap-2 border-t pt-5">
+              <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
+              <Button disabled={isSubmitting} type="submit">
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Crear evento
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vista previa</CardTitle>
+              <CardDescription>Asi se vera el evento en la landing page.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="overflow-hidden rounded-xl border bg-card">
+                <div className="relative aspect-[16/9] bg-muted">
+                  {values.imageFile && previewImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="Evento seleccionado" className="h-full w-full object-cover" src={previewImageUrl} />
+                  ) : (
+                    <div className="grid h-full place-items-center bg-[linear-gradient(135deg,#0f172a,#2563eb)] text-white/75">
+                      <div className="text-center">
+                        <ImagePlus className="mx-auto h-10 w-10" />
+                        <p className="mt-2 text-sm">Imagen del evento</p>
+                      </div>
+                    </div>
+                  )}
+                  {values.isFeatured && (
+                    <Badge className="absolute left-3 top-3 bg-amber-500 text-white">
+                      <Star className="h-3 w-3 fill-current" />
+                      Destacado
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-3 p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={values.isPublished ? "success" : "warning"}>{values.isPublished ? "Publicado" : "Borrador"}</Badge>
+                    <Badge variant="secondary">{values.status}</Badge>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">{previewTitle}</h2>
+                    <div className="mt-2 text-sm leading-6 text-muted-foreground [&_a]:text-primary [&_a]:underline [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:text-lg [&_h2]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: previewDescription }} />
+                  </div>
+                  <div className="grid gap-2 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{formatDate(values.startDate)}</p>
+                    <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />{values.location?.trim() || "Ubicacion por definir"}</p>
+                    <p>{formatPrice(values.price)}{typeof values.capacity === "number" ? ` · Cupo ${values.capacity}` : ""}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Alert>
+                <AlertTitle>Estado visual</AlertTitle>
+                <AlertDescription>El estado administrativo y el switch publicado pueden manejarse por separado cuando necesites preparar eventos antes de publicarlos.</AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </aside>
+      </form>
+    </div>
+  );
+}

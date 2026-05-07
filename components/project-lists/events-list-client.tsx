@@ -24,7 +24,7 @@ import { EVENT_SORT_FIELDS } from "@/lib/project-list-query";
 import { SortHeaderButton } from "./sort-header-button";
 import { useProjectListNavigation } from "./use-project-list-navigation";
 
-const DEFAULT_ORDER_BY = "startDate";
+const DEFAULT_ORDER_BY = "createdAt";
 
 function subtitle(e: EventItem) {
   return e.location?.trim() || e.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 80) || "Sin detalle";
@@ -57,7 +57,7 @@ export function EventsListClient({
   const safeOrderBy = (EVENT_SORT_FIELDS as readonly string[]).includes(currentOrderBy)
     ? currentOrderBy
     : DEFAULT_ORDER_BY;
-  const currentOrder = searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+  const currentOrder = searchParams.get("order") ? (searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC") : "DESC";
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearchDraft(query), 0);

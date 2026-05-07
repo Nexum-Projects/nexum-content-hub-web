@@ -219,6 +219,8 @@ function RichTextEditorInner({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
+        link: false,
+        underline: false,
       }),
       Underline,
       LinkExtension.configure({
