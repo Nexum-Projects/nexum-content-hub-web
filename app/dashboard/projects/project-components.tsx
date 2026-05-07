@@ -13,8 +13,8 @@ export function statusBadge(isPublished?: boolean) {
 }
 
 export function formatPrice(cents?: number | null) {
-  if (!cents) {
-    return "Opcional";
+  if (cents === null || cents === undefined || !Number.isFinite(cents)) {
+    return "Sin precio";
   }
 
   return new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ" }).format(cents / 100);

@@ -19,8 +19,8 @@ export const fallbackProducts: MenuProduct[] = [
 ];
 
 export const fallbackEvents: EventItem[] = [
-  { id: "1", title: "Cata de cafes de origen", startDate: "2026-05-15", location: "Terraza principal", status: "PUBLISHED", isPublished: true },
-  { id: "2", title: "Noche de Jazz", startDate: "2026-05-24", location: "Salon privado", status: "DRAFT", isPublished: false },
+  { id: "1", title: "Cata de cafes de origen", startDate: "2026-05-15", location: "Terraza principal", status: "ACTIVE", isPublished: true },
+  { id: "2", title: "Noche de Jazz", startDate: "2026-05-24", location: "Salon privado", status: "ACTIVE", isPublished: false },
 ];
 
 export const fallbackAwards: Award[] = [

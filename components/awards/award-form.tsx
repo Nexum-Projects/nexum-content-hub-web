@@ -11,6 +11,8 @@ import { z } from "zod";
 
 import { createAwardFromForm } from "@/app/actions/content";
 import { ContentImageUpload, FieldError, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
+import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
+import { formatDateGuatemala, guatemalaLocalInputToUtcIso } from "@/lib/datetime-guatemala";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,8 +46,13 @@ const awardSchema = z.object({
 
 type AwardFormValues = z.infer<typeof awardSchema>;
 
-function formatDate(value?: string) {
-  return value ? value.replace("T", " ") : "Fecha por definir";
+function previewAwardDate(value?: string) {
+  const v = value?.trim();
+  if (!v) {
+    return "Fecha por definir";
+  }
+  const utcIso = guatemalaLocalInputToUtcIso(v);
+  return utcIso ? formatDateGuatemala(utcIso) : "Fecha por definir";
 }
 
 export function AwardForm({ projectId }: { projectId: string }) {
@@ -91,10 +98,6 @@ export function AwardForm({ projectId }: { projectId: string }) {
   }, [isDirty, isSubmitting]);
 
   function onCancel() {
-    if (isDirty && !window.confirm("Tienes cambios sin guardar. ¿Quieres salir?")) {
-      return;
-    }
-
     router.push(`/dashboard/projects/${projectId}/awards`);
   }
 
@@ -218,23 +221,39 @@ export function AwardForm({ projectId }: { projectId: string }) {
                 <Input id="sourceUrl" placeholder="https://..." {...register("sourceUrl")} />
                 <FieldError message={errors.sourceUrl?.message} />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="awardedAt">Fecha del reconocimiento</label>
-                <Input id="awardedAt" type="date" {...register("awardedAt")} />
-                <FieldError message={errors.awardedAt?.message} />
+              <div className="space-y-2 md:col-span-2">
+                <Controller
+                  control={control}
+                  name="awardedAt"
+                  render={({ field }) => (
+                    <>
+                      <EventDateTimePicker
+                        hint="Opcional. Solo fecha (America/Guatemala); puedes escribirla en palabras o elegirla en el calendario."
+                        id="awardedAt"
+                        label="Fecha del reconocimiento"
+                        onChange={field.onChange}
+                        value={field.value}
+                        variant="date"
+                      />
+                      <FieldError message={errors.awardedAt?.message} />
+                    </>
+                  )}
+                />
               </div>
               <Controller
                 control={control}
                 name="sortOrder"
                 render={({ field }) => (
-                  <NumberInput
-                    description="Menor numero = aparece primero."
-                    errorMessage={errors.sortOrder?.message}
-                    label="Orden"
-                    minValue={0}
-                    onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
-                    value={Number.isFinite(field.value) ? field.value : 0}
-                  />
+                  <div className="md:col-span-2 md:max-w-xs">
+                    <NumberInput
+                      description="Menor numero = aparece primero."
+                      errorMessage={errors.sortOrder?.message}
+                      label="Orden"
+                      minValue={0}
+                      onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
+                      value={Number.isFinite(field.value) ? field.value : 0}
+                    />
+                  </div>
                 )}
               />
             </CardContent>
@@ -320,7 +339,7 @@ export function AwardForm({ projectId }: { projectId: string }) {
                     <div className="mt-2 text-sm leading-6 text-muted-foreground [&_a]:text-primary [&_a]:underline [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:text-lg [&_h2]:font-semibold [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: previewDescription }} />
                   </div>
                   <div className="grid gap-2 text-sm text-muted-foreground">
-                    <p>{formatDate(values.awardedAt)}</p>
+                    <p>{previewAwardDate(values.awardedAt)}</p>
                     <p className="flex items-center gap-2">
                       <ExternalLink className="h-4 w-4 text-primary" />
                       {values.sourceName?.trim() || "Fuente por definir"}

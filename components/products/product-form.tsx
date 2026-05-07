@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, DragEvent, type ReactNode, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { Resolver } from "react-hook-form";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkExtension from "@tiptap/extension-link";
@@ -47,6 +48,21 @@ import { cn } from "@/lib/utils";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+function normalizeOptionalFiniteNumber(val: unknown): number | undefined {
+  if (val === "" || val === undefined || val === null) {
+    return undefined;
+  }
+  if (typeof val !== "number" || Number.isNaN(val) || !Number.isFinite(val)) {
+    return undefined;
+  }
+  return val;
+}
+
+const optionalPriceGtq = z
+  .unknown()
+  .transform(normalizeOptionalFiniteNumber)
+  .pipe(z.number().min(0, "El precio no puede ser negativo").optional());
+
 const productSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
   slug: z.string().max(180, "Maximo 180 caracteres").optional(),
@@ -56,13 +72,23 @@ const productSchema = z.object({
     .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
     .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
   type: z.enum(["DRINK", "FOOD"]),
-  price: z.number().min(0, "El precio no puede ser negativo").optional(),
+  price: optionalPriceGtq,
   sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type ProductFormValues = {
+  name: string;
+  slug?: string;
+  description?: string;
+  imageFile: File;
+  type: "DRINK" | "FOOD";
+  price?: number;
+  sortOrder: number;
+  isPublished: boolean;
+  isFeatured: boolean;
+};
 
 function fileSize(size: number) {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
@@ -78,7 +104,7 @@ function FieldError({ message }: { message?: string }) {
 
 function formatPrice(value?: number) {
   if (typeof value !== "number" || Number.isNaN(value)) {
-    return "Precio opcional";
+    return "Sin precio";
   }
 
   return `Q${value.toFixed(2)}`;
@@ -437,7 +463,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
     register,
     reset,
   } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
     defaultValues: {
       name: "",
       slug: "",
@@ -470,10 +496,6 @@ export function ProductForm({ projectId }: { projectId: string }) {
   }, [isDirty, isSubmitting]);
 
   function onCancel() {
-    if (isDirty && !window.confirm("Tienes cambios sin guardar. ¿Quieres salir?")) {
-      return;
-    }
-
     router.push(`/dashboard/projects/${projectId}/products`);
   }
 
@@ -572,18 +594,23 @@ export function ProductForm({ projectId }: { projectId: string }) {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium" htmlFor="price">
-                    Precio
+                    Precio (opcional)
                   </label>
                   <Input
                     id="price"
                     min="0"
-                    placeholder="Q0.00"
+                    placeholder="Ej. 28.50"
                     step="0.01"
                     type="number"
                     {...register("price", {
-                      setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                      setValueAs: (value) => {
+                        if (value === "") return undefined;
+                        const n = Number(value);
+                        return Number.isFinite(n) ? n : undefined;
+                      },
                     })}
                   />
+                  <p className="text-xs text-muted-foreground">Deja vacio para guardar sin precio (nulo en el sistema).</p>
                   <FieldError message={errors.price?.message} />
                 </div>
               </div>
@@ -723,7 +750,16 @@ export function ProductForm({ projectId }: { projectId: string }) {
                       dangerouslySetInnerHTML={{ __html: previewDescription }}
                     />
                   </div>
-                  <p className="text-lg font-semibold text-primary">{formatPrice(values.price)}</p>
+                  <p
+                    className={cn(
+                      "font-semibold",
+                      typeof values.price === "number" && Number.isFinite(values.price)
+                        ? "text-lg text-primary"
+                        : "text-base font-medium text-muted-foreground",
+                    )}
+                  >
+                    {formatPrice(values.price)}
+                  </p>
                 </div>
               </div>
 

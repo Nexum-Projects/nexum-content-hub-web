@@ -53,14 +53,18 @@ export type MenuProduct = {
 export type EventItem = {
   id: string;
   title: string;
+  slug?: string | null;
   description?: string | null;
   imageUrl?: string | null;
   startDate?: string;
   endDate?: string | null;
   location?: string | null;
+  capacity?: number | null;
+  priceCents?: number | null;
   status?: "ACTIVE" | "CANCELLED" | "FINISHED";
   isPublished?: boolean;
   isFeatured?: boolean;
+  sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -75,6 +79,7 @@ export type Award = {
   awardedAt?: string | null;
   isPublished?: boolean;
   isFeatured?: boolean;
+  sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
 };

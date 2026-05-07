@@ -214,6 +214,7 @@ export function ProductsListClient({
                     />
                   </TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Destacado</TableHead>
                   <TableHead>
                     <SortHeaderButton
                       currentOrder={currentOrder}
@@ -238,7 +239,7 @@ export function ProductsListClient({
               <TableBody>
                 {products.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={8}>
+                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={9}>
                       Sin resultados con los filtros actuales.
                     </TableCell>
                   </TableRow>
@@ -254,11 +255,11 @@ export function ProductsListClient({
                       </TableCell>
                       <TableCell>{productTypeBadge(p.type)}</TableCell>
                       <TableCell className="text-muted-foreground tabular-nums">{formatPrice(p.priceCents)}</TableCell>
+                      <TableCell>{publishBadge(p.isPublished)}</TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap items-center gap-1">
-                          {publishBadge(p.isPublished)}
-                          {featuredBadge(p.isFeatured)}
-                        </div>
+                        {featuredBadge(p.isFeatured) ?? (
+                          <span className="text-muted-foreground tabular-nums">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <ListDateTimeGT value={p.createdAt} />
@@ -343,7 +344,7 @@ export function ProductsListClient({
                 <Card className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm" key={p.id}>
                   <div
                     className={cn(
-                      "relative aspect-[16/9] w-full overflow-hidden",
+                      "relative aspect-video w-full overflow-hidden",
                       p.imageUrl ? "bg-muted" : cn("flex items-center justify-center text-white/90", listPlaceholderGradientClass(p.id)),
                     )}
                   >

@@ -17,7 +17,7 @@ import { ListPaginationFooter } from "@/components/resource-lists/list-paginatio
 import { ListThumbnail, listPlaceholderGradientClass } from "@/components/resource-lists/list-thumbnail";
 import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filters-sheet";
 import { ResourceRowActions } from "@/components/resource-lists/resource-row-actions";
-import { ListDateGT, ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
+import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { cn } from "@/lib/utils";
 import { EVENT_SORT_FIELDS } from "@/lib/project-list-query";
 
@@ -203,12 +203,21 @@ export function EventsListClient({
                       onSort={handleSort}
                     />
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="min-w-[10rem]">
                     <SortHeaderButton
                       currentOrder={currentOrder}
                       currentOrderBy={safeOrderBy}
                       field="startDate"
-                      label="Inicio"
+                      label="Fecha de inicio"
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                  <TableHead className="min-w-[10rem]">
+                    <SortHeaderButton
+                      currentOrder={currentOrder}
+                      currentOrderBy={safeOrderBy}
+                      field="endDate"
+                      label="Fecha de fin"
                       onSort={handleSort}
                     />
                   </TableHead>
@@ -238,7 +247,7 @@ export function EventsListClient({
               <TableBody>
                 {events.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={8}>
+                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={9}>
                       Sin resultados con los filtros actuales.
                     </TableCell>
                   </TableRow>
@@ -253,7 +262,14 @@ export function EventsListClient({
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle(e)}</p>
                       </TableCell>
                       <TableCell>
-                        <ListDateGT value={e.startDate} />
+                        <ListDateTimeGT value={e.startDate} />
+                      </TableCell>
+                      <TableCell>
+                        {e.endDate?.trim() ? (
+                          <ListDateTimeGT value={e.endDate} />
+                        ) : (
+                          <span className="text-muted-foreground tabular-nums">—</span>
+                        )}
                       </TableCell>
                       <TableCell>{eventStatusBadge(e.status)}</TableCell>
                       <TableCell>
@@ -299,7 +315,16 @@ export function EventsListClient({
                       <p className="font-medium leading-snug">{e.title}</p>
                       <p className="line-clamp-2 text-xs text-muted-foreground">{subtitle(e)}</p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground/80">Inicio:</span> <ListDateGT value={e.startDate} />
+                        <span className="font-medium text-foreground/80">Fecha de inicio:</span>{" "}
+                        <ListDateTimeGT value={e.startDate} />
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground/80">Fecha de fin:</span>{" "}
+                        {e.endDate?.trim() ? (
+                          <ListDateTimeGT value={e.endDate} />
+                        ) : (
+                          <span className="tabular-nums">—</span>
+                        )}
                       </p>
                       <div className="grid grid-cols-2 gap-2 border-t border-border pt-2">
                         <div>
@@ -373,7 +398,16 @@ export function EventsListClient({
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     <p className="line-clamp-2 font-medium leading-snug">{e.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground/80">Inicio:</span> <ListDateGT value={e.startDate} />
+                      <span className="font-medium text-foreground/80">Fecha de inicio:</span>{" "}
+                      <ListDateTimeGT value={e.startDate} />
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground/80">Fecha de fin:</span>{" "}
+                      {e.endDate?.trim() ? (
+                        <ListDateTimeGT value={e.endDate} />
+                      ) : (
+                        <span className="tabular-nums">—</span>
+                      )}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>

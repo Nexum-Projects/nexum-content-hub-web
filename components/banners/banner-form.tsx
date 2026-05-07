@@ -605,10 +605,6 @@ export function BannerForm({ projectId }: { projectId: string }) {
   }, [isDirty, isSubmitting]);
 
   function onCancel() {
-    if (isDirty && !window.confirm("Tienes cambios sin guardar. ¿Quieres salir?")) {
-      return;
-    }
-
     router.push(`/dashboard/projects/${projectId}/banners`);
   }
 

@@ -7,6 +7,7 @@ import { isAxiosError } from "axios";
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
 import { Storage } from "../storage";
+import { guatemalaLocalInputToUtcIso } from "@/lib/datetime-guatemala";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
 function asString(formData: FormData, key: string) {
@@ -33,16 +34,14 @@ function asPriceCents(formData: FormData, key: string) {
   return typeof value === "number" ? Math.round(value * 100) : undefined;
 }
 
+/** Fecha/hora introducida en el panel como civil en America/Guatemala → ISO UTC para el API. */
 function asOffsetDateTime(formData: FormData, key: string) {
   const value = asString(formData, key);
   if (!value) {
     return undefined;
   }
 
-  if (value.length === 10) {
-    return `${value}T00:00:00Z`;
-  }
-  return value.length === 16 ? `${value}:00Z` : value;
+  return guatemalaLocalInputToUtcIso(value);
 }
 
 type ImageStorageFolder = "BANNERS" | "PRODUCTS" | "EVENTS" | "AWARDS" | "PROJECTS" | "MEDIA";
@@ -185,13 +184,15 @@ export async function createProduct(projectId: string, formData: FormData) {
 }
 
 async function productPayload(projectId: string, formData: FormData) {
+  const priceCents = asPriceCents(formData, "price");
+
   return {
     name: asString(formData, "name"),
     slug: asString(formData, "slug"),
     description: asString(formData, "description"),
     imageUrl: await uploadProductImage(projectId, formData),
     type: asString(formData, "type") ?? "DRINK",
-    priceCents: asPriceCents(formData, "price"),
+    ...(typeof priceCents === "number" ? { priceCents } : {}),
     isAvailable: true,
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
@@ -240,6 +241,9 @@ export async function createEvent(projectId: string, formData: FormData) {
 }
 
 async function eventPayload(projectId: string, formData: FormData) {
+  const priceCents = asPriceCents(formData, "price");
+  const capacity = asNumber(formData, "capacity");
+
   return {
     title: asString(formData, "title"),
     slug: asString(formData, "slug"),
@@ -248,8 +252,8 @@ async function eventPayload(projectId: string, formData: FormData) {
     startDate: asOffsetDateTime(formData, "startDate"),
     endDate: asOffsetDateTime(formData, "endDate"),
     location: asString(formData, "location"),
-    capacity: asNumber(formData, "capacity"),
-    priceCents: asPriceCents(formData, "price"),
+    ...(typeof capacity === "number" ? { capacity } : {}),
+    ...(typeof priceCents === "number" ? { priceCents } : {}),
     status: asString(formData, "status") ?? "ACTIVE",
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
