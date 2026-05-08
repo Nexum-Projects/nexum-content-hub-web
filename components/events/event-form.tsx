@@ -55,7 +55,6 @@ const optionalCapacity = z
 const eventSchema = z
   .object({
     title: z.string().min(1, "El titulo es requerido").max(180, "Maximo 180 caracteres"),
-    slug: z.string().max(200, "Maximo 200 caracteres").optional(),
     description: z.string().optional(),
     imageFile: z
       .custom<File>((file) => file instanceof File, "Selecciona una imagen")
@@ -111,7 +110,6 @@ const eventSchema = z
 
 type EventFormValues = {
   title: string;
-  slug?: string;
   description?: string;
   imageFile: File;
   startDate: string;
@@ -155,7 +153,6 @@ export function EventForm({ projectId }: { projectId: string }) {
     resolver: zodResolver(eventSchema) as Resolver<EventFormValues>,
     defaultValues: {
       title: "",
-      slug: "",
       description: "",
       startDate: "",
       endDate: "",
@@ -209,7 +206,6 @@ export function EventForm({ projectId }: { projectId: string }) {
 
     const formData = new FormData();
     formData.append("title", data.title);
-    if (data.slug?.trim()) formData.append("slug", data.slug);
     formData.append("description", data.description ?? "");
     formData.append("imageFile", data.imageFile);
     formData.append("startDate", data.startDate);
@@ -274,19 +270,12 @@ export function EventForm({ projectId }: { projectId: string }) {
               <CardDescription>Define el contenido base del evento.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="title">
-                    Titulo <span className="text-destructive">*</span>
-                  </label>
-                  <Input id="title" placeholder="Ej. Noche de jazz" {...register("title")} />
-                  <FieldError message={errors.title?.message} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="slug">Slug</label>
-                  <Input id="slug" placeholder="noche-de-jazz" {...register("slug")} />
-                  <FieldError message={errors.slug?.message} />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="title">
+                  Titulo <span className="text-destructive">*</span>
+                </label>
+                <Input id="title" placeholder="Ej. Noche de jazz" {...register("title")} />
+                <FieldError message={errors.title?.message} />
               </div>
 
               <Controller

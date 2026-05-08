@@ -188,7 +188,6 @@ async function productPayload(projectId: string, formData: FormData) {
 
   return {
     name: asString(formData, "name"),
-    slug: asString(formData, "slug"),
     description: asString(formData, "description"),
     imageUrl: await uploadProductImage(projectId, formData),
     type: asString(formData, "type") ?? "DRINK",
@@ -246,7 +245,6 @@ async function eventPayload(projectId: string, formData: FormData) {
 
   return {
     title: asString(formData, "title"),
-    slug: asString(formData, "slug"),
     description: asString(formData, "description"),
     imageUrl: await uploadEventImage(projectId, formData),
     startDate: asOffsetDateTime(formData, "startDate"),

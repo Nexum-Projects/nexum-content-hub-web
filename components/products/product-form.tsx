@@ -63,27 +63,39 @@ const optionalPriceGtq = z
   .transform(normalizeOptionalFiniteNumber)
   .pipe(z.number().min(0, "El precio no puede ser negativo").optional());
 
-const productSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
-  slug: z.string().max(180, "Maximo 180 caracteres").optional(),
-  description: z.string().optional(),
-  imageFile: z
-    .custom<File>((file) => file instanceof File, "Selecciona una imagen")
-    .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
-    .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
-  type: z.enum(["DRINK", "FOOD"]),
-  price: optionalPriceGtq,
-  sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
-  isPublished: z.boolean(),
-  isFeatured: z.boolean(),
-});
+const productSchema = z
+  .object({
+    name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
+    description: z.string().optional(),
+    imageFile: z
+      .custom<File>((file) => file instanceof File, "Selecciona una imagen")
+      .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
+      .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
+    type: z.enum(["DRINK", "FOOD"]),
+    hasPrice: z.boolean(),
+    price: optionalPriceGtq,
+    sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
+    isPublished: z.boolean(),
+    isFeatured: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.hasPrice) {
+      if (typeof data.price !== "number" || !Number.isFinite(data.price)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ingresa el precio o desactiva la opcion.",
+          path: ["price"],
+        });
+      }
+    }
+  });
 
 type ProductFormValues = {
   name: string;
-  slug?: string;
   description?: string;
   imageFile: File;
   type: "DRINK" | "FOOD";
+  hasPrice: boolean;
   price?: number;
   sortOrder: number;
   isPublished: boolean;
@@ -462,13 +474,14 @@ export function ProductForm({ projectId }: { projectId: string }) {
     handleSubmit,
     register,
     reset,
+    setValue,
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
       type: "DRINK",
+      hasPrice: false,
       price: undefined,
       sortOrder: 0,
       isPublished: false,
@@ -481,6 +494,12 @@ export function ProductForm({ projectId }: { projectId: string }) {
   const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del producto.</p>";
   const productStatus = values.isPublished ? "Publicado" : "Borrador";
   const productType = values.type === "FOOD" ? "Comida" : "Bebida";
+
+  useEffect(() => {
+    if (values.hasPrice === false) {
+      setValue("price", undefined, { shouldValidate: true });
+    }
+  }, [values.hasPrice, setValue]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -504,11 +523,10 @@ export function ProductForm({ projectId }: { projectId: string }) {
 
     const formData = new FormData();
     formData.append("name", data.name);
-    if (data.slug?.trim()) formData.append("slug", data.slug);
     formData.append("description", data.description ?? "");
     formData.append("imageFile", data.imageFile);
     formData.append("type", data.type);
-    if (typeof data.price === "number") formData.append("price", String(data.price));
+    if (data.hasPrice && typeof data.price === "number") formData.append("price", String(data.price));
     formData.append("sortOrder", String(data.sortOrder));
     if (data.isPublished) formData.append("isPublished", "on");
     if (data.isFeatured) formData.append("isFeatured", "on");
@@ -565,54 +583,62 @@ export function ProductForm({ projectId }: { projectId: string }) {
               <CardDescription>Define el nombre, tipo y descripcion que vera el visitante.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="name">
-                    Nombre <span className="text-destructive">*</span>
-                  </label>
-                  <Input id="name" placeholder="Ej. Latte de Vainilla" {...register("name")} />
-                  <FieldError message={errors.name?.message} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="slug">
-                    Slug
-                  </label>
-                  <Input id="slug" placeholder="latte-de-vainilla" {...register("slug")} />
-                  <FieldError message={errors.slug?.message} />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="name">
+                  Nombre <span className="text-destructive">*</span>
+                </label>
+                <Input id="name" placeholder="Ej. Latte de Vainilla" {...register("name")} />
+                <FieldError message={errors.name?.message} />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="type">
-                    Tipo
-                  </label>
-                  <Select id="type" {...register("type")}>
-                    <option value="DRINK">Bebida</option>
-                    <option value="FOOD">Comida</option>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="price">
-                    Precio (opcional)
-                  </label>
-                  <Input
-                    id="price"
-                    min="0"
-                    placeholder="Ej. 28.50"
-                    step="0.01"
-                    type="number"
-                    {...register("price", {
-                      setValueAs: (value) => {
-                        if (value === "") return undefined;
-                        const n = Number(value);
-                        return Number.isFinite(n) ? n : undefined;
-                      },
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground">Deja vacio para guardar sin precio (nulo en el sistema).</p>
-                  <FieldError message={errors.price?.message} />
-                </div>
+              <div className="max-w-xs space-y-2">
+                <label className="text-sm font-medium" htmlFor="type">
+                  Tipo
+                </label>
+                <Select id="type" {...register("type")}>
+                  <option value="DRINK">Bebida</option>
+                  <option value="FOOD">Comida</option>
+                </Select>
+              </div>
+
+              <div className="space-y-3 rounded-xl border p-4">
+                <Controller
+                  control={control}
+                  name="hasPrice"
+                  render={({ field }) => (
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">Definir precio</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Activa esta opcion solo si quieres guardar un precio para el producto.
+                        </p>
+                      </div>
+                      <Switch checked={field.value} onClick={() => field.onChange(!field.value)} type="button" />
+                    </div>
+                  )}
+                />
+                {values.hasPrice ? (
+                  <div className="space-y-2 pt-1">
+                    <label className="text-sm font-medium" htmlFor="price">
+                      Precio
+                    </label>
+                    <Input
+                      id="price"
+                      min="0"
+                      placeholder="Ej. 28.50"
+                      step="0.01"
+                      type="number"
+                      {...register("price", {
+                        setValueAs: (value) => {
+                          if (value === "") return undefined;
+                          const n = Number(value);
+                          return Number.isFinite(n) ? n : undefined;
+                        },
+                      })}
+                    />
+                    <FieldError message={errors.price?.message} />
+                  </div>
+                ) : null}
               </div>
 
               <Controller
@@ -653,21 +679,24 @@ export function ProductForm({ projectId }: { projectId: string }) {
           <Card>
             <CardHeader>
               <CardTitle>Publicacion y orden</CardTitle>
-              <CardDescription>Controla como se muestra el producto en el sitio.</CardDescription>
+              <CardDescription>Controla visibilidad y orden del producto.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
+            <CardContent className="flex w-full flex-col gap-4">
               <Controller
                 control={control}
                 name="sortOrder"
                 render={({ field }) => (
-                  <NumberInput
-                    description="Menor numero = aparece primero."
-                    errorMessage={errors.sortOrder?.message}
-                    label="Orden"
-                    minValue={0}
-                    onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
-                    value={Number.isFinite(field.value) ? field.value : 0}
-                  />
+                  <div className="w-full">
+                    <NumberInput
+                      className="max-w-none"
+                      description="Menor numero = aparece primero."
+                      errorMessage={errors.sortOrder?.message}
+                      label="Orden"
+                      minValue={0}
+                      onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
+                      value={Number.isFinite(field.value) ? field.value : 0}
+                    />
+                  </div>
                 )}
               />
 
@@ -675,12 +704,12 @@ export function ProductForm({ projectId }: { projectId: string }) {
                 control={control}
                 name="isPublished"
                 render={({ field }) => (
-                  <div className="flex items-start justify-between gap-4 rounded-xl border p-4">
-                    <div>
+                  <div className="flex w-full items-start justify-between gap-4 rounded-xl border p-4">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">Publicado</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Sera visible en la landing page.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Visible en la landing page.</p>
                     </div>
-                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} />
+                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} type="button" />
                   </div>
                 )}
               />
@@ -689,12 +718,12 @@ export function ProductForm({ projectId }: { projectId: string }) {
                 control={control}
                 name="isFeatured"
                 render={({ field }) => (
-                  <div className="flex items-start justify-between gap-4 rounded-xl border p-4">
-                    <div>
+                  <div className="flex w-full items-start justify-between gap-4 rounded-xl border p-4">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">Destacado</p>
                       <p className="mt-1 text-xs text-muted-foreground">Resalta el producto en la vista publica.</p>
                     </div>
-                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} />
+                    <Switch checked={field.value} onClick={() => field.onChange(!field.value)} type="button" />
                   </div>
                 )}
               />
@@ -753,12 +782,12 @@ export function ProductForm({ projectId }: { projectId: string }) {
                   <p
                     className={cn(
                       "font-semibold",
-                      typeof values.price === "number" && Number.isFinite(values.price)
+                      values.hasPrice && typeof values.price === "number" && Number.isFinite(values.price)
                         ? "text-lg text-primary"
                         : "text-base font-medium text-muted-foreground",
                     )}
                   >
-                    {formatPrice(values.price)}
+                    {values.hasPrice ? formatPrice(values.price) : "Sin precio"}
                   </p>
                 </div>
               </div>
