@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -39,7 +38,6 @@ const awardSchema = z.object({
   sourceName: z.string().max(180, "Maximo 180 caracteres").optional(),
   sourceUrl: optionalUrl,
   awardedAt: z.string().optional(),
-  sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
 });
@@ -74,7 +72,6 @@ export function AwardForm({ projectId }: { projectId: string }) {
       sourceName: "",
       sourceUrl: "",
       awardedAt: "",
-      sortOrder: 0,
       isPublished: false,
       isFeatured: false,
     },
@@ -111,7 +108,6 @@ export function AwardForm({ projectId }: { projectId: string }) {
     if (data.sourceName?.trim()) formData.append("sourceName", data.sourceName);
     if (data.sourceUrl?.trim()) formData.append("sourceUrl", data.sourceUrl);
     if (data.awardedAt?.trim()) formData.append("awardedAt", data.awardedAt);
-    formData.append("sortOrder", String(data.sortOrder));
     if (data.isPublished) formData.append("isPublished", "on");
     if (data.isFeatured) formData.append("isFeatured", "on");
 
@@ -240,22 +236,6 @@ export function AwardForm({ projectId }: { projectId: string }) {
                   )}
                 />
               </div>
-              <Controller
-                control={control}
-                name="sortOrder"
-                render={({ field }) => (
-                  <div className="md:col-span-2 md:max-w-xs">
-                    <NumberInput
-                      description="Menor numero = aparece primero."
-                      errorMessage={errors.sortOrder?.message}
-                      label="Orden"
-                      minValue={0}
-                      onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
-                      value={Number.isFinite(field.value) ? field.value : 0}
-                    />
-                  </div>
-                )}
-              />
             </CardContent>
           </Card>
 
@@ -264,7 +244,11 @@ export function AwardForm({ projectId }: { projectId: string }) {
               <CardTitle>Publicacion</CardTitle>
               <CardDescription>Controla si el logro se muestra y si debe destacarse.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-4">
+              <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                Los nuevos elementos se agregan automaticamente al final de la lista.
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
               <Controller
                 control={control}
                 name="isPublished"
@@ -291,6 +275,7 @@ export function AwardForm({ projectId }: { projectId: string }) {
                   </div>
                 )}
               />
+              </div>
             </CardContent>
             <CardFooter className="justify-end gap-2 border-t pt-5">
               <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">Cancelar</Button>

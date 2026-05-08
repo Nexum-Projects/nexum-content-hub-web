@@ -40,7 +40,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -74,7 +73,6 @@ const productSchema = z
     type: z.enum(["DRINK", "FOOD"]),
     hasPrice: z.boolean(),
     price: optionalPriceGtq,
-    sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
     isPublished: z.boolean(),
     isFeatured: z.boolean(),
   })
@@ -97,7 +95,6 @@ type ProductFormValues = {
   type: "DRINK" | "FOOD";
   hasPrice: boolean;
   price?: number;
-  sortOrder: number;
   isPublished: boolean;
   isFeatured: boolean;
 };
@@ -483,7 +480,6 @@ export function ProductForm({ projectId }: { projectId: string }) {
       type: "DRINK",
       hasPrice: false,
       price: undefined,
-      sortOrder: 0,
       isPublished: false,
       isFeatured: false,
     },
@@ -527,7 +523,6 @@ export function ProductForm({ projectId }: { projectId: string }) {
     formData.append("imageFile", data.imageFile);
     formData.append("type", data.type);
     if (data.hasPrice && typeof data.price === "number") formData.append("price", String(data.price));
-    formData.append("sortOrder", String(data.sortOrder));
     if (data.isPublished) formData.append("isPublished", "on");
     if (data.isFeatured) formData.append("isFeatured", "on");
 
@@ -678,27 +673,13 @@ export function ProductForm({ projectId }: { projectId: string }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Publicacion y orden</CardTitle>
-              <CardDescription>Controla visibilidad y orden del producto.</CardDescription>
+              <CardTitle>Publicacion</CardTitle>
+              <CardDescription>Controla la visibilidad del producto.</CardDescription>
             </CardHeader>
             <CardContent className="flex w-full flex-col gap-4">
-              <Controller
-                control={control}
-                name="sortOrder"
-                render={({ field }) => (
-                  <div className="w-full">
-                    <NumberInput
-                      className="max-w-none"
-                      description="Menor numero = aparece primero."
-                      errorMessage={errors.sortOrder?.message}
-                      label="Orden"
-                      minValue={0}
-                      onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
-                      value={Number.isFinite(field.value) ? field.value : 0}
-                    />
-                  </div>
-                )}
-              />
+              <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                Los nuevos elementos se agregan automaticamente al final de la lista.
+              </p>
 
               <Controller
                 control={control}

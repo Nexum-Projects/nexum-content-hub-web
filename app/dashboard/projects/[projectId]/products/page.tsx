@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { fetchMenuProductsPage } from "@/app/actions/content/fetch-paginated-lists";
@@ -43,6 +43,7 @@ export default async function ProductsPage({
   const meta = listRes.status === "success" ? listRes.data.meta : emptyMeta();
   const listError = listRes.status === "error" ? listRes.errors[0]?.message ?? "No se pudo cargar la lista." : null;
   const createHref = `/dashboard/projects/${projectId}/products/new`;
+  const orderHref = `/dashboard/projects/${projectId}/products/order`;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -52,12 +53,20 @@ export default async function ProductsPage({
           <p className="mt-1 text-sm text-muted-foreground">Comida y bebida para {project.name}.</p>
           <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
         </div>
-        <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm">
-          <Link href={createHref}>
-            <Plus className="h-4 w-4" />
-            Nuevo producto
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
+            <Link href={orderHref}>
+              <GripVertical className="h-4 w-4" />
+              Ordenar productos
+            </Link>
+          </Button>
+          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm">
+            <Link href={createHref}>
+              <Plus className="h-4 w-4" />
+              Nuevo producto
+            </Link>
+          </Button>
+        </div>
       </section>
 
       <Card className="rounded-xl border border-border shadow-sm">

@@ -72,6 +72,42 @@ async function getAllSorted<T>(
   return response.data.data ?? [];
 }
 
+export async function fetchMenuProductsForReorder(projectId: string): ActionResponse<MenuProduct[]> {
+  try {
+    const items = await getAllSorted<MenuProduct>(`/admin/projects/${projectId}/menu-products`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchEventsForReorder(projectId: string): ActionResponse<EventItem[]> {
+  try {
+    const items = await getAllSorted<EventItem>(`/admin/projects/${projectId}/events`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchAwardsForReorder(projectId: string): ActionResponse<Award[]> {
+  try {
+    const items = await getAllSorted<Award>(`/admin/projects/${projectId}/awards`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
 function filterBannersByPublish(list: Banner[], publish: PublishFilter): Banner[] {
   if (publish === "published") {
     return list.filter((b) => b.isPublished);

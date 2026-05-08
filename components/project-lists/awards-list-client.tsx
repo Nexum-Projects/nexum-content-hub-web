@@ -24,7 +24,7 @@ import { AWARD_SORT_FIELDS } from "@/lib/project-list-query";
 import { SortHeaderButton } from "./sort-header-button";
 import { useProjectListNavigation } from "./use-project-list-navigation";
 
-const DEFAULT_ORDER_BY = "createdAt";
+const DEFAULT_ORDER_BY = "sortOrder";
 
 function subtitle(a: Award) {
   return a.sourceName?.trim() || a.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 90) || "Sin detalle";
@@ -57,7 +57,7 @@ export function AwardsListClient({
   const safeOrderBy = (AWARD_SORT_FIELDS as readonly string[]).includes(currentOrderBy)
     ? currentOrderBy
     : DEFAULT_ORDER_BY;
-  const currentOrder = searchParams.get("order") ? (searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC") : "DESC";
+  const currentOrder = searchParams.get("order") ? (searchParams.get("order")?.toUpperCase() === "DESC" ? "DESC" : "ASC") : "ASC";
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearchDraft(query), 0);

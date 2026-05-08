@@ -84,6 +84,23 @@ async function uploadAwardImage(projectId: string, formData: FormData) {
   return uploadImageFile(projectId, formData, "AWARDS", asString(formData, "title"));
 }
 
+async function nextSortOrder(projectId: string, resource: "menu-products" | "events" | "awards") {
+  const response = await baseAxios.get<{ data?: Array<{ sortOrder?: number | null }> }>(`/admin/projects/${projectId}/${resource}`, {
+    params: {
+      order: "ASC",
+      orderBy: "sortOrder",
+      pagination: false,
+    },
+  });
+  const items = response.data.data ?? [];
+  const maxSortOrder = items.reduce((max, item) => {
+    const value = typeof item.sortOrder === "number" ? item.sortOrder : -1;
+    return Math.max(max, value);
+  }, -1);
+
+  return maxSortOrder + 1;
+}
+
 async function bannerPayload(projectId: string, formData: FormData) {
   const buttonLabel = asString(formData, "buttonLabel");
   const buttonUrl = asString(formData, "buttonUrl");
@@ -118,7 +135,7 @@ async function bannerPayload(projectId: string, formData: FormData) {
     imageUrl: await uploadBannerImage(projectId, formData),
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
-    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "menu-products"),
     buttons,
   };
 }
@@ -196,7 +213,7 @@ async function productPayload(projectId: string, formData: FormData) {
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
-    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "events"),
   };
 }
 
@@ -256,7 +273,6 @@ async function eventPayload(projectId: string, formData: FormData) {
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
-    sortOrder: asNumber(formData, "sortOrder") ?? 0,
   };
 }
 
@@ -310,7 +326,7 @@ async function awardPayload(projectId: string, formData: FormData) {
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
-    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "awards"),
   };
 }
 
