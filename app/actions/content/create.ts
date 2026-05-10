@@ -88,6 +88,23 @@ async function uploadAwardImage(projectId: string, formData: FormData) {
   return uploadImageFile(projectId, formData, "AWARDS", asString(formData, "title"));
 }
 
+async function uploadUserAvatar(formData: FormData, subFolder: string) {
+  const file = formData.get("avatarFile");
+  if (file instanceof File && file.name && file.size > 0) {
+    const { path } = await Storage.upload({
+      file,
+      folder: "USERS",
+      name: asString(formData, "name") ?? file.name,
+      subFolder,
+    });
+    const { publicUrl } = await Storage.getPublicUrl(path);
+
+    return publicUrl;
+  }
+
+  return undefined;
+}
+
 async function nextSortOrder(projectId: string, resource: "banners" | "menu-products" | "events" | "awards") {
   const response = await baseAxios.get<{ data?: Array<{ sortOrder?: number | null }> }>(`/admin/projects/${projectId}/${resource}`, {
     params: {
@@ -503,12 +520,14 @@ export async function updateAwardFromForm(projectId: string, awardId: string, fo
 }
 
 export async function createUser(formData: FormData) {
+  const avatarUrl = (await uploadUserAvatar(formData, "pending")) ?? undefined;
+
   await baseAxios.post("/admin/users", {
     name: asString(formData, "name"),
     email: asString(formData, "email"),
     password: asString(formData, "password"),
     platformRole: asString(formData, "platformRole") ?? "USER",
-    avatarUrl: asString(formData, "avatarUrl"),
+    avatarUrl,
     isActive: true,
   });
 
@@ -517,12 +536,15 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(userId: string, formData: FormData) {
+  const uploaded = await uploadUserAvatar(formData, userId);
+  const avatarUrl = uploaded ?? asString(formData, "existingAvatarUrl");
+
   await baseAxios.put(`/admin/users/${userId}`, {
     name: asString(formData, "name"),
     email: asString(formData, "email"),
     password: asString(formData, "password"),
     platformRole: asString(formData, "platformRole") ?? "USER",
-    avatarUrl: asString(formData, "avatarUrl"),
+    avatarUrl,
     isActive: asBoolean(formData, "isActive"),
   });
 

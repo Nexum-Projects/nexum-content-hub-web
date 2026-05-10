@@ -261,12 +261,15 @@ export function ContentImageUpload({
   file,
   onChange,
   onPreviewUrlChange,
+  /** Imagen remota ya guardada (p. ej. avatar actual) cuando aún no hay archivo nuevo seleccionado. */
+  remotePreviewUrl,
 }: {
   emptyLabel?: string;
   error?: string;
   file?: File;
   onChange: (file: File | undefined) => void;
   onPreviewUrlChange: (url: string | null) => void;
+  remotePreviewUrl?: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -304,7 +307,7 @@ export function ContentImageUpload({
     }
 
     setPreviewUrl(null);
-    onPreviewUrlChange(null);
+    onPreviewUrlChange(remotePreviewUrl ?? null);
     onChange(undefined);
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -320,6 +323,9 @@ export function ContentImageUpload({
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     selectFile(event.target.files?.[0]);
   }
+
+  const displayPreview = previewUrl ?? remotePreviewUrl ?? null;
+  const hasLocalSelection = Boolean(previewUrl);
 
   return (
     <div className="space-y-3">
@@ -350,18 +356,22 @@ export function ContentImageUpload({
         </div>
 
         <div className="overflow-hidden rounded-xl border bg-card">
-          {previewUrl ? (
+          {displayPreview ? (
             <>
               <div className="relative h-36 bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img alt="Vista previa del archivo" className="h-full w-full object-cover" src={previewUrl} />
-                <Button className="absolute right-2 top-2" onClick={removeFile} size="icon" type="button" variant="secondary">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <img alt="Vista previa del archivo" className="h-full w-full object-cover" src={displayPreview} />
+                {hasLocalSelection ? (
+                  <Button className="absolute right-2 top-2" onClick={removeFile} size="icon" type="button" variant="secondary">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </div>
               <div className="flex items-center justify-between gap-3 p-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{file?.name}</p>
+                  <p className="truncate text-sm font-medium">
+                    {file?.name ?? (remotePreviewUrl ? "Imagen actual" : "")}
+                  </p>
                   <p className="text-xs text-muted-foreground">{file ? fileSize(file.size) : ""}</p>
                 </div>
                 <Button onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline">

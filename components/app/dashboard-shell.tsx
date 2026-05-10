@@ -8,7 +8,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   ChevronRight,
-  FileText,
   FolderKanban,
   Home,
   ImageIcon,
@@ -365,7 +364,6 @@ export function DashboardShell({
       { label: "Menú / Productos", href: `${base}/products`, icon: Utensils },
       { label: "Eventos", href: `${base}/events`, icon: FolderKanban },
       { label: "Logros / Premios", href: `${base}/awards`, icon: Trophy },
-      { label: "Páginas", href: `${base}/pages`, icon: FileText },
       { label: "Medios", href: `${base}/media`, icon: Package },
     ];
   }, [projectId]);

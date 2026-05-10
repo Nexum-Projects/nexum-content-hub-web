@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import { getSession } from "@/app/actions/auth";
 import { getUserDetail } from "@/app/actions/content";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 import { resolveAvatarUrl } from "@/lib/utils";
+import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 import { isAdminRole } from "../../../projects/project-components";
+
+function formatDate(value?: string | null) {
+  return value?.slice(0, 10) ?? "—";
+}
 
 export default async function UserDetailPage({
   params,
@@ -27,59 +34,152 @@ export default async function UserDetailPage({
 
   const user = res.data;
   const avatar = resolveAvatarUrl(user);
+  const isActive = user.isActive !== false;
+  const roleLabel = humanizePlatformRole(user.platformRole);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap gap-2">
-        <Button asChild className="rounded-lg" size="sm" variant="outline">
-          <Link href="/dashboard/admin/users">Volver al listado</Link>
-        </Button>
-        <Button asChild className="rounded-lg" size="sm">
-          <Link href={`/dashboard/admin/users/${user.id}/edit`}>Editar</Link>
-        </Button>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Link className="font-medium text-primary hover:underline" href="/dashboard/admin/users">
+              Usuarios
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground">Detalle</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold leading-7">{user.name}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Cuenta de acceso al panel: datos personales, rol de plataforma y estado de la sesión.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild className="rounded-lg" variant="outline">
+            <Link href="/dashboard/admin/users">
+              <ArrowLeft className="h-4 w-4" />
+              Volver a usuarios
+            </Link>
+          </Button>
+          <Button asChild className="rounded-lg">
+            <Link href={`/dashboard/admin/users/${user.id}/edit`}>Editar</Link>
+          </Button>
+        </div>
+      </header>
 
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">Detalle de usuario</CardTitle>
-          <CardDescription>Informacion proveniente de `GET /admin/users/{'{id}'}`.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-lg font-semibold text-primary-foreground">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información principal</CardTitle>
+              <CardDescription>Nombre y correo registrados en la plataforma.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Nombre</p>
+                <p className="mt-1 text-base font-semibold">{user.name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Correo electrónico</p>
+                <p className="mt-1 text-sm">{user.email}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Foto de perfil</CardTitle>
+              <CardDescription>Imagen usada como avatar en el panel.</CardDescription>
+            </CardHeader>
+            <CardContent>
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element -- URL remota del CMS
-                <img alt={`Avatar de ${user.name}`} className="absolute inset-0 h-full w-full object-cover" src={avatar} />
+                <img
+                  alt=""
+                  className="max-h-96 w-full rounded-xl border border-border object-cover"
+                  src={avatar}
+                />
               ) : (
-                String(user.name).slice(0, 1).toUpperCase()
+                <p className="text-sm text-muted-foreground">Sin imagen configurada.</p>
               )}
-            </div>
-            <div>
-              <p className="text-lg font-semibold">{user.name}</p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="grid gap-3 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Rol</p>
-              <p className="mt-1 text-sm">{humanizePlatformRole(user.platformRole)}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Estado</p>
-              <p className="mt-1 text-sm">{user.isActive === false ? "Inactivo" : "Activo"}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Creado</p>
-              <p className="mt-1 text-sm">{user.createdAt ? new Date(user.createdAt).toLocaleString("es-GT") : "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email verificado</p>
-              <p className="mt-1 text-sm">{user.emailVerifiedAt ? new Date(user.emailVerifiedAt).toLocaleString("es-GT") : "No verificado"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Cuenta y acceso</CardTitle>
+              <CardDescription>Rol, estado del usuario y fechas del registro.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Rol</p>
+                <div className="mt-2">
+                  <Badge variant={user.platformRole === "SUPER_ADMIN" ? "default" : "secondary"}>{roleLabel}</Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Estado</p>
+                <div className="mt-2">
+                  {isActive ? (
+                    <Badge variant="success">Activo</Badge>
+                  ) : (
+                    <Badge variant="destructive">Inactivo</Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Correo verificado</p>
+                <p className="mt-1 tabular-nums text-sm">
+                  {user.emailVerifiedAt ? new Date(user.emailVerifiedAt).toLocaleString("es-GT") : "No verificado"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Fecha de creación</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDate(user.createdAt)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vista previa</CardTitle>
+              <CardDescription>Identidad visible en listados y cabecera del panel.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col items-center rounded-xl border bg-muted/30 p-8">
+                <div className="relative grid h-28 w-28 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-3xl font-semibold text-primary-foreground shadow-inner ring-2 ring-border">
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" className="absolute inset-0 h-full w-full object-cover" src={avatar} />
+                  ) : (
+                    String(user.name || "?").slice(0, 1).toUpperCase()
+                  )}
+                </div>
+                <p className="mt-4 text-center text-base font-semibold">{user.name}</p>
+                <p className="mt-1 text-center text-sm text-muted-foreground">{user.email}</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <Badge variant={user.platformRole === "SUPER_ADMIN" ? "default" : "secondary"}>{roleLabel}</Badge>
+                  {isActive ? <Badge variant="success">Activo</Badge> : <Badge variant="destructive">Inactivo</Badge>}
+                </div>
+              </div>
+
+              <Alert>
+                <AlertTitle>Estado de la cuenta</AlertTitle>
+                <AlertDescription className="flex flex-wrap items-center gap-2">
+                  {isActive ? (
+                    <Badge variant="success">Puede iniciar sesión</Badge>
+                  ) : (
+                    <Badge variant="destructive">Acceso suspendido</Badge>
+                  )}
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
     </div>
   );
 }

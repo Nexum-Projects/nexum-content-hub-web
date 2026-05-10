@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { getSession } from "@/app/actions/auth";
 import { getUsers } from "@/app/actions/content";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminUsersListClient } from "@/components/resource-lists/admin-users-list-client";
 import { fallbackUsers } from "../../projects/fallback-data";
 import { isAdminRole } from "../../projects/project-components";
@@ -46,7 +46,6 @@ export default async function AdminUsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Usuarios</CardTitle>
-          <CardDescription>Solo visible para SUPER_ADMIN.</CardDescription>
         </CardHeader>
         <CardContent>
           <AdminUsersListClient users={users} />

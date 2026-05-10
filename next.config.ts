@@ -8,6 +8,12 @@ const supabaseStorageRemotePatterns = [
 ];
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      /* Peticiones a workbox-<hash>.js desde SW antiguos → stub (esta app no usa Workbox). */
+      { source: "/workbox-:hash.js", destination: "/workbox-stub.js" },
+    ];
+  },
   images: {
     contentDispositionType: "inline",
     remotePatterns: supabaseStorageRemotePatterns,

@@ -301,7 +301,10 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
                     <TableCell className="text-muted-foreground">{user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-GT") : "N/A"}</TableCell>
                     <TableCell className="text-right">
                       <ResourceRowActions
-                        deleteConfirmMessage="¿Desactivar este usuario? Esta accion lo inhabilita para iniciar sesion."
+                        deleteConfirmActionLabel="Desactivar"
+                        deleteConfirmMessage="Esta acción lo inhabilita para iniciar sesión."
+                        deleteConfirmTitle="¿Desactivar este usuario?"
+                        deleteSuccessMessage="Usuario desactivado correctamente."
                         editHref={`/dashboard/admin/users/${user.id}/edit`}
                         onDelete={async () => {
                           const r = await deleteUser(user.id);
