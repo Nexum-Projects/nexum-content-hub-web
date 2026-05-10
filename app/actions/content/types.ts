@@ -21,6 +21,7 @@ export type User = {
   avatar_url?: string | null;
   emailVerifiedAt?: string | null;
   createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Banner = {

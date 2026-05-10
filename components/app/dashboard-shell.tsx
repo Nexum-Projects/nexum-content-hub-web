@@ -135,6 +135,8 @@ type DashboardSidebarContentProps = {
   setUserMenuOpen: Dispatch<SetStateAction<boolean>>;
   isAdmin: boolean;
   onLogout: () => void | Promise<void>;
+  /** Rol tal como viene en la sesión (JWT), para la insignia del menú de cuenta. */
+  platformRole?: string | null;
 };
 
 function DashboardSidebarContent({
@@ -159,6 +161,7 @@ function DashboardSidebarContent({
   setUserMenuOpen,
   isAdmin,
   onLogout,
+  platformRole,
 }: DashboardSidebarContentProps) {
   const projectAvatarSrc = activeProjectSummary ? resolveAvatarUrl(activeProjectSummary) : null;
   const projectInitial = (activeProjectSummary?.name ?? "P").slice(0, 1).toUpperCase();
@@ -246,7 +249,7 @@ function DashboardSidebarContent({
           onClick={() => setUserMenuOpen((v) => !v)}
           type="button"
         >
-          <div className="relative grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+          <div className="relative isolate z-10 grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-primary-foreground ring-2 ring-card">
             {userAvatarUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element -- URL remota del CMS / JWT */}
@@ -268,7 +271,7 @@ function DashboardSidebarContent({
             <button aria-label="Cerrar menu de cuenta" className="fixed inset-0 z-30" onClick={() => setUserMenuOpen(false)} type="button" />
             <div className="absolute bottom-full left-2 right-2 z-40 mb-1 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg">
               <div className="flex items-start gap-2 px-2 py-2">
-                <div className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                <div className="relative isolate grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-primary-foreground ring-2 ring-popover">
                   {userAvatarUrl ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -281,19 +284,28 @@ function DashboardSidebarContent({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{userName}</p>
                   <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
-                  {isAdmin && (
-                    <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                      <Shield className="h-3 w-3" />
-                      SUPER_ADMIN
+                  {platformRole ? (
+                    <div
+                      className={cn(
+                        "mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                        isAdmin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {isAdmin ? <Shield className="h-3 w-3 shrink-0" /> : <User className="h-3 w-3 shrink-0" />}
+                      {platformRole}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
               <Separator className="my-1" />
-              <button className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted" type="button">
+              <Link
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted"
+                href="/dashboard/profile"
+                onClick={() => setUserMenuOpen(false)}
+              >
                 <User className="h-4 w-4" />
                 Perfil
-              </button>
+              </Link>
               <button
                 className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-destructive hover:bg-destructive/10"
                 onClick={onLogout}
@@ -313,9 +325,12 @@ function DashboardSidebarContent({
 export function DashboardShell({
   children,
   session,
+  profileAvatarUrl = null,
 }: {
   children: React.ReactNode;
   session: SessionClaims | null;
+  /** URL de avatar desde la API de usuario (JWT casi nunca incluye `avatarUrl`). */
+  profileAvatarUrl?: string | null;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -336,7 +351,7 @@ export function DashboardShell({
   const router = useRouter();
   const userName = session?.name ?? "Usuario";
   const userEmail = session?.email ?? "Sin correo";
-  const userAvatarUrl = resolveAvatarUrl(session);
+  const userAvatarUrl = profileAvatarUrl ?? resolveAvatarUrl(session);
   const userInitial = String(userName).slice(0, 1).toUpperCase();
   const isAdmin = isAdminRole(session?.platformRole);
   const projectId = getProjectId(pathname);
@@ -469,6 +484,7 @@ export function DashboardShell({
     setUserMenuOpen,
     isAdmin,
     onLogout,
+    platformRole: session?.platformRole,
   };
 
   return (

@@ -1,8 +1,14 @@
 export type SessionClaims = {
   exp?: number;
   iat?: number;
+  /** En este API puede ser el UUID del usuario (además del id opaco del token JWT). */
   jti?: string;
+  /** A veces es email (`user@…`); no usar como `:id` en rutas admin sin comprobar. */
   sub?: string;
+  /** Algunos backends envían el uuid del usuario aquí en lugar de `sub`. */
+  id?: string;
+  userId?: string;
+  user_id?: string;
   name?: string;
   email?: string;
   platformRole?: string;
