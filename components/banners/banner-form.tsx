@@ -57,11 +57,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { humanizeBannerButtonVariant } from "@/utils/helpers/humanize-enum";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -81,7 +81,6 @@ const bannerSchema = z.object({
     .custom<File>((file) => file instanceof File, "Selecciona una imagen")
     .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
     .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
-  sortOrder: z.number().int("El orden debe ser un numero entero").min(0, "El orden debe ser 0 o mayor"),
   isPublished: z.boolean(),
   buttons: z.array(buttonSchema).optional(),
 });
@@ -507,7 +506,7 @@ function SortableButtonCard({
                 {button?.label?.trim() || "Boton sin titulo"}
               </CardTitle>
               <Badge variant={button?.variant === "SECONDARY" ? "secondary" : "default"}>
-                {button?.variant ?? "PRIMARY"}
+                {humanizeBannerButtonVariant(button?.variant)}
               </Badge>
             </div>
             <CardDescription className="mt-1 truncate">
@@ -534,8 +533,8 @@ function SortableButtonCard({
           <div className="space-y-2">
             <label className="text-sm font-medium">Variante</label>
             <Select {...register(`buttons.${index}.variant`)}>
-              <option value="PRIMARY">PRIMARY</option>
-              <option value="SECONDARY">SECONDARY</option>
+              <option value="PRIMARY">Principal</option>
+              <option value="SECONDARY">Secundario</option>
             </Select>
           </div>
           <div className="space-y-2">
@@ -567,7 +566,6 @@ export function BannerForm({ projectId }: { projectId: string }) {
     defaultValues: {
       title: "",
       description: "",
-      sortOrder: 0,
       isPublished: false,
       buttons: [],
     },
@@ -630,7 +628,6 @@ export function BannerForm({ projectId }: { projectId: string }) {
     formData.append("title", data.title);
     formData.append("description", data.description ?? "");
     formData.append("imageFile", data.imageFile);
-    formData.append("sortOrder", String(data.sortOrder));
     if (data.isPublished) formData.append("isPublished", "on");
     formData.append(
       "buttonsJson",
@@ -745,25 +742,13 @@ export function BannerForm({ projectId }: { projectId: string }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Publicacion y orden</CardTitle>
-              <CardDescription>Controla la visibilidad y posicion del banner.</CardDescription>
+              <CardTitle>Publicacion</CardTitle>
+              <CardDescription>Controla la visibilidad del banner. El orden se cambia desde ordenar banners.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <Controller
-                control={control}
-                name="sortOrder"
-                render={({ field }) => (
-                  <NumberInput
-                    description="Menor numero = aparece primero."
-                    errorMessage={errors.sortOrder?.message}
-                    label="Orden"
-                    minValue={0}
-                    onChange={(nextValue) => field.onChange(Number.isFinite(nextValue) ? nextValue : 0)}
-                    value={Number.isFinite(field.value) ? field.value : 0}
-                  />
-                )}
-              />
-
+            <CardContent className="space-y-4">
+              <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                Los nuevos banners se agregan automaticamente al final de la lista.
+              </p>
               <Controller
                 control={control}
                 name="isPublished"

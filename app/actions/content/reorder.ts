@@ -75,3 +75,14 @@ export async function reorderAwards(projectId: string, items: ReorderItem[]): Ac
 
   return result;
 }
+
+export async function reorderBanners(projectId: string, items: ReorderItem[]): ActionResponse<null> {
+  const result = await reorder(`/admin/projects/${projectId}/banners/reorder`, items);
+
+  if (result.status === "success") {
+    revalidatePath(`/dashboard/projects/${projectId}/banners`);
+    revalidatePath(`/dashboard/projects/${projectId}/banners/order`);
+  }
+
+  return result;
+}

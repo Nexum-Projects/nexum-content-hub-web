@@ -108,6 +108,18 @@ export async function fetchAwardsForReorder(projectId: string): ActionResponse<A
   }
 }
 
+export async function fetchBannersForReorder(projectId: string): ActionResponse<Banner[]> {
+  try {
+    const items = await getAllSorted<Banner>(`/admin/projects/${projectId}/banners`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
 function filterBannersByPublish(list: Banner[], publish: PublishFilter): Banner[] {
   if (publish === "published") {
     return list.filter((b) => b.isPublished);

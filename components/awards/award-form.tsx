@@ -224,7 +224,7 @@ export function AwardForm({ projectId }: { projectId: string }) {
                   render={({ field }) => (
                     <>
                       <EventDateTimePicker
-                        hint="Opcional. Solo fecha (America/Guatemala); puedes escribirla en palabras o elegirla en el calendario."
+                        hint="Opcional. Solo fecha civil del reconocimiento."
                         id="awardedAt"
                         label="Fecha del reconocimiento"
                         onChange={field.onChange}

@@ -14,12 +14,17 @@ export {
   createProductFromForm,
   createProject,
   createUser,
+  updateAwardFromForm,
+  updateBannerFromForm,
+  updateEventFromForm,
+  updateProductFromForm,
   updateUser,
 } from "./create";
 
 export { deleteAward, deleteBanner, deleteEvent, deleteMenuProduct, deleteUser } from "./delete-entities";
 export {
   fetchAwardsForReorder,
+  fetchBannersForReorder,
   fetchAwardsPage,
   fetchBannersPage,
   fetchEventsForReorder,
@@ -28,8 +33,8 @@ export {
   fetchMenuProductsPage,
 } from "./fetch-paginated-lists";
 export { getAwardDetail, getBannerDetail, getEventDetail, getMenuProductDetail, getUserDetail } from "./get-resource-detail";
-export { reorderAwards, reorderEvents, reorderMenuProducts } from "./reorder";
+export { reorderAwards, reorderBanners, reorderEvents, reorderMenuProducts } from "./reorder";
 export { getDashboardData, getProjectContent, getProjectSummary, getProjects, getUsers };
 export type { ProjectSummary } from "./get-project-summary";
 export type { PaginatedPayload } from "./paginated-list-types";
-export type { Award, Banner, DashboardData, EventItem, MenuProduct, Project, User } from "./types";
+export type { Award, Banner, BannerButton, DashboardData, EventItem, MenuProduct, Project, User } from "./types";

@@ -1,33 +1,15 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAwardDetail } from "@/app/actions/content";
+import { AwardEditForm } from "@/components/content/content-edit-forms";
 
 export default async function AwardEditPage({ params }: { params: Promise<{ projectId: string; awardId: string }> }) {
   const { projectId, awardId } = await params;
+  const result = await getAwardDetail(projectId, awardId);
 
-  return (
-    <div className="mx-auto max-w-lg space-y-4">
-      <Button asChild className="rounded-lg" size="sm" variant="outline">
-        <Link href={`/dashboard/projects/${projectId}/awards/${awardId}`}>Volver al detalle</Link>
-      </Button>
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle>Editar logro</CardTitle>
-          <CardDescription>Actualizacion vía PUT al recurso awards del API.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>Formulario de edicion en preparacion.</p>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild className="rounded-lg" variant="secondary">
-              <Link href={`/dashboard/projects/${projectId}/awards/${awardId}`}>Ver</Link>
-            </Button>
-            <Button asChild className="rounded-lg" variant="outline">
-              <Link href={`/dashboard/projects/${projectId}/awards`}>Listado</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  if (result.status === "error" || !result.data) {
+    notFound();
+  }
+
+  return <AwardEditForm award={result.data} projectId={projectId} />;
 }

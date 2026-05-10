@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { humanizeBannerButtonVariant } from "@/utils/helpers/humanize-enum";
 import { sanitizeHtmlForDisplay } from "@/utils/helpers/sanitize-html-display";
 
 function formatDate(value?: string | null) {
@@ -27,6 +28,9 @@ export default async function BannerDetailPage({
   const b = res.data;
   const previewHtml =
     sanitizeHtmlForDisplay(b.description) || "<p class=\"text-white/80\">Descripcion del banner aqui</p>";
+  const previewButtons = (b.buttons ?? [])
+    .slice()
+    .sort((a, c) => (a.sortOrder ?? 0) - (c.sortOrder ?? 0));
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -106,6 +110,32 @@ export default async function BannerDetailPage({
 
           <Card>
             <CardHeader>
+              <CardTitle>Botones</CardTitle>
+              <CardDescription>Llamadas a la accion configuradas para este banner.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {previewButtons.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin botones configurados.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {previewButtons.map((btn, index) => (
+                    <li className="rounded-lg border border-border p-3" key={btn.id ?? `${btn.url}-${index}`}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium">{btn.label?.trim() || "Sin texto"}</span>
+                        <Badge variant={btn.variant === "SECONDARY" ? "secondary" : "default"}>
+                          {humanizeBannerButtonVariant(btn.variant)}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">{btn.url?.trim() || "—"}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Publicacion y orden</CardTitle>
               <CardDescription>Visibilidad y posicion en el listado.</CardDescription>
             </CardHeader>
@@ -155,7 +185,19 @@ export default async function BannerDetailPage({
                     dangerouslySetInnerHTML={{ __html: previewHtml }}
                   />
                   <div className="mt-6 flex flex-wrap gap-2">
-                    <Button type="button">Texto del boton</Button>
+                    {previewButtons.length ? (
+                      previewButtons.map((button, index) => (
+                        <Button
+                          key={`${button.label ?? "btn"}-${index}`}
+                          type="button"
+                          variant={button.variant === "SECONDARY" ? "secondary" : "default"}
+                        >
+                          {button.label?.trim() || "Texto del boton"}
+                        </Button>
+                      ))
+                    ) : (
+                      <Button type="button">Texto del boton</Button>
+                    )}
                   </div>
                 </div>
               </div>

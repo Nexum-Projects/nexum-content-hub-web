@@ -18,6 +18,7 @@ import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filte
 import { ResourceRowActions } from "@/components/resource-lists/resource-row-actions";
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { cn } from "@/lib/utils";
+import { humanizeBannerButtonVariant } from "@/utils/helpers/humanize-enum";
 import { publishBadge } from "@/components/resource-lists/entity-badges";
 import { BANNER_SORT_FIELDS } from "@/lib/project-list-query";
 import { SortHeaderButton } from "./sort-header-button";
@@ -31,6 +32,17 @@ function plainSnippet(html?: string | null, max = 90) {
   }
   const t = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   return t.length <= max ? t : `${t.slice(0, max)}…`;
+}
+
+function bannerButtonVariantsSummary(buttons: Banner["buttons"]) {
+  if (!buttons?.length) {
+    return "";
+  }
+  return buttons
+    .slice()
+    .sort((a, c) => (a.sortOrder ?? 0) - (c.sortOrder ?? 0))
+    .map((btn) => humanizeBannerButtonVariant(btn.variant))
+    .join(" · ");
 }
 
 export function BannersListClient({
@@ -229,6 +241,12 @@ export function BannersListClient({
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                           {plainSnippet(banner.description) || "Sin descripcion"}
                         </p>
+                        {banner.buttons?.length ? (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            <span className="font-medium text-foreground/70">Botones:</span>{" "}
+                            {bannerButtonVariantsSummary(banner.buttons)}
+                          </p>
+                        ) : null}
                       </TableCell>
                       <TableCell>{publishBadge(banner.isPublished)}</TableCell>
                       <TableCell>
@@ -270,6 +288,12 @@ export function BannersListClient({
                       <p className="line-clamp-2 text-xs text-muted-foreground">
                         {plainSnippet(banner.description) || "Sin descripcion"}
                       </p>
+                      {banner.buttons?.length ? (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          <span className="font-medium text-foreground/70">Botones:</span>{" "}
+                          {bannerButtonVariantsSummary(banner.buttons)}
+                        </p>
+                      ) : null}
                       <div className="flex flex-wrap items-center gap-1 pt-1">{publishBadge(banner.isPublished)}</div>
                       <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 pt-1 text-[11px] text-muted-foreground">
                         <span>
@@ -324,6 +348,12 @@ export function BannersListClient({
                   </div>
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     <p className="line-clamp-2 font-medium leading-snug">{banner.title}</p>
+                    {banner.buttons?.length ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        <span className="font-medium text-foreground/70">Botones:</span>{" "}
+                        {bannerButtonVariantsSummary(banner.buttons)}
+                      </p>
+                    ) : null}
                     <div className="flex flex-wrap gap-1">{publishBadge(banner.isPublished)}</div>
                     <div className="grid grid-cols-1 gap-0.5 text-[11px] text-muted-foreground sm:grid-cols-2">
                       <span>

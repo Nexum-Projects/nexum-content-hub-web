@@ -316,7 +316,7 @@ export function EventForm({ projectId }: { projectId: string }) {
                   render={({ field }) => (
                     <div className="space-y-2">
                       <EventDateTimePicker
-                        hint="Lenguaje natural (ES/EN) o calendario; luego ajusta la hora."
+                        hint="Selecciona la fecha en el calendario y ajusta hora, minutos y AM/PM."
                         id="startDate"
                         label="Fecha y hora de inicio"
                         onChange={field.onChange}
@@ -334,7 +334,7 @@ export function EventForm({ projectId }: { projectId: string }) {
                   render={({ field }) => (
                     <div className="space-y-2">
                       <EventDateTimePicker
-                        hint="Opcional. Si no la defines, el evento usa solo la fecha de inicio. Borra el texto para limpiar."
+                        hint="Opcional. Si no la defines, el evento usa solo la fecha de inicio."
                         id="endDate"
                         label="Fecha y hora de fin"
                         onChange={field.onChange}

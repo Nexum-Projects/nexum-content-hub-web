@@ -19,6 +19,10 @@ function asBoolean(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
+function asBooleanWithDefault(formData: FormData, key: string, defaultValue: boolean) {
+  return formData.has(key) ? asBoolean(formData, key) : defaultValue;
+}
+
 function asNumber(formData: FormData, key: string) {
   const value = asString(formData, key);
   if (!value) {
@@ -84,7 +88,7 @@ async function uploadAwardImage(projectId: string, formData: FormData) {
   return uploadImageFile(projectId, formData, "AWARDS", asString(formData, "title"));
 }
 
-async function nextSortOrder(projectId: string, resource: "menu-products" | "events" | "awards") {
+async function nextSortOrder(projectId: string, resource: "banners" | "menu-products" | "events" | "awards") {
   const response = await baseAxios.get<{ data?: Array<{ sortOrder?: number | null }> }>(`/admin/projects/${projectId}/${resource}`, {
     params: {
       order: "ASC",
@@ -135,7 +139,7 @@ async function bannerPayload(projectId: string, formData: FormData) {
     imageUrl: await uploadBannerImage(projectId, formData),
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
-    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "menu-products"),
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "banners"),
     buttons,
   };
 }
@@ -213,7 +217,7 @@ async function productPayload(projectId: string, formData: FormData) {
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
-    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "events"),
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "menu-products"),
   };
 }
 
@@ -273,6 +277,7 @@ async function eventPayload(projectId: string, formData: FormData) {
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
+    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "events"),
   };
 }
 
@@ -359,6 +364,141 @@ export async function createAwardFromForm(projectId: string, formData: FormData)
       status: "error",
       errors: [{ title: humanizedError.title, message: humanizedError.description }],
     };
+  }
+}
+
+function mutationError(error: unknown): Awaited<ActionResponse<null>> {
+  if (isAxiosError(error) && error.response) {
+    const humanizedError = parseApiError(error.response.data);
+    return {
+      status: "error",
+      errors: [
+        {
+          title: humanizedError.title,
+          message: humanizedError.description,
+          statusCode: error.response.status,
+        },
+      ],
+    };
+  }
+
+  const humanizedError = parseApiError(error);
+  return {
+    status: "error",
+    errors: [{ title: humanizedError.title, message: humanizedError.description }],
+  };
+}
+
+async function bannerUpdatePayload(projectId: string, formData: FormData) {
+  return {
+    ...(await bannerPayload(projectId, formData)),
+    isActive: asBooleanWithDefault(formData, "isActive", true),
+    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+  };
+}
+
+async function productUpdatePayload(projectId: string, formData: FormData) {
+  const priceCents = asPriceCents(formData, "price");
+
+  return {
+    name: asString(formData, "name"),
+    description: asString(formData, "description"),
+    imageUrl: await uploadProductImage(projectId, formData),
+    type: asString(formData, "type") ?? "DRINK",
+    priceCents: typeof priceCents === "number" ? priceCents : null,
+    isAvailable: asBooleanWithDefault(formData, "isAvailable", true),
+    isActive: asBooleanWithDefault(formData, "isActive", true),
+    isPublished: asBoolean(formData, "isPublished"),
+    isFeatured: asBoolean(formData, "isFeatured"),
+    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+  };
+}
+
+async function eventUpdatePayload(projectId: string, formData: FormData) {
+  const capacity = asNumber(formData, "capacity");
+  const priceCents = asPriceCents(formData, "price");
+
+  return {
+    title: asString(formData, "title"),
+    description: asString(formData, "description"),
+    imageUrl: await uploadEventImage(projectId, formData),
+    startDate: asOffsetDateTime(formData, "startDate"),
+    endDate: asOffsetDateTime(formData, "endDate") ?? null,
+    location: asString(formData, "location") ?? null,
+    capacity: typeof capacity === "number" ? capacity : null,
+    priceCents: typeof priceCents === "number" ? priceCents : null,
+    status: asString(formData, "status") ?? "ACTIVE",
+    isActive: asBooleanWithDefault(formData, "isActive", true),
+    isPublished: asBoolean(formData, "isPublished"),
+    isFeatured: asBoolean(formData, "isFeatured"),
+    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+  };
+}
+
+async function awardUpdatePayload(projectId: string, formData: FormData) {
+  return {
+    title: asString(formData, "title"),
+    description: asString(formData, "description"),
+    imageUrl: await uploadAwardImage(projectId, formData),
+    sourceName: asString(formData, "sourceName") ?? null,
+    sourceUrl: asString(formData, "sourceUrl") ?? null,
+    awardedAt: asOffsetDateTime(formData, "awardedAt") ?? null,
+    isActive: asBooleanWithDefault(formData, "isActive", true),
+    isPublished: asBoolean(formData, "isPublished"),
+    isFeatured: asBoolean(formData, "isFeatured"),
+    sortOrder: asNumber(formData, "sortOrder") ?? 0,
+  };
+}
+
+export async function updateBannerFromForm(projectId: string, bannerId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.put(`/admin/projects/${projectId}/banners/${bannerId}`, await bannerUpdatePayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/banners`);
+    revalidatePath(`/dashboard/projects/${projectId}/banners/${bannerId}`);
+    revalidatePath(`/dashboard/projects/${projectId}/banners/${bannerId}/edit`);
+
+    return { status: "success", data: null };
+  } catch (error) {
+    return mutationError(error);
+  }
+}
+
+export async function updateProductFromForm(projectId: string, productId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.put(`/admin/projects/${projectId}/menu-products/${productId}`, await productUpdatePayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/products`);
+    revalidatePath(`/dashboard/projects/${projectId}/products/${productId}`);
+    revalidatePath(`/dashboard/projects/${projectId}/products/${productId}/edit`);
+
+    return { status: "success", data: null };
+  } catch (error) {
+    return mutationError(error);
+  }
+}
+
+export async function updateEventFromForm(projectId: string, eventId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.put(`/admin/projects/${projectId}/events/${eventId}`, await eventUpdatePayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/events`);
+    revalidatePath(`/dashboard/projects/${projectId}/events/${eventId}`);
+    revalidatePath(`/dashboard/projects/${projectId}/events/${eventId}/edit`);
+
+    return { status: "success", data: null };
+  } catch (error) {
+    return mutationError(error);
+  }
+}
+
+export async function updateAwardFromForm(projectId: string, awardId: string, formData: FormData): ActionResponse<null> {
+  try {
+    await baseAxios.put(`/admin/projects/${projectId}/awards/${awardId}`, await awardUpdatePayload(projectId, formData));
+    revalidatePath(`/dashboard/projects/${projectId}/awards`);
+    revalidatePath(`/dashboard/projects/${projectId}/awards/${awardId}`);
+    revalidatePath(`/dashboard/projects/${projectId}/awards/${awardId}/edit`);
+
+    return { status: "success", data: null };
+  } catch (error) {
+    return mutationError(error);
   }
 }
 

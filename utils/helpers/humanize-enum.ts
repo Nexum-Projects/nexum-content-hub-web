@@ -12,6 +12,13 @@ const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
   FINISHED: "Finalizado",
 };
 
+export type BannerButtonVariant = "PRIMARY" | "SECONDARY";
+
+const BANNER_BUTTON_VARIANT_LABELS: Record<BannerButtonVariant, string> = {
+  PRIMARY: "Principal",
+  SECONDARY: "Secundario",
+};
+
 export function humanizePlatformRole(role: string | null | undefined): string {
   if (!role) {
     return "Sin rol";
@@ -24,4 +31,9 @@ export function humanizeEventStatus(status: string | null | undefined): string {
     return "Sin estado";
   }
   return EVENT_STATUS_LABELS[status as EventStatus] ?? status;
+}
+
+export function humanizeBannerButtonVariant(variant: string | null | undefined): string {
+  const key = (variant ?? "PRIMARY") as BannerButtonVariant;
+  return BANNER_BUTTON_VARIANT_LABELS[key] ?? String(variant ?? "PRIMARY");
 }

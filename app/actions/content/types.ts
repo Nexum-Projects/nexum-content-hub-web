@@ -28,10 +28,22 @@ export type Banner = {
   title: string;
   description?: string | null;
   imageUrl?: string | null;
+  isActive?: boolean;
   isPublished?: boolean;
   sortOrder?: number;
+  buttons?: BannerButton[];
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type BannerButton = {
+  id?: string;
+  label: string;
+  url: string;
+  variant?: "PRIMARY" | "SECONDARY" | null;
+  target?: "_self" | "_blank" | null;
+  isActive?: boolean | null;
+  sortOrder?: number | null;
 };
 
 export type MenuProduct = {
@@ -43,6 +55,7 @@ export type MenuProduct = {
   type: "DRINK" | "FOOD";
   priceCents?: number | null;
   isAvailable?: boolean;
+  isActive?: boolean;
   isPublished?: boolean;
   isFeatured?: boolean;
   sortOrder?: number;
@@ -62,6 +75,7 @@ export type EventItem = {
   capacity?: number | null;
   priceCents?: number | null;
   status?: "ACTIVE" | "CANCELLED" | "FINISHED";
+  isActive?: boolean;
   isPublished?: boolean;
   isFeatured?: boolean;
   sortOrder?: number;
@@ -77,6 +91,7 @@ export type Award = {
   sourceName?: string | null;
   sourceUrl?: string | null;
   awardedAt?: string | null;
+  isActive?: boolean;
   isPublished?: boolean;
   isFeatured?: boolean;
   sortOrder?: number;
