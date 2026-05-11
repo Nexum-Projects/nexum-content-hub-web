@@ -8,13 +8,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
 import { resolveAvatarUrl } from "@/lib/utils";
 import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 import { isAdminRole } from "../../../projects/project-components";
-
-function formatDate(value?: string | null) {
-  return value?.slice(0, 10) ?? "—";
-}
 
 export default async function UserDetailPage({
   params,
@@ -131,12 +128,16 @@ export default async function UserDetailPage({
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Correo verificado</p>
                 <p className="mt-1 tabular-nums text-sm">
-                  {user.emailVerifiedAt ? new Date(user.emailVerifiedAt).toLocaleString("es-GT") : "No verificado"}
+                  {user.emailVerifiedAt ? formatDateTimeGuatemala(user.emailVerifiedAt) : "No verificado"}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Fecha de creación</p>
-                <p className="mt-1 tabular-nums text-sm">{formatDate(user.createdAt)}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(user.createdAt)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Última actualización</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(user.updatedAt)}</p>
               </div>
             </CardContent>
           </Card>

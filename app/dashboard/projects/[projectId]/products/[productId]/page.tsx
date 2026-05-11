@@ -8,6 +8,7 @@ import { featuredBadge, productTypeBadge, publishBadge } from "@/components/reso
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
 import { sanitizeHtmlForDisplay } from "@/utils/helpers/sanitize-html-display";
 
 export default async function ProductDetailPage({
@@ -139,11 +140,11 @@ export default async function ProductDetailPage({
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Fecha de creacion</p>
-                <p className="mt-1 tabular-nums text-sm">{p.createdAt?.slice(0, 10) ?? "—"}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(p.createdAt)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Ultima actualizacion</p>
-                <p className="mt-1 tabular-nums text-sm">{p.updatedAt?.slice(0, 10) ?? "—"}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(p.updatedAt)}</p>
               </div>
             </CardContent>
           </Card>

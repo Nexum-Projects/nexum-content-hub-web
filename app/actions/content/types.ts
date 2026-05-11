@@ -10,6 +10,19 @@ export type Project = {
   isActive?: boolean;
 };
 
+/** Rol del usuario dentro de un proyecto (API `ProjectMember`). */
+export type ProjectMemberRole = "OWNER" | "ADMIN" | "MARKETING";
+
+export type ProjectMember = {
+  id: string;
+  /** Identificador del usuario de plataforma asociado al miembro. */
+  userId?: string;
+  role: ProjectMemberRole;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type User = {
   id: string;
   name: string;

@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   ChevronRight,
+  Contact,
   FolderKanban,
   Home,
   ImageIcon,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { logout } from "@/app/actions/auth";
+import { canViewProjectMembers } from "@/app/actions/content/can-view-project-members";
 import { getProjectSummary, getProjects } from "@/app/actions/content";
 import type { Project, ProjectSummary } from "@/app/actions/content";
 import type { SessionClaims } from "@/utils/auth-token";
@@ -337,6 +339,8 @@ export function DashboardShell({
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [projectsList, setProjectsList] = useState<Project[] | null>(null);
   const [currentProject, setCurrentProject] = useState<ProjectSummary | null>(null);
+  /** Miembros del proyecto: solo SUPER_ADMIN o rol de proyecto OWNER/ADMIN (según API). */
+  const [showMembersNav, setShowMembersNav] = useState(false);
 
   const dark = useSyncExternalStore(subscribeTheme, getThemeSnapshot, () => false);
 
@@ -374,14 +378,20 @@ export function DashboardShell({
 
     const base = `/dashboard/projects/${projectId}`;
 
-    return [
+    const items: NavItem[] = [
       { label: "Banners", href: `${base}/banners`, icon: ImageIcon },
       { label: "Menú / Productos", href: `${base}/products`, icon: Utensils },
       { label: "Eventos", href: `${base}/events`, icon: FolderKanban },
       { label: "Logros / Premios", href: `${base}/awards`, icon: Trophy },
       { label: "Medios", href: `${base}/media`, icon: Package },
     ];
-  }, [projectId]);
+
+    if (showMembersNav) {
+      items.push({ label: "Miembros", href: `${base}/members`, icon: Contact });
+    }
+
+    return items;
+  }, [projectId, showMembersNav]);
 
   const adminItems = useMemo((): NavItem[] => {
     const list: NavItem[] = [];
@@ -414,6 +424,29 @@ export function DashboardShell({
       cancelled = true;
     };
   }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) {
+      setShowMembersNav(false);
+      return;
+    }
+
+    if (session?.platformRole === "SUPER_ADMIN") {
+      setShowMembersNav(true);
+      return;
+    }
+
+    let cancelled = false;
+    void canViewProjectMembers(projectId).then((ok) => {
+      if (!cancelled) {
+        setShowMembersNav(ok);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, session?.platformRole]);
 
   const loadProjectsList = useCallback(async () => {
     if (projectsList) {

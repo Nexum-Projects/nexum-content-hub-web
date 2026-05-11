@@ -159,7 +159,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Fecha de creacion</p>
-                <p className="mt-1 tabular-nums text-sm">{e.createdAt?.slice(0, 10) ?? "—"}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(e.createdAt)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Ultima actualizacion</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(e.updatedAt)}</p>
               </div>
             </CardContent>
           </Card>

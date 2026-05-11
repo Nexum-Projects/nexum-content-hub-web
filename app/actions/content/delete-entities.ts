@@ -58,6 +58,17 @@ export async function deleteUser(userId: string): ActionResponse<null> {
   }
 }
 
+export async function deleteProjectMember(projectId: string, memberId: string): ActionResponse<null> {
+  try {
+    await baseAxios.delete(`/admin/projects/${projectId}/members/${memberId}`);
+    revalidatePath(`/dashboard/projects/${projectId}/members`);
+    revalidatePath(`/dashboard/projects/${projectId}/members/${memberId}`);
+    return { status: "success", data: null };
+  } catch (error) {
+    return errorDeleteResponse(error);
+  }
+}
+
 function errorDeleteResponse(error: unknown): Extract<Awaited<ActionResponse<null>>, { status: "error" }> {
   if (isAxiosError(error) && error.response) {
     const humanizedError = parseApiError(error.response.data);

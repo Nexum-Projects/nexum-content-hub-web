@@ -19,9 +19,20 @@ function mergeSearchParams(
 }
 
 function resetsPageToOne(updates: Record<string, string | undefined | null>) {
-  return ["query", "orderBy", "order", "limit", "pub", "ptype", "when", "award", "urole", "ustatus"].some((k) =>
-    Object.prototype.hasOwnProperty.call(updates, k),
-  );
+  return [
+    "query",
+    "orderBy",
+    "order",
+    "limit",
+    "pub",
+    "ptype",
+    "when",
+    "award",
+    "urole",
+    "ustatus",
+    "mrole",
+    "mstatus",
+  ].some((k) => Object.prototype.hasOwnProperty.call(updates, k));
 }
 
 export function useProjectListNavigation(basePath: string) {

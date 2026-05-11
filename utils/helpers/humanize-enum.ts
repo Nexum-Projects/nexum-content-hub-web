@@ -1,3 +1,11 @@
+export type ProjectMemberRole = "OWNER" | "ADMIN" | "MARKETING";
+
+const PROJECT_MEMBER_ROLE_LABELS: Record<ProjectMemberRole, string> = {
+  OWNER: "Propietario",
+  ADMIN: "Administrador del proyecto",
+  MARKETING: "Marketing",
+};
+
 export type PlatformRole = "SUPER_ADMIN" | "USER";
 export type EventStatus = "ACTIVE" | "CANCELLED" | "FINISHED";
 
@@ -18,6 +26,13 @@ const BANNER_BUTTON_VARIANT_LABELS: Record<BannerButtonVariant, string> = {
   PRIMARY: "Principal",
   SECONDARY: "Secundario",
 };
+
+export function humanizeProjectMemberRole(role: string | null | undefined): string {
+  if (!role) {
+    return "Sin rol";
+  }
+  return PROJECT_MEMBER_ROLE_LABELS[role as ProjectMemberRole] ?? role;
+}
 
 export function humanizePlatformRole(role: string | null | undefined): string {
   if (!role) {

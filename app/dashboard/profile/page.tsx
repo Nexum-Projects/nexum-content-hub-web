@@ -9,13 +9,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
 import { resolveAvatarUrl } from "@/lib/utils";
 import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 import { isAdminRole } from "../projects/project-components";
-
-function formatDate(value?: string | null) {
-  return value?.slice(0, 10) ?? "—";
-}
 
 type ProfileSource = User | (Pick<User, "id" | "name" | "email"> & {
   platformRole?: string | null;
@@ -171,16 +168,18 @@ export default async function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Correo verificado</p>
                 <p className="mt-1 tabular-nums text-sm">
-                  {merged.emailVerifiedAt ? new Date(merged.emailVerifiedAt).toLocaleString("es-GT") : "No verificado"}
+                  {merged.emailVerifiedAt ? formatDateTimeGuatemala(merged.emailVerifiedAt) : "No verificado"}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Fecha de creación</p>
-                <p className="mt-1 tabular-nums text-sm">{formatDate(merged.createdAt)}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(merged.createdAt)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Última actualización</p>
-                <p className="mt-1 tabular-nums text-sm">{formatDate("updatedAt" in merged ? merged.updatedAt : undefined)}</p>
+                <p className="mt-1 tabular-nums text-sm">
+                  {formatDateTimeGuatemala("updatedAt" in merged ? merged.updatedAt : undefined)}
+                </p>
               </div>
             </CardContent>
           </Card>

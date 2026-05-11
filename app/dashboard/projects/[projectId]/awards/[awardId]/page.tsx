@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateGuatemala } from "@/lib/datetime-guatemala";
+import { formatDateGuatemala, formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
 import { sanitizeHtmlForDisplay } from "@/utils/helpers/sanitize-html-display";
 
 function formatAwardDate(value?: string | null) {
@@ -157,11 +157,11 @@ export default async function AwardDetailPage({ params }: { params: Promise<{ pr
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Fecha de creacion</p>
-                <p className="mt-1 tabular-nums text-sm">{a.createdAt?.slice(0, 10) ?? "—"}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(a.createdAt)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Ultima actualizacion</p>
-                <p className="mt-1 tabular-nums text-sm">{a.updatedAt?.slice(0, 10) ?? "—"}</p>
+                <p className="mt-1 tabular-nums text-sm">{formatDateTimeGuatemala(a.updatedAt)}</p>
               </div>
             </CardContent>
           </Card>
