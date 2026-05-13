@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, ImagePlus, MapPin, Star } from "lucide-react";
+import { ArrowLeft, CalendarDays, ImagePlus, MapPin, Pencil, Star } from "lucide-react";
 
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 import { getEventDetail } from "@/app/actions/content/get-resource-detail";
@@ -50,7 +50,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
             </Link>
           </Button>
           <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/events/${eventId}/edit`}>Editar</Link>
+            <Link href={`/dashboard/projects/${projectId}/events/${eventId}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </header>

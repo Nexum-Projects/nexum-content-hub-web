@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 
 import { getBannerDetail } from "@/app/actions/content/get-resource-detail";
 import { publishBadge } from "@/components/resource-lists/entity-badges";
@@ -55,7 +55,10 @@ export default async function BannerDetailPage({
             </Link>
           </Button>
           <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/banners/${bannerId}/edit`}>Editar</Link>
+            <Link href={`/dashboard/projects/${projectId}/banners/${bannerId}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </header>

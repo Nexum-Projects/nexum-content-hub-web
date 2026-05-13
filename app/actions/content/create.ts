@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAxiosError } from "axios";
 
+import getSession from "../auth/getSession";
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
+import type { ProjectMemberRole, User } from "./types";
 import { Storage } from "../storage";
 import { guatemalaLocalInputToUtcIso } from "@/lib/datetime-guatemala";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
@@ -519,36 +521,249 @@ export async function updateAwardFromForm(projectId: string, awardId: string, fo
   }
 }
 
-export async function createUser(formData: FormData) {
-  const avatarUrl = (await uploadUserAvatar(formData, "pending")) ?? undefined;
+const PROJECT_MEMBER_ROLES: readonly ProjectMemberRole[] = ["OWNER", "ADMIN", "MARKETING"];
 
-  await baseAxios.post("/admin/users", {
-    name: asString(formData, "name"),
-    email: asString(formData, "email"),
-    password: asString(formData, "password"),
-    platformRole: asString(formData, "platformRole") ?? "USER",
-    avatarUrl,
-    isActive: true,
-  });
+type ProjectMembershipInput = {
+  projectId: string;
+  role: ProjectMemberRole;
+};
 
-  revalidatePath("/dashboard/admin/users");
-  redirect("/dashboard/admin/users");
+type ExistingProjectMembershipInput = {
+  projectId: string;
+  memberId: string;
+};
+
+function parseAssignProjectRole(formData: FormData): ProjectMemberRole {
+  const r = asString(formData, "assignProjectRole");
+  if (r && (PROJECT_MEMBER_ROLES as readonly string[]).includes(r)) {
+    return r as ProjectMemberRole;
+  }
+  return "MARKETING";
 }
 
-export async function updateUser(userId: string, formData: FormData) {
-  const uploaded = await uploadUserAvatar(formData, userId);
-  const avatarUrl = uploaded ?? asString(formData, "existingAvatarUrl");
+function isProjectMemberRole(value: unknown): value is ProjectMemberRole {
+  return typeof value === "string" && (PROJECT_MEMBER_ROLES as readonly string[]).includes(value);
+}
 
-  await baseAxios.put(`/admin/users/${userId}`, {
-    name: asString(formData, "name"),
-    email: asString(formData, "email"),
-    password: asString(formData, "password"),
-    platformRole: asString(formData, "platformRole") ?? "USER",
-    avatarUrl,
-    isActive: asBoolean(formData, "isActive"),
-  });
+function parseProjectMemberships(formData: FormData): ProjectMembershipInput[] {
+  const membershipsJson = asString(formData, "projectMembershipsJson");
+  if (membershipsJson) {
+    try {
+      const parsed = JSON.parse(membershipsJson);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
 
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath(`/dashboard/admin/users/${userId}`);
-  redirect(`/dashboard/admin/users/${userId}`);
+      return parsed
+        .map((item): ProjectMembershipInput | null => {
+          if (!item || typeof item !== "object") {
+            return null;
+          }
+          const projectId = typeof item.projectId === "string" ? item.projectId.trim() : "";
+          const role = (item as { role?: unknown }).role;
+          if (!projectId || !isProjectMemberRole(role)) {
+            return null;
+          }
+          return { projectId, role };
+        })
+        .filter((item): item is ProjectMembershipInput => Boolean(item));
+    } catch {
+      return [];
+    }
+  }
+
+  const role = parseAssignProjectRole(formData);
+  return formData
+    .getAll("assignProjectId")
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .map((projectId) => ({ projectId, role }));
+}
+
+function parseExistingProjectMemberships(formData: FormData): ExistingProjectMembershipInput[] {
+  const existingJson = asString(formData, "existingProjectMembershipsJson");
+  if (!existingJson) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(existingJson);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item): ExistingProjectMembershipInput | null => {
+        if (!item || typeof item !== "object") {
+          return null;
+        }
+        const projectId = typeof item.projectId === "string" ? item.projectId.trim() : "";
+        const memberId = typeof item.memberId === "string" ? item.memberId.trim() : "";
+        if (!projectId || !memberId) {
+          return null;
+        }
+        return { projectId, memberId };
+      })
+      .filter((item): item is ExistingProjectMembershipInput => Boolean(item));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Crea o actualiza membresía vía POST /admin/projects/:projectId/members (upsert en el API).
+ * Solo debe invocarse cuando la sesión es SUPER_ADMIN.
+ */
+async function assignUserToProjectsFromForm(userId: string, formData: FormData): Promise<string[]> {
+  const memberships = parseProjectMemberships(formData);
+  const existingMemberships = parseExistingProjectMemberships(formData);
+  const selectedProjectIds = new Set(memberships.map((item) => item.projectId));
+  const errors: string[] = [];
+
+  for (const existing of existingMemberships) {
+    if (selectedProjectIds.has(existing.projectId)) {
+      continue;
+    }
+
+    try {
+      await baseAxios.delete(`/admin/projects/${existing.projectId}/members/${existing.memberId}`);
+      revalidatePath(`/dashboard/projects/${existing.projectId}/members`);
+    } catch (error) {
+      let msg = "Error desconocido";
+      if (isAxiosError(error) && error.response) {
+        msg = parseApiError(error.response.data).description;
+      } else {
+        msg = parseApiError(error).description;
+      }
+      errors.push(`${existing.projectId}: ${msg}`);
+    }
+  }
+
+  for (const membership of memberships) {
+    try {
+      await baseAxios.post(`/admin/projects/${membership.projectId}/members`, {
+        userId,
+        role: membership.role,
+        isActive: true,
+      });
+      revalidatePath(`/dashboard/projects/${membership.projectId}/members`);
+    } catch (error) {
+      let msg = "Error desconocido";
+      if (isAxiosError(error) && error.response) {
+        msg = parseApiError(error.response.data).description;
+      } else {
+        msg = parseApiError(error).description;
+      }
+      errors.push(`${membership.projectId}: ${msg}`);
+    }
+  }
+
+  return errors;
+}
+
+export async function createUser(formData: FormData): ActionResponse<{ userId: string; assignmentErrors?: string[] }> {
+  try {
+    const session = await getSession();
+    const avatarUrl = (await uploadUserAvatar(formData, "pending")) ?? undefined;
+
+    const response = await baseAxios.post<{ data: User }>("/admin/users", {
+      name: asString(formData, "name"),
+      email: asString(formData, "email"),
+      password: asString(formData, "password"),
+      platformRole: asString(formData, "platformRole") ?? "USER",
+      avatarUrl,
+      isActive: true,
+    });
+
+    const userId = response.data.data?.id;
+    if (!userId) {
+      return {
+        status: "error",
+        errors: [{ title: "Respuesta inválida", message: "El API no devolvió el identificador del usuario creado." }],
+      };
+    }
+
+    let assignmentErrors: string[] | undefined;
+    if (session?.platformRole === "SUPER_ADMIN") {
+      const errs = await assignUserToProjectsFromForm(userId, formData);
+      assignmentErrors = errs.length > 0 ? errs : undefined;
+    }
+
+    revalidatePath("/dashboard/admin/users");
+
+    return {
+      status: "success",
+      data: { userId, assignmentErrors },
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const humanizedError = parseApiError(error.response.data);
+      return {
+        status: "error",
+        errors: [
+          {
+            title: humanizedError.title,
+            message: humanizedError.description,
+            statusCode: error.response.status,
+          },
+        ],
+      };
+    }
+
+    const humanizedError = parseApiError(error);
+    return {
+      status: "error",
+      errors: [{ title: humanizedError.title, message: humanizedError.description }],
+    };
+  }
+}
+
+export async function updateUser(userId: string, formData: FormData): ActionResponse<{ assignmentErrors?: string[] }> {
+  try {
+    const session = await getSession();
+    const uploaded = await uploadUserAvatar(formData, userId);
+    const avatarUrl = uploaded ?? asString(formData, "existingAvatarUrl");
+
+    await baseAxios.put(`/admin/users/${userId}`, {
+      name: asString(formData, "name"),
+      email: asString(formData, "email"),
+      password: asString(formData, "password"),
+      platformRole: asString(formData, "platformRole") ?? "USER",
+      avatarUrl,
+      isActive: asBoolean(formData, "isActive"),
+    });
+
+    let assignmentErrors: string[] | undefined;
+    if (session?.platformRole === "SUPER_ADMIN") {
+      const errs = await assignUserToProjectsFromForm(userId, formData);
+      assignmentErrors = errs.length > 0 ? errs : undefined;
+    }
+
+    revalidatePath("/dashboard/admin/users");
+    revalidatePath(`/dashboard/admin/users/${userId}`);
+
+    return {
+      status: "success",
+      data: { assignmentErrors },
+    };
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const humanizedError = parseApiError(error.response.data);
+      return {
+        status: "error",
+        errors: [
+          {
+            title: humanizedError.title,
+            message: humanizedError.description,
+            statusCode: error.response.status,
+          },
+        ],
+      };
+    }
+
+    const humanizedError = parseApiError(error);
+    return {
+      status: "error",
+      errors: [{ title: humanizedError.title, message: humanizedError.description }],
+    };
+  }
 }

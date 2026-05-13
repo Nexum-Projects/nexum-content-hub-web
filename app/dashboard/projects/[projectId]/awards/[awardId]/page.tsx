@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award as AwardIcon, ExternalLink, ImagePlus, Star } from "lucide-react";
+import { ArrowLeft, Award as AwardIcon, ExternalLink, ImagePlus, Pencil, Star } from "lucide-react";
 
 import { getAwardDetail } from "@/app/actions/content/get-resource-detail";
 import { featuredBadge, publishBadge } from "@/components/resource-lists/entity-badges";
@@ -56,7 +56,10 @@ export default async function AwardDetailPage({ params }: { params: Promise<{ pr
             </Link>
           </Button>
           <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/awards/${awardId}/edit`}>Editar</Link>
+            <Link href={`/dashboard/projects/${projectId}/awards/${awardId}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </header>

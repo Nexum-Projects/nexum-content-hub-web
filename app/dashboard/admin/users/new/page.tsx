@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/app/actions/auth";
+import { getProjects } from "@/app/actions/content";
+import type { Project } from "@/app/actions/content/types";
 import { AdminUserCreateForm } from "@/components/admin/admin-user-forms";
 import { AdminUserPageHeader } from "@/components/admin/admin-user-page-header";
 import { isAdminRole } from "../../../projects/project-components";
@@ -10,6 +12,15 @@ export default async function NewUserPage() {
 
   if (!isAdminRole(session?.platformRole)) {
     redirect("/dashboard");
+  }
+
+  const isSuperAdmin = session?.platformRole === "SUPER_ADMIN";
+  let projects: Project[] = [];
+  if (isSuperAdmin) {
+    const projectsRes = await getProjects();
+    if (projectsRes.status === "success") {
+      projects = projectsRes.data;
+    }
   }
 
   return (
@@ -23,7 +34,7 @@ export default async function NewUserPage() {
         title="Nuevo usuario"
       />
 
-      <AdminUserCreateForm />
+      <AdminUserCreateForm projects={projects} showProjectAssignment={isSuperAdmin} />
     </div>
   );
 }

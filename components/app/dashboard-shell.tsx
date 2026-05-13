@@ -427,13 +427,13 @@ export function DashboardShell({
 
   useEffect(() => {
     if (!projectId) {
-      setShowMembersNav(false);
-      return;
+      const id = window.setTimeout(() => setShowMembersNav(false), 0);
+      return () => window.clearTimeout(id);
     }
 
     if (session?.platformRole === "SUPER_ADMIN") {
-      setShowMembersNav(true);
-      return;
+      const id = window.setTimeout(() => setShowMembersNav(true), 0);
+      return () => window.clearTimeout(id);
     }
 
     let cancelled = false;

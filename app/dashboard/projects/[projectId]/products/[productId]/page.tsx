@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ImagePlus, Star } from "lucide-react";
+import { ArrowLeft, ImagePlus, Pencil, Star } from "lucide-react";
 
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 import { getMenuProductDetail } from "@/app/actions/content/get-resource-detail";
@@ -53,7 +53,10 @@ export default async function ProductDetailPage({
             </Link>
           </Button>
           <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/products/${productId}/edit`}>Editar</Link>
+            <Link href={`/dashboard/projects/${projectId}/products/${productId}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </header>

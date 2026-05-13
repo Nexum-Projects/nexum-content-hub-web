@@ -17,6 +17,8 @@ export type ProjectMember = {
   id: string;
   /** Identificador del usuario de plataforma asociado al miembro. */
   userId?: string;
+  /** Identificador del proyecto asociado al miembro. */
+  projectId?: string;
   role: ProjectMemberRole;
   isActive?: boolean;
   createdAt?: string;

@@ -20,7 +20,7 @@ import { resolveAvatarUrl } from "@/lib/utils";
 import { coerceListLimit } from "@/lib/project-list-query";
 import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 
-const USER_ORDER_FIELDS = ["name", "email", "platformRole", "isActive", "createdAt"] as const;
+const USER_ORDER_FIELDS = ["name", "email", "platformRole", "isActive", "emailVerifiedAt", "createdAt"] as const;
 type UserOrderField = (typeof USER_ORDER_FIELDS)[number];
 
 function safeOrderBy(raw: string | null): UserOrderField {
@@ -139,6 +139,9 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
           break;
         case "isActive":
           result = Number(a.isActive !== false) - Number(b.isActive !== false);
+          break;
+        case "emailVerifiedAt":
+          result = dateToEpoch(a.emailVerifiedAt ?? undefined) - dateToEpoch(b.emailVerifiedAt ?? undefined);
           break;
         case "createdAt":
           result = dateToEpoch(a.createdAt) - dateToEpoch(b.createdAt);
@@ -260,6 +263,15 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
                 <SortHeaderButton
                   currentOrder={order}
                   currentOrderBy={orderBy}
+                  field="emailVerifiedAt"
+                  label="Verificado"
+                  onSort={handleSort}
+                />
+              </TableHead>
+              <TableHead>
+                <SortHeaderButton
+                  currentOrder={order}
+                  currentOrderBy={orderBy}
                   field="createdAt"
                   label="Creación"
                   onSort={handleSort}
@@ -271,7 +283,7 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
           <TableBody>
             {paginatedUsers.length === 0 ? (
               <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={6}>
+                <TableCell className="h-24 text-center text-muted-foreground" colSpan={7}>
                   Sin resultados con los filtros actuales.
                 </TableCell>
               </TableRow>
@@ -299,6 +311,13 @@ export function AdminUsersListClient({ users }: { users: User[] }) {
                       <Badge variant={user.platformRole === "SUPER_ADMIN" ? "default" : "secondary"}>{roleLabel}</Badge>
                     </TableCell>
                     <TableCell>{user.isActive === false ? <Badge variant="destructive">Inactivo</Badge> : <Badge variant="success">Activo</Badge>}</TableCell>
+                    <TableCell>
+                      {user.emailVerifiedAt ? (
+                        <ListDateTimeGT value={user.emailVerifiedAt} />
+                      ) : (
+                        <Badge variant="inactive">Sin verificar</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <ListDateTimeGT value={user.createdAt} />
                     </TableCell>

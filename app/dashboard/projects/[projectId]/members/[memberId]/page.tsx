@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 
 import { getSession } from "@/app/actions/auth";
 import { getProjectMemberDetail, getUserDetail } from "@/app/actions/content";
@@ -79,7 +79,10 @@ export default async function ProjectMemberDetailPage({
             </Link>
           </Button>
           <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/members/${memberId}/edit`}>Editar</Link>
+            <Link href={`/dashboard/projects/${projectId}/members/${memberId}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </header>

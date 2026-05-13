@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 
 import { getSession } from "@/app/actions/auth";
 import { getUserDetail } from "@/app/actions/content";
+import { VerifyUserEmailButton } from "@/components/admin/verify-user-email-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,11 +33,31 @@ export default async function UserDetailPage({
   const user = res.data;
   const avatar = resolveAvatarUrl(user);
   const isActive = user.isActive !== false;
+  const isSuperAdmin = session?.platformRole === "SUPER_ADMIN";
   const roleLabel = humanizePlatformRole(user.platformRole);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild className="rounded-lg" variant="outline">
+            <Link href="/dashboard/admin/users">
+              <ArrowLeft className="h-4 w-4" />
+              Volver a usuarios
+            </Link>
+          </Button>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            {isSuperAdmin && !user.emailVerifiedAt ? (
+              <VerifyUserEmailButton userEmail={user.email} userId={user.id} />
+            ) : null}
+            <Button asChild className="rounded-lg">
+              <Link href={`/dashboard/admin/users/${user.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Link>
+            </Button>
+          </div>
+        </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href="/dashboard/admin/users">
@@ -51,17 +72,6 @@ export default async function UserDetailPage({
               Cuenta de acceso al panel: datos personales, rol de plataforma y estado de la sesión.
             </p>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="rounded-lg" variant="outline">
-            <Link href="/dashboard/admin/users">
-              <ArrowLeft className="h-4 w-4" />
-              Volver a usuarios
-            </Link>
-          </Button>
-          <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/admin/users/${user.id}/edit`}>Editar</Link>
-          </Button>
         </div>
       </header>
 

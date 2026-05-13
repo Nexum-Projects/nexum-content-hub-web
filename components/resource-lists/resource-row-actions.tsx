@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -59,9 +60,11 @@ export function ResourceRowActions({
     <>
       <DataTableRowActions>
         <DataTableRowActions.Item href={viewHref} type="link">
+          <Eye className="mr-2 h-4 w-4" />
           Ver
         </DataTableRowActions.Item>
         <DataTableRowActions.Item href={editHref} type="link">
+          <Pencil className="mr-2 h-4 w-4" />
           Editar
         </DataTableRowActions.Item>
         <DataTableRowActions.Separator />
@@ -72,6 +75,7 @@ export function ResourceRowActions({
           variant="destructive"
           onClick={() => setConfirmOpen(true)}
         >
+          <Trash2 className="mr-2 h-4 w-4" />
           Eliminar
         </DataTableRowActions.Item>
       </DataTableRowActions>

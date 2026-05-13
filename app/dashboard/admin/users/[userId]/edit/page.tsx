@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 
 import { getSession } from "@/app/actions/auth";
-import { getUserDetail } from "@/app/actions/content";
+import { getProjectMembers, getProjects, getUserDetail } from "@/app/actions/content";
+import type { Project, ProjectMemberRole } from "@/app/actions/content/types";
 import { AdminUserEditForm } from "@/components/admin/admin-user-forms";
 import { AdminUserPageHeader } from "@/components/admin/admin-user-page-header";
 import { resolveAvatarUrl } from "@/lib/utils";
@@ -27,6 +28,30 @@ export default async function UserEditPage({
   const displayName = user.name?.trim() || user.email || "Usuario";
   const existingAvatarUrl = resolveAvatarUrl(user);
 
+  const isSuperAdmin = session?.platformRole === "SUPER_ADMIN";
+  let projects: Project[] = [];
+  let projectMemberships: Array<{ memberId: string; projectId: string; role: ProjectMemberRole }> = [];
+  if (isSuperAdmin) {
+    const projectsRes = await getProjects();
+    if (projectsRes.status === "success") {
+      projects = projectsRes.data;
+    }
+    const memberResults = await Promise.all(projects.map((project) => getProjectMembers(project.id)));
+    projectMemberships = memberResults.flatMap((result, index) => {
+      if (result.status === "error") {
+        return [];
+      }
+      const projectId = projects[index]?.id;
+      return result.data
+        .filter((member) => member.userId === userId)
+        .map((member) => ({
+          memberId: member.id,
+          projectId: member.projectId ?? projectId,
+          role: member.role,
+        }));
+    });
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminUserPageHeader
@@ -38,7 +63,13 @@ export default async function UserEditPage({
         title={`Editar · ${displayName}`}
       />
 
-      <AdminUserEditForm existingAvatarUrl={existingAvatarUrl} user={user} />
+      <AdminUserEditForm
+        existingAvatarUrl={existingAvatarUrl}
+        initialProjectMemberships={projectMemberships}
+        projects={projects}
+        showProjectAssignment={isSuperAdmin}
+        user={user}
+      />
     </div>
   );
 }
