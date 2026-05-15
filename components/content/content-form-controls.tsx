@@ -263,6 +263,9 @@ export function ContentImageUpload({
   onPreviewUrlChange,
   /** Imagen remota ya guardada (p. ej. avatar actual) cuando aún no hay archivo nuevo seleccionado. */
   remotePreviewUrl,
+  accept = "image/jpeg,image/png,image/webp",
+  formatDescription = "JPG, PNG o WEBP · Máx. 5MB",
+  previewObjectFit = "cover",
 }: {
   emptyLabel?: string;
   error?: string;
@@ -270,6 +273,9 @@ export function ContentImageUpload({
   onChange: (file: File | undefined) => void;
   onPreviewUrlChange: (url: string | null) => void;
   remotePreviewUrl?: string | null;
+  accept?: string;
+  formatDescription?: string;
+  previewObjectFit?: "cover" | "contain";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -343,14 +349,14 @@ export function ContentImageUpload({
           }}
           onDrop={onDrop}
         >
-          <input accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onFileChange} ref={inputRef} type="file" />
+          <input accept={accept} className="hidden" onChange={onFileChange} ref={inputRef} type="file" />
           <div className="space-y-3">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
               <UploadCloud className="h-6 w-6" />
             </div>
             <div>
               <p className="font-medium">Arrastra una imagen o haz clic para seleccionar</p>
-              <p className="text-sm text-muted-foreground">JPG, PNG o WEBP · Max. 5MB</p>
+              <p className="text-sm text-muted-foreground">{formatDescription}</p>
             </div>
           </div>
         </div>
@@ -360,7 +366,11 @@ export function ContentImageUpload({
             <>
               <div className="relative h-36 bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img alt="Vista previa del archivo" className="h-full w-full object-cover" src={displayPreview} />
+                <img
+                  alt="Vista previa del archivo"
+                  className={cn("h-full w-full", previewObjectFit === "contain" ? "object-contain p-2" : "object-cover")}
+                  src={displayPreview}
+                />
                 {hasLocalSelection ? (
                   <Button className="absolute right-2 top-2" onClick={removeFile} size="icon" type="button" variant="secondary">
                     <Trash2 className="h-4 w-4" />

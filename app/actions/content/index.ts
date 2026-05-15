@@ -15,6 +15,7 @@ export {
   createProductFromForm,
   createProject,
   createUser,
+  updateProject,
   updateAwardFromForm,
   updateBannerFromForm,
   updateEventFromForm,

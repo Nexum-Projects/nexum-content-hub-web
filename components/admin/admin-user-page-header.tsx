@@ -32,10 +32,10 @@ export function AdminUserPageHeader({
         </div>
         <div>
           <h1 className="text-2xl font-semibold leading-7">{title}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+          {description.trim() ? <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p> : null}
         </div>
       </div>
-      <Button asChild variant="outline">
+      <Button asChild className="w-fit shrink-0" variant="outline">
         <Link href={backHref}>
           <ArrowLeft className="h-4 w-4" />
           {backLabel}

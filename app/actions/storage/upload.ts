@@ -49,10 +49,18 @@ export async function upload({ file, folder, name, subFolder }: UploadParams) {
 function getFileExtension(file: File) {
   const fromName = file.name.split(".").pop()?.toLowerCase();
 
-  if (fromName && ["jpg", "jpeg", "png", "webp"].includes(fromName)) {
+  if (fromName && ["jpg", "jpeg", "png", "webp", "svg"].includes(fromName)) {
     return fromName === "jpeg" ? "jpg" : fromName;
   }
 
+  if (file.type === "image/svg+xml") {
+    return "svg";
+  }
+
   const fromMime = file.type.split("/").pop()?.toLowerCase();
+  if (fromMime === "svg+xml") {
+    return "svg";
+  }
+
   return fromMime === "jpeg" ? "jpg" : fromMime || "bin";
 }

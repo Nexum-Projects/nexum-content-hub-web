@@ -4,6 +4,8 @@ export type Project = {
   slug: string;
   domain?: string | null;
   logoUrl?: string | null;
+  /** Columna `logo_url` en BD; la API puede enviar `logo_url` o `logoUrl`. */
+  logo_url?: string | null;
   /** Imagen del proyecto (columna `avatar_url` en BD; la API puede enviar `avatar_url` o `avatarUrl`). */
   avatarUrl?: string | null;
   avatar_url?: string | null;

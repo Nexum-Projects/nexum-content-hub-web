@@ -358,6 +358,7 @@ export function DashboardShell({
   const userAvatarUrl = profileAvatarUrl ?? resolveAvatarUrl(session);
   const userInitial = String(userName).slice(0, 1).toUpperCase();
   const isAdmin = isAdminRole(session?.platformRole);
+  const isSuperAdmin = session?.platformRole === "SUPER_ADMIN";
   const projectId = getProjectId(pathname);
 
   const roleLine = isAdmin ? humanizePlatformRole(session?.platformRole) : userEmail;
@@ -395,7 +396,7 @@ export function DashboardShell({
 
   const adminItems = useMemo((): NavItem[] => {
     const list: NavItem[] = [];
-    if (projectId) {
+    if (projectId && isSuperAdmin) {
       list.push({ label: "Configuración", href: `/dashboard/projects/${projectId}/settings`, icon: Settings });
     }
 
@@ -404,7 +405,7 @@ export function DashboardShell({
     }
 
     return list;
-  }, [projectId, isAdmin]);
+  }, [projectId, isAdmin, isSuperAdmin]);
 
   useEffect(() => {
     if (!projectId) {

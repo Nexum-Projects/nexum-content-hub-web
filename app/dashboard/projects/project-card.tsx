@@ -7,6 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveAvatarUrl } from "@/lib/utils";
 
+function resolveLogoUrl(project: Project): string | null {
+  const camel = project.logoUrl;
+  if (typeof camel === "string" && camel.trim()) {
+    return camel.trim();
+  }
+  const snake = project.logo_url;
+  if (typeof snake === "string" && snake.trim()) {
+    return snake.trim();
+  }
+  return null;
+}
+
 export function ProjectCard({
   project,
   index,
@@ -14,6 +26,7 @@ export function ProjectCard({
   project: Project;
   index: number;
 }) {
+  const logoSrc = resolveLogoUrl(project);
   const avatarSrc = resolveAvatarUrl(project);
   const initials = project.name
     .split(" ")
@@ -30,10 +43,10 @@ export function ProjectCard({
         prefetch
       >
         <div className="relative h-28 overflow-hidden">
-          {avatarSrc ? (
+          {logoSrc ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- URL remota del CMS */}
-              <img alt="" className="absolute inset-0 h-full w-full object-cover" src={avatarSrc} />
+              <img alt="" className="absolute inset-0 h-full w-full object-cover" src={logoSrc} />
               <div className="absolute inset-0 bg-slate-950/35" />
             </>
           ) : (

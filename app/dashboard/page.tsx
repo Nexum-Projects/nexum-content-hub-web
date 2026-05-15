@@ -2,12 +2,13 @@ import { getSession } from "@/app/actions/auth";
 import { getProjects } from "@/app/actions/content";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectCard } from "./projects/project-card";
-import { CreateProjectCard, isAdminRole } from "./projects/project-components";
+import { CreateProjectCard, isAdminRole, isSuperAdminRole } from "./projects/project-components";
 import { fallbackProjects } from "./projects/fallback-data";
 
 export default async function DashboardPage() {
   const [session, result] = await Promise.all([getSession(), getProjects()]);
   const isAdmin = isAdminRole(session?.platformRole);
+  const isSuperAdmin = isSuperAdminRole(session?.platformRole);
   const projects = result.status === "success" && result.data.length ? result.data : fallbackProjects;
 
   return (
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
         {projects.map((project, index) => (
           <ProjectCard index={index} key={project.id} project={project} />
         ))}
-        {isAdmin && <CreateProjectCard />}
+        {isSuperAdmin && <CreateProjectCard />}
       </section>
     </div>
   );

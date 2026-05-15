@@ -1,40 +1,45 @@
+import { notFound, redirect } from "next/navigation";
+
+import { getSession } from "@/app/actions/auth";
 import { getProjectContent } from "@/app/actions/content";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { fallbackProjects } from "../../fallback-data";
+import { ProjectFormPage } from "@/components/projects/project-form-card";
+
+import { isSuperAdminRole } from "../../project-components";
 
 export default async function ProjectSettingsPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const session = await getSession();
+
+  if (!isSuperAdminRole(session?.platformRole)) {
+    redirect("/dashboard");
+  }
+
   const { projectId } = await params;
   const result = await getProjectContent(projectId);
-  const project = result.status === "success" ? result.data.selectedProject : fallbackProjects[0];
+
+  if (result.status !== "success") {
+    notFound();
+  }
+
+  const project = result.data.selectedProject;
+  if (!project) {
+    notFound();
+  }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <section>
-        <h1 className="text-2xl font-semibold leading-7">Configuracion</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Informacion del sitio, contacto y presencia digital.</p>
-      </section>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos del proyecto</CardTitle>
-          <CardDescription>Campos base de {project?.name ?? "Proyecto"}.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <Input defaultValue={project?.name ?? ""} placeholder="Nombre del proyecto" />
-          <Input defaultValue={project?.slug ?? ""} placeholder="Slug" />
-          <Input defaultValue={project?.domain ?? ""} placeholder="Dominio" />
-          <Input defaultValue={project?.logoUrl ?? ""} placeholder="Logo URL" />
-          <Input placeholder="Color principal opcional" />
-          <Input placeholder="Direccion" />
-          <Input placeholder="Telefono" />
-          <Input placeholder="Email" />
-          <Input placeholder="Instagram" />
-          <Input placeholder="Facebook" />
-          <Input placeholder="Google Maps URL" />
-          <Input placeholder="Horarios" />
-        </CardContent>
-      </Card>
-    </div>
+    <ProjectFormPage
+      backHref={`/dashboard/projects/${projectId}`}
+      backLabel="Volver al proyecto"
+      breadcrumbCurrent={project.name}
+      breadcrumbHref="/dashboard"
+      breadcrumbParentLabel="Proyectos"
+      cancelHref={`/dashboard/projects/${projectId}`}
+      description="Ajusta metadatos del sitio visibles en el panel. Solo los super administradores pueden ver y editar esta sección."
+      footerHelper="Los cambios se guardan en la API y afectan a todos los usuarios con acceso a este proyecto."
+      mode="edit"
+      project={project}
+      projectId={projectId}
+      submitLabel="Guardar cambios"
+      title="Configuración del proyecto"
+    />
   );
 }

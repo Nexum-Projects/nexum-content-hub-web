@@ -6,6 +6,7 @@ import { isAxiosError } from "axios";
 
 import getSession from "../auth/getSession";
 import baseAxios from "../baseAxios";
+import { ADMIN_PROJECTS_PATH, adminProjectDetailPath } from "./admin-projects-api";
 import type { ActionResponse } from "../types";
 import type { ProjectMemberRole, User } from "./types";
 import { Storage } from "../storage";
@@ -107,6 +108,69 @@ async function uploadUserAvatar(formData: FormData, subFolder: string) {
   return undefined;
 }
 
+const MAX_PROJECT_RASTER_BYTES = 5 * 1024 * 1024;
+const MAX_PROJECT_SVG_BYTES = 2 * 1024 * 1024;
+const PROJECT_RASTER_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+function isRasterProjectFile(file: File) {
+  if (file.size > MAX_PROJECT_RASTER_BYTES) {
+    return false;
+  }
+  if (PROJECT_RASTER_MIMES.has(file.type)) {
+    return true;
+  }
+  return !file.type && /\.(jpe?g|png|webp)$/i.test(file.name);
+}
+
+function isSvgProjectIconFile(file: File) {
+  if (file.size > MAX_PROJECT_SVG_BYTES) {
+    return false;
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext !== "svg") {
+    return false;
+  }
+  return !file.type || file.type === "image/svg+xml" || (file.type === "application/octet-stream" && ext === "svg");
+}
+
+async function uploadOptionalProjectLogo(formData: FormData, subFolder: string) {
+  const file = formData.get("logoFile");
+  if (!(file instanceof File) || file.size === 0) {
+    return asString(formData, "existingLogoUrl");
+  }
+  if (!isRasterProjectFile(file)) {
+    throw new Error("El logo debe ser JPG, PNG o WEBP y no superar 5MB.");
+  }
+  const { path } = await Storage.upload({
+    file,
+    folder: "PROJECTS",
+    name: asString(formData, "name") ?? file.name,
+    subFolder,
+  });
+  const { publicUrl } = await Storage.getPublicUrl(path);
+
+  return publicUrl;
+}
+
+async function uploadOptionalProjectIconSvg(formData: FormData, subFolder: string) {
+  const file = formData.get("iconFile");
+  if (!(file instanceof File) || file.size === 0) {
+    return asString(formData, "existingAvatarUrl");
+  }
+  if (!isSvgProjectIconFile(file)) {
+    throw new Error("El icono debe ser un archivo SVG y no superar 2MB.");
+  }
+  const { path } = await Storage.upload({
+    file,
+    folder: "PROJECTS",
+    name: `${asString(formData, "name") ?? "icon"}-icon`,
+    subFolder,
+  });
+  const { publicUrl } = await Storage.getPublicUrl(path);
+
+  return publicUrl;
+}
+
 async function nextSortOrder(projectId: string, resource: "banners" | "menu-products" | "events" | "awards") {
   const response = await baseAxios.get<{ data?: Array<{ sortOrder?: number | null }> }>(`/admin/projects/${projectId}/${resource}`, {
     params: {
@@ -164,17 +228,52 @@ async function bannerPayload(projectId: string, formData: FormData) {
 }
 
 export async function createProject(formData: FormData) {
-  await baseAxios.post("/admin/projects", {
+  const session = await getSession();
+  if (session?.platformRole !== "SUPER_ADMIN") {
+    redirect("/dashboard");
+  }
+
+  const subFolder = "pending";
+  const logoUrl = await uploadOptionalProjectLogo(formData, subFolder);
+  const avatarUrl = await uploadOptionalProjectIconSvg(formData, subFolder);
+
+  await baseAxios.post(ADMIN_PROJECTS_PATH, {
     name: asString(formData, "name"),
-    slug: asString(formData, "slug"),
     domain: asString(formData, "domain"),
-    logoUrl: asString(formData, "logoUrl"),
-    avatarUrl: asString(formData, "avatarUrl"),
+    logoUrl,
+    avatarUrl,
     isActive: true,
   });
 
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+/**
+ * Persiste cambios de configuración del proyecto. Llama a
+ * {@code ProjectController#update}: {@code PUT /api/admin/projects/{id}}.
+ */
+export async function updateProject(projectId: string, formData: FormData) {
+  const session = await getSession();
+  if (session?.platformRole !== "SUPER_ADMIN") {
+    redirect("/dashboard");
+  }
+
+  const logoUrl = await uploadOptionalProjectLogo(formData, projectId);
+  const avatarUrl = await uploadOptionalProjectIconSvg(formData, projectId);
+
+  await baseAxios.put(adminProjectDetailPath(projectId), {
+    name: asString(formData, "name"),
+    domain: asString(formData, "domain"),
+    logoUrl,
+    avatarUrl,
+    isActive: true,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/dashboard/projects/${projectId}/settings`);
+  redirect(`/dashboard/projects/${projectId}`);
 }
 
 export async function createBanner(projectId: string, formData: FormData) {

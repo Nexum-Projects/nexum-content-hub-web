@@ -8,6 +8,11 @@ export function isAdminRole(role?: unknown) {
   return role === "SUPER_ADMIN" || role === "SYSADMIN";
 }
 
+/** Creación y configuración global de proyectos en la API exigen rol de super administrador. */
+export function isSuperAdminRole(role?: unknown) {
+  return role === "SUPER_ADMIN";
+}
+
 export function statusBadge(isPublished?: boolean) {
   return isPublished ? <Badge variant="success">Publicado</Badge> : <Badge variant="warning">Borrador</Badge>;
 }
