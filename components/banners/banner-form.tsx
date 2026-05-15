@@ -41,7 +41,6 @@ import {
   Link as LinkIcon,
   List,
   ListOrdered,
-  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -52,6 +51,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createBannerFromForm } from "@/app/actions/content";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -663,7 +663,13 @@ export function BannerForm({ projectId }: { projectId: string }) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <Button asChild className="rounded-lg" variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/banners`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a banners
+          </Link>
+        </Button>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/banners`}>
@@ -679,12 +685,6 @@ export function BannerForm({ projectId }: { projectId: string }) {
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/dashboard/projects/${projectId}/banners`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a banners
-          </Link>
-        </Button>
       </header>
 
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]" onSubmit={handleSubmit(onSubmit)}>
@@ -819,15 +819,8 @@ export function BannerForm({ projectId }: { projectId: string }) {
               )}
             </CardContent>
             <CardFooter className="justify-between border-t pt-5">
-              <p className="hidden text-sm text-muted-foreground md:block">Los botones se mostraran en el mismo orden visual.</p>
-              <div className="ml-auto flex gap-2">
-                <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">
-                  Cancelar
-                </Button>
-                <Button disabled={isSubmitting} type="submit">
-                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Crear banner
-                </Button>
+              <div className="ml-auto">
+                <FormSaveActions isSubmitting={isSubmitting} onCancel={onCancel} submitLabel="Crear banner" />
               </div>
             </CardFooter>
           </Card>

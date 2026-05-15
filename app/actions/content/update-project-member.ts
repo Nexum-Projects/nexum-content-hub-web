@@ -30,5 +30,5 @@ export async function updateProjectMember(projectId: string, memberId: string, f
 
   revalidatePath(`/dashboard/projects/${projectId}/members`);
   revalidatePath(`/dashboard/projects/${projectId}/members/${memberId}`);
-  redirect(`/dashboard/projects/${projectId}/members/${memberId}`);
+  redirect(`/dashboard/projects/${projectId}/members`);
 }

@@ -252,6 +252,7 @@ export async function createProject(formData: FormData) {
 /**
  * Persiste cambios de configuración del proyecto. Llama a
  * {@code ProjectController#update}: {@code PUT /api/admin/projects/{id}}.
+ * No redirige: el cliente debe navegar o recargar tras éxito para reflejar datos.
  */
 export async function updateProject(projectId: string, formData: FormData) {
   const session = await getSession();
@@ -273,7 +274,6 @@ export async function updateProject(projectId: string, formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${projectId}`);
   revalidatePath(`/dashboard/projects/${projectId}/settings`);
-  redirect(`/dashboard/projects/${projectId}`);
 }
 
 export async function createBanner(projectId: string, formData: FormData) {

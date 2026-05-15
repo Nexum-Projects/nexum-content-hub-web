@@ -55,6 +55,7 @@ export default async function UserEditPage({
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminUserPageHeader
+        backAlign="left"
         backHref={`/dashboard/admin/users/${userId}`}
         backLabel="Volver al detalle"
         breadcrumbCurrent="Editar"

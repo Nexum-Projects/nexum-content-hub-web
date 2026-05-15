@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CalendarDays, ImagePlus, Loader2, MapPin, Star } from "lucide-react";
+import { ArrowLeft, CalendarDays, ImagePlus, MapPin, Star } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { createEventFromForm } from "@/app/actions/content";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { ContentImageUpload, FieldError, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
 import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -233,7 +234,13 @@ export function EventForm({ projectId }: { projectId: string }) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <Button asChild className="rounded-lg" variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/events`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a eventos
+          </Link>
+        </Button>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/events`}>
@@ -249,12 +256,6 @@ export function EventForm({ projectId }: { projectId: string }) {
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/dashboard/projects/${projectId}/events`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a eventos
-          </Link>
-        </Button>
       </header>
 
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]" onSubmit={handleSubmit(onSubmit)}>
@@ -469,11 +470,7 @@ export function EventForm({ projectId }: { projectId: string }) {
               />
             </CardContent>
             <CardFooter className="justify-end gap-2 border-t pt-5">
-              <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">Cancelar</Button>
-              <Button disabled={isSubmitting} type="submit">
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Crear evento
-              </Button>
+              <FormSaveActions isSubmitting={isSubmitting} onCancel={onCancel} submitLabel="Crear evento" />
             </CardFooter>
           </Card>
         </div>

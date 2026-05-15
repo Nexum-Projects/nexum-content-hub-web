@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Save } from "lucide-react";
+import { GripVertical, Loader2, Save } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -111,9 +111,9 @@ export function ReorderableList<T>({
           <p className="text-sm font-medium">{orderedItems.length} elementos</p>
           <p className="text-sm text-muted-foreground">Arrastra las tarjetas para cambiar su posicion.</p>
         </div>
-        <Button disabled={isSaving || !hasChanges} onClick={handleSave} type="button">
-          <Save className={cn("h-4 w-4", isSaving && "animate-pulse")} />
-          {isSaving ? "Guardando..." : saveLabel}
+        <Button className="gap-2" disabled={isSaving || !hasChanges} onClick={handleSave} type="button" variant="default">
+          {isSaving ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Save className="h-4 w-4 shrink-0" />}
+          {isSaving ? "Guardando…" : saveLabel}
         </Button>
       </div>
 

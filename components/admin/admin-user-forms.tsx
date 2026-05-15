@@ -1,17 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronDown, Loader2, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { createUser, updateUser } from "@/app/actions/content";
 import type { Project, ProjectMemberRole, User } from "@/app/actions/content/types";
 import { ContentImageUpload, FieldError } from "@/components/content/content-form-controls";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -499,13 +499,7 @@ export function AdminUserCreateForm({
         <CardFooter className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">Tras crear el usuario verás su ficha de detalle.</p>
           <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
-            <Button asChild variant="outline">
-              <Link href="/dashboard/admin/users">Cancelar</Link>
-            </Button>
-            <Button disabled={isSubmitting} type="submit">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Crear usuario
-            </Button>
+            <FormSaveActions cancelHref="/dashboard/admin/users" isSubmitting={isSubmitting} submitLabel="Crear usuario" />
           </div>
         </CardFooter>
       </Card>
@@ -590,7 +584,7 @@ export function AdminUserEditForm({
     } else {
       toast.success("Usuario actualizado correctamente.");
     }
-    router.push(`/dashboard/admin/users/${user.id}`);
+    router.push("/dashboard/admin/users");
     router.refresh();
   }
 
@@ -702,13 +696,11 @@ export function AdminUserEditForm({
         <CardFooter className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">Al guardar se actualiza el detalle del usuario.</p>
           <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
-            <Button asChild variant="outline">
-              <Link href={`/dashboard/admin/users/${user.id}`}>Cancelar</Link>
-            </Button>
-            <Button disabled={isSubmitting} type="submit">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Guardar cambios
-            </Button>
+            <FormSaveActions
+              cancelHref="/dashboard/admin/users"
+              isSubmitting={isSubmitting}
+              submitLabel="Guardar cambios"
+            />
           </div>
         </CardFooter>
       </Card>

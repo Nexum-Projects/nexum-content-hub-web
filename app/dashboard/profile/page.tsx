@@ -65,7 +65,22 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild className="rounded-lg" variant="outline">
+            <Link href="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Volver al inicio
+            </Link>
+          </Button>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            {canEditInAdmin && userId ? (
+              <Button asChild className="rounded-lg">
+                <Link href={`/dashboard/admin/users/${userId}/edit`}>Editar perfil</Link>
+              </Button>
+            ) : null}
+          </div>
+        </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href="/dashboard">
@@ -80,19 +95,6 @@ export default async function ProfilePage() {
               Datos de tu cuenta en el panel Nexum Content Hub.
             </p>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="rounded-lg" variant="outline">
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-              Volver al inicio
-            </Link>
-          </Button>
-          {canEditInAdmin && userId ? (
-            <Button asChild className="rounded-lg">
-              <Link href={`/dashboard/admin/users/${userId}/edit`}>Editar perfil</Link>
-            </Button>
-          ) : null}
         </div>
       </header>
 

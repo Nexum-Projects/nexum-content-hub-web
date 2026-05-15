@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { login } from "@/app/actions/auth";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { NexumLogo } from "@/components/app/nexum-logo";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,10 +117,7 @@ export function LoginForm() {
               Recordarme
             </label>
           </div>
-          <Button className="w-full" disabled={isLoading} type="submit">
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Iniciar sesion
-          </Button>
+          <FormSaveActions fullWidthSubmit isSubmitting={isLoading} submitLabel="Iniciar sesion" />
 
           <div className="text-center text-sm">
             <Link className="text-primary underline-offset-4 hover:underline" href="/reset-password">

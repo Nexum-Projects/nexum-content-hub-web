@@ -15,7 +15,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ImageIcon, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -30,6 +30,7 @@ import {
   type MenuProduct,
 } from "@/app/actions/content";
 import { FieldError, ContentImageUpload, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -172,44 +173,38 @@ function priceFromCents(priceCents?: number | null) {
 }
 
 function SaveFooter({
-  backHref,
+  cancelHref,
   isSubmitting,
   label,
 }: {
-  backHref: string;
+  cancelHref: string;
   isSubmitting: boolean;
   label: string;
 }) {
   return (
     <CardFooter className="flex flex-col-reverse gap-3 border-t p-5 sm:flex-row sm:justify-end">
-      <Button asChild className="w-full sm:w-auto" type="button" variant="outline">
-        <Link href={backHref}>Cancelar</Link>
-      </Button>
-      <Button className="w-full sm:w-auto" disabled={isSubmitting} type="submit">
-        <Save className="h-4 w-4" />
-        {isSubmitting ? "Guardando..." : label}
-      </Button>
+      <FormSaveActions cancelHref={cancelHref} isSubmitting={isSubmitting} stackOnSmallScreens submitLabel={label} />
     </CardFooter>
   );
 }
 
 function HeaderActions({ backHref, title }: { backHref: string; title: string }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="space-y-1">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <h1 className="text-2xl font-semibold tracking-normal">Editar contenido</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Actualiza la informacion del registro. El orden se administra desde su pantalla dedicada.
-        </p>
-      </div>
-      <Button asChild variant="outline">
+    <header className="space-y-4">
+      <Button asChild className="rounded-lg" variant="outline">
         <Link href={backHref}>
           <ArrowLeft className="h-4 w-4" />
           Volver al detalle
         </Link>
       </Button>
-    </div>
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <h1 className="text-2xl font-semibold leading-7">Editar contenido</h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Actualiza la informacion del registro. El orden se administra desde su pantalla dedicada.
+        </p>
+      </div>
+    </header>
   );
 }
 
@@ -370,7 +365,8 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
   });
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "buttons" });
   const values = useWatch({ control: form.control }) as BannerEditValues;
-  const backHref = `/dashboard/projects/${projectId}/banners/${banner.id}`;
+  const detailHref = `/dashboard/projects/${projectId}/banners/${banner.id}`;
+  const listHref = `/dashboard/projects/${projectId}/banners`;
 
   async function onSubmit(data: BannerEditValues) {
     const formData = new FormData();
@@ -394,7 +390,7 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
     const result = await updateBannerFromForm(projectId, banner.id, formData);
     if (result.status === "success") {
       toast.success("Banner actualizado");
-      router.push(backHref);
+      router.push(listHref);
       router.refresh();
       return;
     }
@@ -404,7 +400,7 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <HeaderActions backHref={backHref} title="Banners / Editar banner" />
+      <HeaderActions backHref={detailHref} title="Banners / Editar banner" />
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <Card className="rounded-xl border shadow-sm">
@@ -523,7 +519,7 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
                 </Card>
               ))}
             </CardContent>
-            <SaveFooter backHref={backHref} isSubmitting={form.formState.isSubmitting} label="Guardar banner" />
+            <SaveFooter cancelHref={listHref} isSubmitting={form.formState.isSubmitting} label="Guardar banner" />
           </Card>
         </div>
 
@@ -556,7 +552,8 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
     },
   });
   const values = useWatch({ control: form.control }) as ProductEditValues;
-  const backHref = `/dashboard/projects/${projectId}/products/${product.id}`;
+  const detailHref = `/dashboard/projects/${projectId}/products/${product.id}`;
+  const listHref = `/dashboard/projects/${projectId}/products`;
 
   async function onSubmit(data: ProductEditValues) {
     const formData = new FormData();
@@ -574,7 +571,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
     const result = await updateProductFromForm(projectId, product.id, formData);
     if (result.status === "success") {
       toast.success("Producto actualizado");
-      router.push(backHref);
+      router.push(listHref);
       router.refresh();
       return;
     }
@@ -584,7 +581,8 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
 
   return (
     <ContentEntityForm
-      backHref={backHref}
+      detailHref={detailHref}
+      listHref={listHref}
       badge="Producto"
       currentImageUrl={product.imageUrl}
       description={values.description}
@@ -639,7 +637,8 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
     },
   });
   const values = useWatch({ control: form.control }) as EventEditValues;
-  const backHref = `/dashboard/projects/${projectId}/events/${event.id}`;
+  const detailHref = `/dashboard/projects/${projectId}/events/${event.id}`;
+  const listHref = `/dashboard/projects/${projectId}/events`;
 
   async function onSubmit(data: EventEditValues) {
     const formData = new FormData();
@@ -660,7 +659,7 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
     const result = await updateEventFromForm(projectId, event.id, formData);
     if (result.status === "success") {
       toast.success("Evento actualizado");
-      router.push(backHref);
+      router.push(listHref);
       router.refresh();
       return;
     }
@@ -670,7 +669,8 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
 
   return (
     <ContentEntityForm
-      backHref={backHref}
+      detailHref={detailHref}
+      listHref={listHref}
       badge="Evento"
       currentImageUrl={event.imageUrl}
       description={values.description}
@@ -765,7 +765,8 @@ export function AwardEditForm({ award, projectId }: { award: Award; projectId: s
     },
   });
   const values = useWatch({ control: form.control }) as AwardEditValues;
-  const backHref = `/dashboard/projects/${projectId}/awards/${award.id}`;
+  const detailHref = `/dashboard/projects/${projectId}/awards/${award.id}`;
+  const listHref = `/dashboard/projects/${projectId}/awards`;
 
   async function onSubmit(data: AwardEditValues) {
     const formData = new FormData();
@@ -783,7 +784,7 @@ export function AwardEditForm({ award, projectId }: { award: Award; projectId: s
     const result = await updateAwardFromForm(projectId, award.id, formData);
     if (result.status === "success") {
       toast.success("Logro actualizado");
-      router.push(backHref);
+      router.push(listHref);
       router.refresh();
       return;
     }
@@ -793,7 +794,8 @@ export function AwardEditForm({ award, projectId }: { award: Award; projectId: s
 
   return (
     <ContentEntityForm
-      backHref={backHref}
+      detailHref={detailHref}
+      listHref={listHref}
       badge="Logro"
       currentImageUrl={award.imageUrl}
       description={values.description}
@@ -858,7 +860,8 @@ function getFormError<T extends FieldValues>(errors: FieldErrors<T>, key: Path<T
 }
 
 function ContentEntityForm<T extends CommonEditValues>({
-  backHref,
+  detailHref,
+  listHref,
   badge,
   children,
   currentImageUrl,
@@ -875,7 +878,8 @@ function ContentEntityForm<T extends CommonEditValues>({
   titlePath,
   titleText,
 }: {
-  backHref: string;
+  detailHref: string;
+  listHref: string;
   badge: string;
   children: ReactNode;
   currentImageUrl?: string | null;
@@ -894,7 +898,7 @@ function ContentEntityForm<T extends CommonEditValues>({
 }) {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <HeaderActions backHref={backHref} title={titleText} />
+      <HeaderActions backHref={detailHref} title={titleText} />
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <Card className="rounded-xl border shadow-sm">
@@ -949,7 +953,7 @@ function ContentEntityForm<T extends CommonEditValues>({
               <CardDescription>Los nuevos elementos se agregan automaticamente al final de la lista. El orden se cambia desde ordenar.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">{children}</CardContent>
-            <SaveFooter backHref={backHref} isSubmitting={form.formState.isSubmitting} label={saveLabel} />
+            <SaveFooter cancelHref={listHref} isSubmitting={form.formState.isSubmitting} label={saveLabel} />
           </Card>
         </div>
 

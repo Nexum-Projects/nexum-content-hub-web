@@ -26,6 +26,7 @@ export default async function NewUserPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminUserPageHeader
+        backAlign="left"
         backHref="/dashboard/admin/users"
         backLabel="Volver a usuarios"
         breadcrumbCurrent="Nuevo usuario"

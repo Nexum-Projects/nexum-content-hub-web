@@ -25,7 +25,6 @@ import {
   Link as LinkIcon,
   List,
   ListOrdered,
-  Loader2,
   Pencil,
   Star,
   Trash2,
@@ -36,6 +35,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createProductFromForm } from "@/app/actions/content";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -546,7 +546,13 @@ export function ProductForm({ projectId }: { projectId: string }) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <Button asChild className="rounded-lg" variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/products`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a productos
+          </Link>
+        </Button>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/products`}>
@@ -562,12 +568,6 @@ export function ProductForm({ projectId }: { projectId: string }) {
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/dashboard/projects/${projectId}/products`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a productos
-          </Link>
-        </Button>
       </header>
 
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]" onSubmit={handleSubmit(onSubmit)}>
@@ -710,13 +710,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
               />
             </CardContent>
             <CardFooter className="justify-end gap-2 border-t pt-5">
-              <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">
-                Cancelar
-              </Button>
-              <Button disabled={isSubmitting} type="submit">
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Crear producto
-              </Button>
+              <FormSaveActions isSubmitting={isSubmitting} onCancel={onCancel} submitLabel="Crear producto" />
             </CardFooter>
           </Card>
         </div>

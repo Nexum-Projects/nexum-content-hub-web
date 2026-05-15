@@ -21,7 +21,13 @@ export default async function AwardsOrderPage({ params }: { params: Promise<{ pr
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <Button asChild className="rounded-lg" variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/awards`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a logros
+          </Link>
+        </Button>
         <div>
           <p className="text-sm text-muted-foreground">Logros / Premios</p>
           <h1 className="mt-2 text-2xl font-semibold leading-7">Ordenar logros</h1>
@@ -29,12 +35,6 @@ export default async function AwardsOrderPage({ params }: { params: Promise<{ pr
             Reordena visualmente los logros de {project.name}. El primer elemento aparece antes en la landing page.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/dashboard/projects/${projectId}/awards`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a logros
-          </Link>
-        </Button>
       </header>
 
       <Card>

@@ -29,6 +29,7 @@ export default async function ProjectMemberEditPage({
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminUserPageHeader
+        backAlign="left"
         backHref={`/dashboard/projects/${projectId}/members/${memberId}`}
         backLabel="Volver al detalle"
         breadcrumbCurrent="Editar"

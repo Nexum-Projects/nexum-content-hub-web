@@ -53,7 +53,23 @@ export default async function ProjectMemberDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild className="rounded-lg" variant="outline">
+            <Link href={`/dashboard/projects/${projectId}/members`}>
+              <ArrowLeft className="h-4 w-4" />
+              Volver a miembros
+            </Link>
+          </Button>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <Button asChild className="rounded-lg">
+              <Link href={`/dashboard/projects/${projectId}/members/${memberId}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Link>
+            </Button>
+          </div>
+        </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/members`}>
@@ -70,20 +86,6 @@ export default async function ProjectMemberDetailPage({
                 : "Rol y estado de esta persona dentro del proyecto."}
             </p>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="rounded-lg" variant="outline">
-            <Link href={`/dashboard/projects/${projectId}/members`}>
-              <ArrowLeft className="h-4 w-4" />
-              Volver a miembros
-            </Link>
-          </Button>
-          <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/members/${memberId}/edit`}>
-              <Pencil className="h-4 w-4" />
-              Editar
-            </Link>
-          </Button>
         </div>
       </header>
 

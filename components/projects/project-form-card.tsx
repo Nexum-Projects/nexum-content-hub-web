@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import type { Project } from "@/app/actions/content/types";
 import { createProject, updateProject } from "@/app/actions/content";
+import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { ContentImageUpload, FieldError } from "@/components/content/content-form-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,6 +150,7 @@ export function ProjectFormPage({
         await createProject(fd);
       } else if (projectId) {
         await updateProject(projectId, fd);
+        window.location.assign("/dashboard");
       } else {
         toast.error("No se pudo identificar el proyecto. Vuelve a abrir la configuración desde el panel.");
       }
@@ -266,12 +268,7 @@ export function ProjectFormPage({
           <CardFooter className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">{footerHelper}</p>
             <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
-              <Button asChild variant="outline">
-                <Link href={cancelHref}>Cancelar</Link>
-              </Button>
-              <Button disabled={isSubmitting} type="submit">
-                {submitLabel}
-              </Button>
+              <FormSaveActions cancelHref={cancelHref} isSubmitting={isSubmitting} submitLabel={submitLabel} />
             </div>
           </CardFooter>
         </Card>

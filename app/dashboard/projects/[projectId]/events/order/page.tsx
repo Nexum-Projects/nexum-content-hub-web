@@ -21,7 +21,13 @@ export default async function EventsOrderPage({ params }: { params: Promise<{ pr
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header className="space-y-4">
+        <Button asChild className="rounded-lg" variant="outline">
+          <Link href={`/dashboard/projects/${projectId}/events`}>
+            <ArrowLeft className="h-4 w-4" />
+            Volver a eventos
+          </Link>
+        </Button>
         <div>
           <p className="text-sm text-muted-foreground">Eventos</p>
           <h1 className="mt-2 text-2xl font-semibold leading-7">Ordenar eventos</h1>
@@ -29,12 +35,6 @@ export default async function EventsOrderPage({ params }: { params: Promise<{ pr
             Reordena visualmente los eventos de {project.name}. El primer elemento aparece antes en la landing page.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/dashboard/projects/${projectId}/events`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver a eventos
-          </Link>
-        </Button>
       </header>
 
       <Card>

@@ -4,8 +4,8 @@ import { useMemo } from "react";
 
 import { updateProjectMember } from "@/app/actions/content/update-project-member";
 import type { ProjectMember, User } from "@/app/actions/content/types";
+import { ProjectMemberFormFooter } from "@/components/project-members/project-member-form-footer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { humanizeProjectMemberRole } from "@/utils/helpers/humanize-enum";
@@ -92,10 +92,11 @@ export function ProjectMemberEditForm({
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-          <Button disabled={!users.length} type="submit">
-            Guardar cambios
-          </Button>
+        <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-5">
+          <ProjectMemberFormFooter
+            cancelHref={`/dashboard/projects/${projectId}/members`}
+            submitDisabled={!users.length}
+          />
         </CardFooter>
       </Card>
     </form>
