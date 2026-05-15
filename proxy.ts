@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  if (pathname === "/login" && hasValidSession) {
+  if ((pathname === "/login" || pathname === "/register") && hasValidSession) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -26,5 +26,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/login"],
+  matcher: ["/", "/dashboard/:path*", "/login", "/register"],
 };

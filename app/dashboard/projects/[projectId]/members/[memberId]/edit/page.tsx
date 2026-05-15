@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getProjectMemberDetail, getUsers } from "@/app/actions/content";
+import { getSession } from "@/app/actions/auth";
+import { getProjectMemberDetail, getUserDetail } from "@/app/actions/content";
 import { AdminUserPageHeader } from "@/components/admin/admin-user-page-header";
 import { ProjectMemberEditForm } from "@/components/project-members/project-member-edit-form";
+import { isAdminRole } from "@/app/dashboard/projects/project-components";
 
 export default async function ProjectMemberEditPage({
   params,
@@ -11,20 +13,21 @@ export default async function ProjectMemberEditPage({
   params: Promise<{ projectId: string; memberId: string }>;
 }) {
   const { projectId, memberId } = await params;
+  const session = await getSession();
+  const canAdminUsers = isAdminRole(session?.platformRole);
 
-  const [memberRes, usersRes] = await Promise.all([getProjectMemberDetail(projectId, memberId), getUsers()]);
+  const memberRes = await getProjectMemberDetail(projectId, memberId);
 
   if (memberRes.status === "error") {
     notFound();
   }
 
   const member = memberRes.data;
-  const users =
-    usersRes.status === "success"
-      ? [...usersRes.data].sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }))
-      : [];
-
-  const displayLabel = member.userId ? `Miembro · ${member.userId.slice(0, 8)}…` : "Editar miembro";
+  const userId = member.userId?.trim();
+  const userRes = canAdminUsers && userId ? await getUserDetail(userId) : null;
+  const platformUser = userRes?.status === "success" ? userRes.data : null;
+  const displayLabel =
+    platformUser?.name?.trim() ?? (userId ? `Usuario ${userId.slice(0, 8)}…` : "Editar miembro");
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -35,7 +38,7 @@ export default async function ProjectMemberEditPage({
         breadcrumbCurrent="Editar"
         breadcrumbHref={`/dashboard/projects/${projectId}/members`}
         breadcrumbParentLabel="Miembros"
-        description="Actualiza el usuario vinculado, el rol dentro del proyecto y si la membresía está activa."
+        description="Actualiza el rol de esta persona dentro del proyecto."
         title={displayLabel}
       />
 
@@ -45,7 +48,12 @@ export default async function ProjectMemberEditPage({
         </Link>
       </p>
 
-      <ProjectMemberEditForm member={member} projectId={projectId} users={users} />
+      <ProjectMemberEditForm
+        member={member}
+        projectId={projectId}
+        userEmail={platformUser?.email}
+        userName={displayLabel}
+      />
     </div>
   );
 }

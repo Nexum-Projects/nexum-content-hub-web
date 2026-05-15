@@ -24,6 +24,10 @@ const knownMessages: Record<string, HumanizedError> = {
     title: "Cuenta no verificada",
     description: "Confirma tu correo antes de iniciar sesion.",
   },
+  "Email already exists": {
+    title: "Correo en uso",
+    description: "Ya existe una cuenta con ese correo electronico.",
+  },
   "Invalid or expired JWT token.": {
     title: "Sesion vencida",
     description: "Tu sesion expiro. Inicia sesion nuevamente.",
@@ -44,6 +48,10 @@ export function parseApiError(error: unknown): HumanizedError {
     }
 
     if (message) {
+      if (message.startsWith("Email already exists")) {
+        return knownMessages["Email already exists"];
+      }
+
       return {
         title: apiError.statusCode === 401 ? "No autorizado" : "No se pudo completar la accion",
         description: message,

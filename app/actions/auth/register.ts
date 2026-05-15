@@ -7,40 +7,27 @@ import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
-import { setAuthCookies } from "./set-auth-cookies";
-
-const LoginSchema = z.object({
+const RegisterSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").max(150, "Maximo 150 caracteres"),
   email: z.string().email("Ingresa un correo valido"),
-  password: z.string().min(1, "La contrasena es requerida"),
-  remember: z.boolean().optional(),
+  password: z.string().min(6, "Minimo 6 caracteres"),
 });
 
-const TokenResponseSchema = z.object({
-  data: z.object({
-    accessToken: z.string(),
-    refreshToken: z.string(),
-  }),
-});
+type RegisterInput = z.infer<typeof RegisterSchema>;
 
-type LoginInput = z.infer<typeof LoginSchema>;
-
-export default async function login(input: LoginInput): ActionResponse<{
-  accessToken: string;
-  refreshToken: string;
-}> {
+/** Registra usuario sin abrir sesión: debe verificar correo antes de iniciar sesión. */
+export default async function register(input: RegisterInput): ActionResponse<null> {
   try {
-    const payload = LoginSchema.parse(input);
-    const response = await baseAxios.post("/auth/login", {
+    const payload = RegisterSchema.parse(input);
+    await baseAxios.post("/auth/register", {
+      name: payload.name,
       email: payload.email,
       password: payload.password,
     });
 
-    const { data } = TokenResponseSchema.parse(response.data);
-    await setAuthCookies(data, payload.remember);
-
     return {
       status: "success",
-      data,
+      data: null,
     };
   } catch (error) {
     if (isAxiosError(error) && error.response) {
