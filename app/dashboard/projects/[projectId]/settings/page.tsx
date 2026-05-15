@@ -32,7 +32,7 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
       breadcrumbCurrent={project.name}
       breadcrumbHref="/dashboard"
       breadcrumbParentLabel="Proyectos"
-      cancelHref="/dashboard"
+      cancelHref={`/dashboard/projects/${projectId}`}
       description="Ajusta metadatos del sitio visibles en el panel. Solo los super administradores pueden ver y editar esta sección."
       footerHelper="Los cambios se guardan en la API y afectan a todos los usuarios con acceso a este proyecto."
       mode="edit"

@@ -150,7 +150,7 @@ export function ProjectFormPage({
         await createProject(fd);
       } else if (projectId) {
         await updateProject(projectId, fd);
-        window.location.assign("/dashboard");
+        window.location.assign(`/dashboard/projects/${projectId}`);
       } else {
         toast.error("No se pudo identificar el proyecto. Vuelve a abrir la configuración desde el panel.");
       }

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -118,12 +117,6 @@ export function LoginForm() {
             </label>
           </div>
           <FormSaveActions fullWidthSubmit isSubmitting={isLoading} submitLabel="Iniciar sesion" />
-
-          <div className="text-center text-sm">
-            <Link className="text-primary underline-offset-4 hover:underline" href="/reset-password">
-              ¿Olvidaste tu contrasena?
-            </Link>
-          </div>
 
           <p className="text-center text-xs text-muted-foreground">
             ¿No tienes una cuenta?{" "}
