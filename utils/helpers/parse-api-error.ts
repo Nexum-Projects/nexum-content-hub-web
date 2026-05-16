@@ -32,6 +32,14 @@ const knownMessages: Record<string, HumanizedError> = {
     title: "Sesion vencida",
     description: "Tu sesion expiro. Inicia sesion nuevamente.",
   },
+  "Invalid or expired reset token": {
+    title: "Enlace expirado",
+    description: "El enlace de recuperacion no es valido o ya caduco. Solicita uno nuevo.",
+  },
+  "User not found": {
+    title: "Usuario no encontrado",
+    description: "No existe ningun usuario con ese identificador en la plataforma.",
+  },
 };
 
 export function parseApiError(error: unknown): HumanizedError {

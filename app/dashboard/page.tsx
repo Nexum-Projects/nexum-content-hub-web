@@ -9,7 +9,10 @@ export default async function DashboardPage() {
   const [session, result] = await Promise.all([getSession(), getProjects()]);
   const isAdmin = isAdminRole(session?.platformRole);
   const isSuperAdmin = isSuperAdminRole(session?.platformRole);
-  const projects = result.status === "success" && result.data.length ? result.data : fallbackProjects;
+
+  const loadOk = result.status === "success";
+  const projects = loadOk ? result.data : fallbackProjects;
+  const noAssignedProjects = loadOk && projects.length === 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -21,23 +24,33 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold leading-7">Proyectos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isAdmin
-              ? "Administra todos los proyectos desde un solo lugar."
-              : "Estos son los proyectos que tienes asignados."}
+      {!noAssignedProjects && (
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold leading-7">Proyectos</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isAdmin
+                ? "Administra todos los proyectos desde un solo lugar."
+                : "Estos son los proyectos que tienes asignados."}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {noAssignedProjects ? (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+          <p className="max-w-md text-lg text-muted-foreground">
+            Aún no tienes proyectos asignados.
           </p>
         </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {projects.map((project, index) => (
-          <ProjectCard index={index} key={project.id} project={project} />
-        ))}
-        {isSuperAdmin && <CreateProjectCard />}
-      </section>
+      ) : (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {projects.map((project, index) => (
+            <ProjectCard index={index} key={project.id} project={project} />
+          ))}
+          {isSuperAdmin && <CreateProjectCard />}
+        </section>
+      )}
     </div>
   );
 }

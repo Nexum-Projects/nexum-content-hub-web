@@ -1,7 +1,8 @@
+import confirmPasswordReset from "./confirm-password-reset";
 import { getAuthenticatedUserId } from "./get-authenticated-user-id";
 import getSession from "./getSession";
 import login from "./login";
 import logout from "./logout";
 import register from "./register";
 
-export { getAuthenticatedUserId, getSession, login, logout, register };
+export { confirmPasswordReset, getAuthenticatedUserId, getSession, login, logout, register };

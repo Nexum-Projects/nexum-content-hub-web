@@ -53,6 +53,7 @@ export {
   getProjectMemberDetail,
   getUserDetail,
 } from "./get-resource-detail";
+export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
 export { reorderAwards, reorderBanners, reorderEvents, reorderMenuProducts } from "./reorder";
 export { getDashboardData, getProjectContent, getProjectMembers, getProjectSummary, getProjects, getUsers };

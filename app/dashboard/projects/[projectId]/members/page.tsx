@@ -1,23 +1,27 @@
 import Link from "next/link";
 import { ArrowLeft, Contact } from "lucide-react";
 
+import { getSession } from "@/app/actions/auth";
 import { getProjectMembers, getProjectSummary, getUsers } from "@/app/actions/content";
 import type { ProjectMember, User } from "@/app/actions/content/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AssignProjectMemberDialog } from "@/components/project-members/assign-project-member-dialog";
 import { ProjectMembersListClient } from "@/components/project-members/project-members-list-client";
 import { fallbackProjects } from "../../fallback-data";
 
 export default async function ProjectMembersPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
 
-  const [projectRes, membersRes, usersRes] = await Promise.all([
+  const [session, projectRes, membersRes, usersRes] = await Promise.all([
+    getSession(),
     getProjectSummary(projectId),
     getProjectMembers(projectId),
     getUsers(),
   ]);
 
+  const isSuperAdmin = session?.platformRole === "SUPER_ADMIN";
   const project = projectRes.status === "success" ? projectRes.data : fallbackProjects[0];
   const members: ProjectMember[] = membersRes.status === "success" ? membersRes.data : [];
   const listError = membersRes.status === "error" ? membersRes.errors[0]?.message ?? "No se pudo cargar el equipo." : null;
@@ -28,6 +32,12 @@ export default async function ProjectMembersPage({ params }: { params: Promise<{
       usersById.set(u.id, u);
     }
   }
+
+  const assignedUserIds = new Set(members.map((m) => m.userId).filter(Boolean) as string[]);
+  const assignCandidates =
+    usersRes.status === "success"
+      ? usersRes.data.filter((u) => u.isActive !== false && !assignedUserIds.has(u.id))
+      : [];
 
   const rows = members.map((member) => ({
     member,
@@ -57,12 +67,21 @@ export default async function ProjectMembersPage({ params }: { params: Promise<{
             <span className="font-medium">marketing</span>.
           </p>
         </div>
-        <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
-          <Link href={`/dashboard/projects/${projectId}`}>
-            <ArrowLeft className="h-4 w-4" />
-            Volver al dashboard
-          </Link>
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {isSuperAdmin ? (
+            <AssignProjectMemberDialog
+              candidates={assignCandidates}
+              projectId={projectId}
+              usersLoaded={usersRes.status === "success"}
+            />
+          ) : null}
+          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
+            <Link href={`/dashboard/projects/${projectId}`}>
+              <ArrowLeft className="h-4 w-4" />
+              Volver al dashboard
+            </Link>
+          </Button>
+        </div>
       </section>
 
       {usersRes.status === "error" && members.length > 0 ? (
