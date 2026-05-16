@@ -117,6 +117,18 @@ export type Award = {
   updatedAt?: string;
 };
 
+export type MediaItem = {
+  id: string;
+  projectId?: string;
+  type: "IMAGE" | "VIDEO";
+  value: string;
+  sortOrder?: number;
+  isPublic?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type DataResponse<T> = {
   data: T[];
   meta?: {

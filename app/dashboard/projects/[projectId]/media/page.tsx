@@ -1,34 +1,83 @@
-import { Copy, Upload } from "lucide-react";
+import { Suspense } from "react";
+import { GripVertical } from "lucide-react";
+import Link from "next/link";
 
+import { fetchMediaPage } from "@/app/actions/content";
+import getProjectSummary from "@/app/actions/content/get-project-summary";
+import { MediaCreateDialog } from "@/components/project-lists/media-create-dialog";
+import { MediaListClient } from "@/components/project-lists/media-list-client";
+import { ProjectListPanelSkeleton } from "@/components/project-lists/project-list-panel-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DEFAULT_LIST_LIMIT, type RawSearchParams } from "@/lib/project-list-query";
 
-export default function MediaPage() {
+import { fallbackProjects } from "../../fallback-data";
+
+function emptyMeta() {
+  return {
+    page: 1,
+    limit: DEFAULT_LIST_LIMIT,
+    totalObjects: 0,
+    totalPages: 1,
+    hasPreviousPage: false,
+    hasNextPage: false,
+  };
+}
+
+export default async function MediaPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<RawSearchParams>;
+}) {
+  const { projectId } = await params;
+  const sp = await searchParams;
+
+  const [projectRes, listRes] = await Promise.all([
+    getProjectSummary(projectId),
+    fetchMediaPage(projectId, sp),
+  ]);
+
+  const project = projectRes.status === "success" ? projectRes.data : fallbackProjects[0];
+  const media = listRes.status === "success" ? listRes.data.items : [];
+  const meta = listRes.status === "success" ? listRes.data.meta : emptyMeta();
+  const listError = listRes.status === "error" ? listRes.errors[0]?.message ?? "No se pudo cargar la biblioteca." : null;
+  const orderHref = `/dashboard/projects/${projectId}/media/order`;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold leading-7">Medios</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Gestiona imagenes y recursos del proyecto.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Medios</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Biblioteca visual para {project.name}.</p>
+          <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
         </div>
-        <Button><Upload className="h-4 w-4" />Subir imagen</Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
+            <Link href={orderHref}>
+              <GripVertical className="h-4 w-4" />
+              Ordenar medios
+            </Link>
+          </Button>
+          <MediaCreateDialog projectId={projectId} />
+        </div>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Biblioteca de imagenes</CardTitle>
-          <CardDescription>Copia URLs, revisa detalles o elimina recursos.</CardDescription>
+      <Card className="rounded-xl border border-border shadow-sm">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-lg">Biblioteca</CardTitle>
+          <CardDescription className="text-sm">Subida, filtros, vista previa, orden y paginacion.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <div className="group relative aspect-square rounded-lg bg-[linear-gradient(135deg,#0f172a,#2563eb)]" key={index}>
-                <Button className="absolute right-1 top-1 hidden group-hover:inline-flex" size="icon" variant="secondary">
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
+          <Suspense fallback={<ProjectListPanelSkeleton />}>
+            <MediaListClient
+              listError={listError}
+              media={media}
+              meta={meta}
+              projectId={projectId}
+            />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

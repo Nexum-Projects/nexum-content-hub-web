@@ -4,7 +4,7 @@ import { isAxiosError } from "axios";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
-import type { Award, Banner, DataResponse, EventItem, MenuProduct } from "./types";
+import type { Award, Banner, DataResponse, EventItem, MediaItem, MenuProduct } from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 import type { AwardScopeFilter, EventWhenFilter, PublishFilter } from "@/lib/project-list-query";
@@ -12,6 +12,7 @@ import {
   parseAwardListQuery,
   parseBannerListQuery,
   parseEventListQuery,
+  parseMediaListQuery,
   parseMenuProductListQuery,
   type RawSearchParams,
   toListRequestParams,
@@ -120,6 +121,18 @@ export async function fetchBannersForReorder(projectId: string): ActionResponse<
   }
 }
 
+export async function fetchMediaForReorder(projectId: string): ActionResponse<MediaItem[]> {
+  try {
+    const items = await getAllSorted<MediaItem>(`/admin/projects/${projectId}/media`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
 function filterBannersByPublish(list: Banner[], publish: PublishFilter): Banner[] {
   if (publish === "published") {
     return list.filter((b) => b.isPublished);
@@ -211,6 +224,19 @@ function filterAwardsPublishOnly(list: Award[], publish: PublishFilter): Award[]
     return list.filter((a) => !a.isPublished);
   }
   return list;
+}
+
+function filterMediaList(list: MediaItem[], publish: PublishFilter, mediaType: "all" | "IMAGE" | "VIDEO"): MediaItem[] {
+  let r = list;
+  if (publish === "published") {
+    r = r.filter((item) => item.isPublic);
+  } else if (publish === "draft") {
+    r = r.filter((item) => !item.isPublic);
+  }
+  if (mediaType !== "all") {
+    r = r.filter((item) => item.type === mediaType);
+  }
+  return r;
 }
 
 export async function fetchBannersPage(
@@ -325,6 +351,35 @@ export async function fetchAwardsPage(
       parsed.award !== "all" ? filterAwardsList(all, parsed.publish, parsed.award) : filterAwardsPublishOnly(all, parsed.publish);
     const { items, meta } = paginateInMemory(filtered, parsed.page, parsed.limit);
     return { status: "success", data: { items, meta } };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchMediaPage(
+  projectId: string,
+  rawSearchParams: RawSearchParams,
+): ActionResponse<PaginatedPayload<MediaItem>> {
+  const parsed = parseMediaListQuery(rawSearchParams);
+  const url = `/admin/projects/${projectId}/media`;
+
+  try {
+    const params = {
+      ...toListRequestParams(parsed),
+      ...(parsed.mediaType !== "all" ? { type: parsed.mediaType } : {}),
+      ...(parsed.publish === "published" ? { isPublic: true } : {}),
+      ...(parsed.publish === "draft" ? { isPublic: false } : {}),
+    };
+
+    const { items, meta } = await getPage<MediaItem>(url, params);
+
+    if (parsed.mediaType === "all" && parsed.publish === "all") {
+      return { status: "success", data: { items, meta } };
+    }
+
+    // El API ya soporta los filtros; este fallback conserva consistencia si algun entorno ignora query params booleanos/enums.
+    const filtered = filterMediaList(items, parsed.publish, parsed.mediaType);
+    return { status: "success", data: { items: filtered, meta } };
   } catch (error) {
     return catchListError(error);
   }

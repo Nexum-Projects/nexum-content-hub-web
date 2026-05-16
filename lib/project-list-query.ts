@@ -149,6 +149,32 @@ export function parseAwardListQuery(raw: RawSearchParams) {
   };
 }
 
+/** Medios: `mtype` all | IMAGE | VIDEO */
+export type MediaTypeFilter = "all" | "IMAGE" | "VIDEO";
+
+export function parseMediaTypeFilter(raw: RawSearchParams): MediaTypeFilter {
+  const v = spFirst(raw, "mtype")?.toUpperCase();
+  if (v === "IMAGE" || v === "VIDEO") {
+    return v;
+  }
+  return "all";
+}
+
+export const MEDIA_SORT_FIELDS = ["type", "value", "sortOrder", "createdAt", "updatedAt"] as const;
+export type MediaSortField = (typeof MEDIA_SORT_FIELDS)[number];
+
+export function parseMediaListQuery(raw: RawSearchParams) {
+  return {
+    page: parsePositiveInt(spFirst(raw, "page"), 1),
+    limit: coerceListLimit(spFirst(raw, "limit")),
+    query: (spFirst(raw, "query") ?? "").trim() || undefined,
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), MEDIA_SORT_FIELDS, "sortOrder"),
+    order: parseOrder(spFirst(raw, "order")),
+    publish: parsePublishFilter(raw),
+    mediaType: parseMediaTypeFilter(raw),
+  };
+}
+
 export type ListRequestParams = {
   pagination: boolean;
   page: number;

@@ -38,9 +38,12 @@ export {
   fetchBannersPage,
   fetchEventsForReorder,
   fetchEventsPage,
+  fetchMediaForReorder,
+  fetchMediaPage,
   fetchMenuProductsForReorder,
   fetchMenuProductsPage,
 } from "./fetch-paginated-lists";
+export { createMediaFromForm, deactivateMedia, publishMedia, unpublishMedia } from "./media";
 export {
   assertCanViewProjectMembers,
   canViewProjectMembers,
@@ -55,7 +58,7 @@ export {
 } from "./get-resource-detail";
 export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
-export { reorderAwards, reorderBanners, reorderEvents, reorderMenuProducts } from "./reorder";
+export { reorderAwards, reorderBanners, reorderEvents, reorderMedia, reorderMenuProducts } from "./reorder";
 export { getDashboardData, getProjectContent, getProjectMembers, getProjectSummary, getProjects, getUsers };
 export type { ProjectSummary } from "./get-project-summary";
 export type { PaginatedPayload } from "./paginated-list-types";
@@ -65,6 +68,7 @@ export type {
   BannerButton,
   DashboardData,
   EventItem,
+  MediaItem,
   MenuProduct,
   Project,
   ProjectMember,

@@ -86,3 +86,14 @@ export async function reorderBanners(projectId: string, items: ReorderItem[]): A
 
   return result;
 }
+
+export async function reorderMedia(projectId: string, items: ReorderItem[]): ActionResponse<null> {
+  const result = await reorder(`/admin/projects/${projectId}/media/reorder`, items);
+
+  if (result.status === "success") {
+    revalidatePath(`/dashboard/projects/${projectId}/media`);
+    revalidatePath(`/dashboard/projects/${projectId}/media/order`);
+  }
+
+  return result;
+}
