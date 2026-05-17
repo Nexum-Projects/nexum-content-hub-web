@@ -7,9 +7,12 @@ export const metadata: Metadata = {
   title: "Nexum Content Hub",
   description: "CMS SaaS para administrar contenido dinamico por proyecto.",
   icons: {
-    icon: [{ url: "/images/image_2.png", type: "image/png" }],
-    shortcut: "/images/image_2.png",
-    apple: "/images/image_2.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/nexum-icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
