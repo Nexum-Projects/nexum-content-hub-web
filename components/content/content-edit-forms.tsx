@@ -148,6 +148,9 @@ type AwardEditValues = z.infer<typeof awardEditSchema>;
 function appendImage(formData: FormData, file: File | undefined, currentImageUrl?: string | null) {
   if (file) {
     formData.append("imageFile", file);
+    if (currentImageUrl) {
+      formData.append("previousImageUrl", currentImageUrl);
+    }
     return;
   }
 
@@ -310,7 +313,7 @@ function PreviewCard({
               <ImageIcon className="h-10 w-10" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/75 via-black/35 to-transparent" />
           <div className="relative flex min-h-72 max-w-lg flex-col justify-center p-6 text-white">
             <Badge className="w-fit bg-primary text-primary-foreground">{badge}</Badge>
             <h2 className="mt-4 text-2xl font-semibold">{title || "Titulo del contenido"}</h2>

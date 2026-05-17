@@ -129,9 +129,17 @@ export async function unpublishMedia(projectId: string, mediaId: string): Action
 export async function deactivateMedia(projectId: string, mediaId: string): ActionResponse<MediaItem> {
   try {
     const response = await baseAxios.delete<{ data: MediaItem }>(`/admin/projects/${projectId}/media/${mediaId}`);
+    const media = response.data.data;
+    if (media.type === "IMAGE") {
+      try {
+        await Storage.removeByPublicUrl(media.value);
+      } catch (error) {
+        console.warn("No se pudo eliminar el archivo de media en Supabase Storage.", error);
+      }
+    }
     revalidatePath(`/dashboard/projects/${projectId}/media`);
     revalidatePath(`/dashboard/projects/${projectId}/media/order`);
-    return { status: "success", data: response.data.data };
+    return { status: "success", data: media };
   } catch (error) {
     return mediaErrorResponse<MediaItem>(error);
   }

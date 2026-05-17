@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/radix-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { eventStatusBadge, featuredBadge } from "@/components/resource-lists/entity-badges";
+import { eventStatusBadge, featuredBadge, publishBadge } from "@/components/resource-lists/entity-badges";
 import { ListEmptyState } from "@/components/resource-lists/list-empty-state";
 import { ListPaginationFooter } from "@/components/resource-lists/list-pagination-footer";
 import { ListThumbnail, listPlaceholderGradientClass } from "@/components/resource-lists/list-thumbnail";
@@ -221,7 +221,8 @@ export function EventsListClient({
                       onSort={handleSort}
                     />
                   </TableHead>
-                  <TableHead className="min-w-[8.5rem]">Publicación</TableHead>
+                  <TableHead className="min-w-[8.5rem]">Estado</TableHead>
+                  <TableHead className="min-w-[8.5rem]">Publicado</TableHead>
                   <TableHead className="min-w-[7rem]">Destacado</TableHead>
                   <TableHead>
                     <SortHeaderButton
@@ -247,7 +248,7 @@ export function EventsListClient({
               <TableBody>
                 {events.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={9}>
+                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={10}>
                       Sin resultados con los filtros actuales.
                     </TableCell>
                   </TableRow>
@@ -272,6 +273,7 @@ export function EventsListClient({
                         )}
                       </TableCell>
                       <TableCell>{eventStatusBadge(e.status)}</TableCell>
+                      <TableCell>{publishBadge(e.isPublished)}</TableCell>
                       <TableCell>
                         {featuredBadge(e.isFeatured) ?? (
                           <span className="text-muted-foreground tabular-nums">—</span>
@@ -329,9 +331,15 @@ export function EventsListClient({
                       <div className="grid grid-cols-2 gap-2 border-t border-border pt-2">
                         <div>
                           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                            Publicación
+                            Estado
                           </p>
                           <div className="mt-1">{eventStatusBadge(e.status)}</div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Publicado
+                          </p>
+                          <div className="mt-1">{publishBadge(e.isPublished)}</div>
                         </div>
                         <div>
                           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -409,12 +417,18 @@ export function EventsListClient({
                         <span className="tabular-nums">—</span>
                       )}
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Publicación
+                          Estado
                         </p>
                         <div className="mt-1">{eventStatusBadge(e.status)}</div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          Publicado
+                        </p>
+                        <div className="mt-1">{publishBadge(e.isPublished)}</div>
                       </div>
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">

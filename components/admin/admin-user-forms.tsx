@@ -564,7 +564,8 @@ export function AdminUserEditForm({
     fd.append("platformRole", data.platformRole);
     if (data.avatarFile) {
       fd.append("avatarFile", data.avatarFile);
-    } else if (existingAvatarUrl) {
+    }
+    if (existingAvatarUrl) {
       fd.append("existingAvatarUrl", existingAvatarUrl);
     }
     if (data.isActive) {

@@ -433,7 +433,7 @@ function MediaActions({ item, onOpen, projectId }: { item: MediaItem; onOpen: ()
           <AlertDialogHeader>
             <AlertDialogTitle>¿Desactivar este medio?</AlertDialogTitle>
             <AlertDialogDescription>
-              El medio dejara de estar disponible en la biblioteca activa. No se eliminara el archivo del storage.
+              El medio dejara de estar disponible en la biblioteca activa. Si es una imagen del storage de Supabase, tambien se eliminara el archivo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

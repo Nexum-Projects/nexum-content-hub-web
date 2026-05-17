@@ -36,6 +36,28 @@ function asNumber(formData: FormData, key: string) {
   return Number.isFinite(number) ? number : undefined;
 }
 
+function hasUploadedFile(formData: FormData, key: string) {
+  const file = formData.get(key);
+  return file instanceof File && file.name && file.size > 0;
+}
+
+async function removePreviousStorageObjectIfReplaced(formData: FormData, fileKey: string, previousUrlKey: string) {
+  if (!hasUploadedFile(formData, fileKey)) {
+    return;
+  }
+
+  const previousUrl = asString(formData, previousUrlKey);
+  if (!previousUrl) {
+    return;
+  }
+
+  try {
+    await Storage.removeByPublicUrl(previousUrl);
+  } catch (error) {
+    console.warn("No se pudo eliminar el archivo anterior de Supabase Storage.", error);
+  }
+}
+
 function asPriceCents(formData: FormData, key: string) {
   const value = asNumber(formData, key);
   return typeof value === "number" ? Math.round(value * 100) : undefined;
@@ -270,6 +292,10 @@ export async function updateProject(projectId: string, formData: FormData) {
     avatarUrl,
     isActive: true,
   });
+  await Promise.all([
+    removePreviousStorageObjectIfReplaced(formData, "logoFile", "existingLogoUrl"),
+    removePreviousStorageObjectIfReplaced(formData, "iconFile", "existingAvatarUrl"),
+  ]);
 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${projectId}`);
@@ -571,6 +597,7 @@ async function awardUpdatePayload(projectId: string, formData: FormData) {
 export async function updateBannerFromForm(projectId: string, bannerId: string, formData: FormData): ActionResponse<null> {
   try {
     await baseAxios.put(`/admin/projects/${projectId}/banners/${bannerId}`, await bannerUpdatePayload(projectId, formData));
+    await removePreviousStorageObjectIfReplaced(formData, "imageFile", "previousImageUrl");
     revalidatePath(`/dashboard/projects/${projectId}/banners`);
     revalidatePath(`/dashboard/projects/${projectId}/banners/${bannerId}`);
     revalidatePath(`/dashboard/projects/${projectId}/banners/${bannerId}/edit`);
@@ -584,6 +611,7 @@ export async function updateBannerFromForm(projectId: string, bannerId: string, 
 export async function updateProductFromForm(projectId: string, productId: string, formData: FormData): ActionResponse<null> {
   try {
     await baseAxios.put(`/admin/projects/${projectId}/menu-products/${productId}`, await productUpdatePayload(projectId, formData));
+    await removePreviousStorageObjectIfReplaced(formData, "imageFile", "previousImageUrl");
     revalidatePath(`/dashboard/projects/${projectId}/products`);
     revalidatePath(`/dashboard/projects/${projectId}/products/${productId}`);
     revalidatePath(`/dashboard/projects/${projectId}/products/${productId}/edit`);
@@ -597,6 +625,7 @@ export async function updateProductFromForm(projectId: string, productId: string
 export async function updateEventFromForm(projectId: string, eventId: string, formData: FormData): ActionResponse<null> {
   try {
     await baseAxios.put(`/admin/projects/${projectId}/events/${eventId}`, await eventUpdatePayload(projectId, formData));
+    await removePreviousStorageObjectIfReplaced(formData, "imageFile", "previousImageUrl");
     revalidatePath(`/dashboard/projects/${projectId}/events`);
     revalidatePath(`/dashboard/projects/${projectId}/events/${eventId}`);
     revalidatePath(`/dashboard/projects/${projectId}/events/${eventId}/edit`);
@@ -610,6 +639,7 @@ export async function updateEventFromForm(projectId: string, eventId: string, fo
 export async function updateAwardFromForm(projectId: string, awardId: string, formData: FormData): ActionResponse<null> {
   try {
     await baseAxios.put(`/admin/projects/${projectId}/awards/${awardId}`, await awardUpdatePayload(projectId, formData));
+    await removePreviousStorageObjectIfReplaced(formData, "imageFile", "previousImageUrl");
     revalidatePath(`/dashboard/projects/${projectId}/awards`);
     revalidatePath(`/dashboard/projects/${projectId}/awards/${awardId}`);
     revalidatePath(`/dashboard/projects/${projectId}/awards/${awardId}/edit`);
@@ -830,6 +860,7 @@ export async function updateUser(userId: string, formData: FormData): ActionResp
       avatarUrl,
       isActive: asBoolean(formData, "isActive"),
     });
+    await removePreviousStorageObjectIfReplaced(formData, "avatarFile", "existingAvatarUrl");
 
     let assignmentErrors: string[] | undefined;
     if (session?.platformRole === "SUPER_ADMIN") {
