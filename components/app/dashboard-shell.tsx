@@ -31,6 +31,7 @@ import { canViewProjectMembers } from "@/app/actions/content/can-view-project-me
 import { getProjectSummary, getProjects } from "@/app/actions/content";
 import type { Project, ProjectSummary } from "@/app/actions/content";
 import type { SessionClaims } from "@/utils/auth-token";
+import { APP_VERSION } from "@/utils/app-version";
 import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
 import { cn, resolveAvatarUrl } from "@/lib/utils";
 import { NexumLogo } from "./nexum-logo";
@@ -319,6 +320,7 @@ function DashboardSidebarContent({
             </div>
           </>
         )}
+        <p className="mt-2 text-center text-xs text-muted-foreground">{APP_VERSION}</p>
       </footer>
     </div>
   );
