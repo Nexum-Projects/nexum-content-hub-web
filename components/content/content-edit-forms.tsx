@@ -29,6 +29,7 @@ import {
   type EventItem,
   type MenuProduct,
 } from "@/app/actions/content";
+import { BannerImageRecommendation } from "@/components/banners/banner-image-recommendation";
 import { FieldError, ContentImageUpload, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
@@ -463,7 +464,9 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
           <Card className="rounded-xl border shadow-sm">
             <CardHeader>
               <CardTitle>Imagen del banner</CardTitle>
-              <CardDescription>JPG, PNG o WEBP. Maximo 5MB. Recomendado 1920x800px o superior.</CardDescription>
+              <CardDescription>
+                JPG, PNG o WEBP. Maximo 5MB. Recomendado 1920 x 800 px o mayor, proporción aproximada 2.4:1.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <CurrentImage imageUrl={banner.imageUrl} title={banner.title} />
@@ -474,6 +477,7 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
                 onChange={(file) => form.setValue("imageFile", file, { shouldDirty: true, shouldValidate: true })}
                 onPreviewUrlChange={(url) => setPreviewUrl(url ?? banner.imageUrl ?? null)}
               />
+              <BannerImageRecommendation imageUrl={previewUrl} />
             </CardContent>
           </Card>
 

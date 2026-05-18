@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createBannerFromForm } from "@/app/actions/content";
+import { BannerImageRecommendation } from "@/components/banners/banner-image-recommendation";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -722,9 +723,11 @@ export function BannerForm({ projectId }: { projectId: string }) {
           <Card>
             <CardHeader>
               <CardTitle>Imagen del banner</CardTitle>
-              <CardDescription>Sube una imagen de alta calidad. Recomendado: 1920x800px o superior.</CardDescription>
+              <CardDescription>
+                Sube una imagen de alta calidad. Recomendado: 1920 x 800 px o mayor, proporción aproximada 2.4:1.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Controller
                 control={control}
                 name="imageFile"
@@ -737,6 +740,7 @@ export function BannerForm({ projectId }: { projectId: string }) {
                   />
                 )}
               />
+              <BannerImageRecommendation imageUrl={previewImageUrl} />
             </CardContent>
           </Card>
 
