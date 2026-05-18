@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Controller,
   useFieldArray,
@@ -93,6 +93,7 @@ const productEditSchema = z.object({
   description: z.string().optional(),
   imageFile: optionalImageFile,
   type: z.enum(["DRINK", "FOOD"]),
+  hasPrice: z.boolean(),
   price: z
     .string()
     .trim()
@@ -100,6 +101,14 @@ const productEditSchema = z.object({
     .refine((value) => !value || /^\d+(\.\d{1,2})?$/.test(value), "Usa un precio valido, por ejemplo 35.00."),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
+}).superRefine((value, ctx) => {
+  if (value.hasPrice && !value.price?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Ingresa el precio o desactiva la opcion.",
+      path: ["price"],
+    });
+  }
 });
 
 const eventEditSchema = z
@@ -110,11 +119,13 @@ const eventEditSchema = z
     startDate: z.string().trim().min(1, "La fecha de inicio es requerida."),
     endDate: z.string().trim().optional(),
     location: z.string().trim().max(255, "Maximo 255 caracteres.").optional(),
+    hasCapacity: z.boolean(),
     capacity: z
       .string()
       .trim()
       .optional()
       .refine((value) => !value || /^\d+$/.test(value), "La capacidad debe ser un numero entero."),
+    hasPrice: z.boolean(),
     price: z
       .string()
       .trim()
@@ -124,9 +135,28 @@ const eventEditSchema = z
     isPublished: z.boolean(),
     isFeatured: z.boolean(),
   })
-  .refine((value) => !value.endDate || value.endDate >= value.startDate, {
-    message: "La fecha de fin debe ser posterior al inicio.",
-    path: ["endDate"],
+  .superRefine((value, ctx) => {
+    if (value.endDate && value.endDate < value.startDate) {
+      ctx.addIssue({
+        code: "custom",
+        message: "La fecha de fin debe ser posterior al inicio.",
+        path: ["endDate"],
+      });
+    }
+    if (value.hasCapacity && !value.capacity?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ingresa el cupo maximo o desactiva la opcion.",
+        path: ["capacity"],
+      });
+    }
+    if (value.hasPrice && !value.price?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ingresa el precio o desactiva la opcion.",
+        path: ["price"],
+      });
+    }
   });
 
 const awardEditSchema = z.object({
@@ -549,6 +579,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       description: product.description ?? "",
       imageFile: undefined,
       type: product.type ?? "DRINK",
+      hasPrice: typeof product.priceCents === "number",
       price: priceFromCents(product.priceCents),
       isPublished: Boolean(product.isPublished),
       isFeatured: Boolean(product.isFeatured),
@@ -558,13 +589,21 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
   const detailHref = `/dashboard/projects/${projectId}/products/${product.id}`;
   const listHref = `/dashboard/projects/${projectId}/products`;
 
+  useEffect(() => {
+    if (!values.hasPrice) {
+      form.setValue("price", "", { shouldDirty: false, shouldValidate: true });
+    }
+  }, [form, values.hasPrice]);
+
   async function onSubmit(data: ProductEditValues) {
     const formData = new FormData();
     formData.append("name", data.name);
     appendOptional(formData, "description", data.description);
     appendImage(formData, data.imageFile, product.imageUrl);
     formData.append("type", data.type);
-    appendOptional(formData, "price", data.price);
+    if (data.hasPrice) {
+      appendOptional(formData, "price", data.price);
+    }
     appendBoolean(formData, "isAvailable", product.isAvailable ?? true);
     appendBoolean(formData, "isActive", product.isActive ?? true);
     appendBoolean(formData, "isPublished", data.isPublished);
@@ -609,10 +648,33 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
             <option value="FOOD">Comida</option>
           </Select>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Precio</label>
-          <Input inputMode="decimal" placeholder="Ej. 35.00" {...form.register("price")} />
-          <FieldError message={form.formState.errors.price?.message} />
+        <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+          <Controller
+            control={form.control}
+            name="hasPrice"
+            render={({ field }) => (
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Definir precio</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Desactivalo para guardar el producto sin precio.
+                  </p>
+                </div>
+                <Switch checked={field.value} disabled={form.formState.isSubmitting} onClick={() => field.onChange(!field.value)} type="button" />
+              </div>
+            )}
+          />
+          {values.hasPrice ? (
+            <div className="space-y-2 pt-1">
+              <label className="text-sm font-medium">Precio</label>
+              <Input inputMode="decimal" placeholder="Ej. 35.00" {...form.register("price")} />
+              <FieldError message={form.formState.errors.price?.message} />
+            </div>
+          ) : (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Se guardara como sin precio.
+            </p>
+          )}
         </div>
       </div>
       <PublicationSwitches control={form.control} disabled={form.formState.isSubmitting} featured />
@@ -632,7 +694,9 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
       startDate: utcIsoToGuatemalaLocalForm(event.startDate),
       endDate: utcIsoToGuatemalaLocalForm(event.endDate),
       location: event.location ?? "",
+      hasCapacity: typeof event.capacity === "number",
       capacity: typeof event.capacity === "number" ? String(event.capacity) : "",
+      hasPrice: typeof event.priceCents === "number",
       price: priceFromCents(event.priceCents),
       status: event.status ?? "ACTIVE",
       isPublished: Boolean(event.isPublished),
@@ -643,6 +707,18 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
   const detailHref = `/dashboard/projects/${projectId}/events/${event.id}`;
   const listHref = `/dashboard/projects/${projectId}/events`;
 
+  useEffect(() => {
+    if (!values.hasCapacity) {
+      form.setValue("capacity", "", { shouldDirty: false, shouldValidate: true });
+    }
+  }, [form, values.hasCapacity]);
+
+  useEffect(() => {
+    if (!values.hasPrice) {
+      form.setValue("price", "", { shouldDirty: false, shouldValidate: true });
+    }
+  }, [form, values.hasPrice]);
+
   async function onSubmit(data: EventEditValues) {
     const formData = new FormData();
     formData.append("title", data.title);
@@ -651,8 +727,12 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
     formData.append("startDate", data.startDate);
     appendOptional(formData, "endDate", data.endDate);
     appendOptional(formData, "location", data.location);
-    appendOptional(formData, "capacity", data.capacity);
-    appendOptional(formData, "price", data.price);
+    if (data.hasCapacity) {
+      appendOptional(formData, "capacity", data.capacity);
+    }
+    if (data.hasPrice) {
+      appendOptional(formData, "price", data.price);
+    }
     formData.append("status", data.status);
     appendBoolean(formData, "isActive", event.isActive ?? true);
     appendBoolean(formData, "isPublished", data.isPublished);
@@ -735,15 +815,61 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
             <option value="FINISHED">Finalizado</option>
           </Select>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Capacidad</label>
-          <Input inputMode="numeric" placeholder="Ej. 80" {...form.register("capacity")} />
-          <FieldError message={form.formState.errors.capacity?.message} />
+        <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+          <Controller
+            control={form.control}
+            name="hasCapacity"
+            render={({ field }) => (
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Definir cupo maximo</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Desactivalo para guardar el evento sin capacidad definida.
+                  </p>
+                </div>
+                <Switch checked={field.value} disabled={form.formState.isSubmitting} onClick={() => field.onChange(!field.value)} type="button" />
+              </div>
+            )}
+          />
+          {values.hasCapacity ? (
+            <div className="space-y-2 pt-1">
+              <label className="text-sm font-medium">Capacidad</label>
+              <Input inputMode="numeric" placeholder="Ej. 80" {...form.register("capacity")} />
+              <FieldError message={form.formState.errors.capacity?.message} />
+            </div>
+          ) : (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Se guardara sin capacidad definida.
+            </p>
+          )}
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Precio</label>
-          <Input inputMode="decimal" placeholder="Ej. 125.00" {...form.register("price")} />
-          <FieldError message={form.formState.errors.price?.message} />
+        <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+          <Controller
+            control={form.control}
+            name="hasPrice"
+            render={({ field }) => (
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Definir precio de entrada</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Desactivalo para guardar el evento sin precio.
+                  </p>
+                </div>
+                <Switch checked={field.value} disabled={form.formState.isSubmitting} onClick={() => field.onChange(!field.value)} type="button" />
+              </div>
+            )}
+          />
+          {values.hasPrice ? (
+            <div className="space-y-2 pt-1">
+              <label className="text-sm font-medium">Precio</label>
+              <Input inputMode="decimal" placeholder="Ej. 125.00" {...form.register("price")} />
+              <FieldError message={form.formState.errors.price?.message} />
+            </div>
+          ) : (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Se guardara como sin precio.
+            </p>
+          )}
         </div>
       </div>
       <PublicationSwitches control={form.control} disabled={form.formState.isSubmitting} featured />
