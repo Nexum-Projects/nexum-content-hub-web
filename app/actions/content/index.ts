@@ -1,5 +1,6 @@
 import getDashboardData from "./get-dashboard-data";
 import getProjectContent from "./get-project-content";
+import getProjectDashboardSummary from "./get-project-dashboard-summary";
 import getProjectSummary from "./get-project-summary";
 import getProjects from "./get-projects";
 import getProjectMembers from "./get-project-members";
@@ -59,7 +60,8 @@ export {
 export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
 export { reorderAwards, reorderBanners, reorderEvents, reorderMedia, reorderMenuProducts } from "./reorder";
-export { getDashboardData, getProjectContent, getProjectMembers, getProjectSummary, getProjects, getUsers };
+export { getDashboardData, getProjectContent, getProjectDashboardSummary, getProjectMembers, getProjectSummary, getProjects, getUsers };
+export type { ProjectDashboardSummary } from "./get-project-dashboard-summary";
 export type { ProjectSummary } from "./get-project-summary";
 export type { PaginatedPayload } from "./paginated-list-types";
 export type {

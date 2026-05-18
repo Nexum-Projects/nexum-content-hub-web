@@ -1,6 +1,6 @@
 import { ArrowRight, Calendar, Clock, ExternalLink, ImagePlus, Trophy, Utensils } from "lucide-react";
 
-import { getProjectContent } from "@/app/actions/content";
+import { getProjectContent, getProjectDashboardSummary } from "@/app/actions/content";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fallbackAwards, fallbackBanners, fallbackEvents, fallbackProducts, fallbackProjects } from "../fallback-data";
@@ -12,7 +12,7 @@ function StatCard({ icon: Icon, label, value, tone }: { icon: typeof ImagePlus; 
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="mt-2 text-2xl font-semibold leading-7">{value}</p>
-          <p className="text-xs text-muted-foreground">Publicados</p>
+          <p className="text-xs text-muted-foreground">Registros</p>
         </div>
         <div className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
           <Icon className="h-5 w-5" />
@@ -28,13 +28,25 @@ export default async function ProjectOverviewPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const result = await getProjectContent(projectId);
+  const [result, summaryResult] = await Promise.all([
+    getProjectContent(projectId),
+    getProjectDashboardSummary(projectId),
+  ]);
   const data = result.status === "success" ? result.data : null;
   const project = data?.selectedProject ?? fallbackProjects[0];
   const banners = data?.banners.length ? data.banners : fallbackBanners;
   const products = data?.products.length ? data.products : fallbackProducts;
   const events = data?.events.length ? data.events : fallbackEvents;
   const awards = data?.awards.length ? data.awards : fallbackAwards;
+  const summary =
+    summaryResult.status === "success"
+      ? summaryResult.data
+      : {
+          banners: banners.filter((item) => item.isPublished).length,
+          products: products.filter((item) => item.isPublished).length,
+          events: events.length,
+          awards: awards.filter((item) => item.isPublished).length,
+        };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -45,6 +57,13 @@ export default async function ProjectOverviewPage({
           </CardContent>
         </Card>
       )}
+      {summaryResult.status === "error" && (
+        <Card className="border-warning/40 bg-warning/10">
+          <CardContent className="p-4 text-sm text-warning">
+            {summaryResult.errors[0]?.title}: {summaryResult.errors[0]?.message}. Se muestra un resumen calculado localmente.
+          </CardContent>
+        </Card>
+      )}
 
       <section>
         <h1 className="text-2xl font-semibold leading-7">{project.name}</h1>
@@ -52,10 +71,10 @@ export default async function ProjectOverviewPage({
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={ImagePlus} label="Banners" tone="bg-blue-500/10 text-blue-500" value={banners.filter((item) => item.isPublished).length} />
-        <StatCard icon={Utensils} label="Productos" tone="bg-emerald-500/10 text-emerald-500" value={products.filter((item) => item.isPublished).length} />
-        <StatCard icon={Calendar} label="Eventos" tone="bg-orange-500/10 text-orange-500" value={events.length} />
-        <StatCard icon={Trophy} label="Logros" tone="bg-yellow-500/10 text-yellow-500" value={awards.filter((item) => item.isPublished).length} />
+        <StatCard icon={ImagePlus} label="Banners" tone="bg-blue-500/10 text-blue-500" value={summary.banners} />
+        <StatCard icon={Utensils} label="Productos" tone="bg-emerald-500/10 text-emerald-500" value={summary.products} />
+        <StatCard icon={Calendar} label="Eventos" tone="bg-orange-500/10 text-orange-500" value={summary.events} />
+        <StatCard icon={Trophy} label="Logros" tone="bg-yellow-500/10 text-yellow-500" value={summary.awards} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
