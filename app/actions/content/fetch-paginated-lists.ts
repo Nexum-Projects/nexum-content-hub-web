@@ -7,7 +7,7 @@ import type { ActionResponse } from "../types";
 import type { Award, Banner, DataResponse, EventItem, MediaItem, MenuProduct } from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
-import type { AwardScopeFilter, EventWhenFilter, PublishFilter } from "@/lib/project-list-query";
+import type { AwardScopeFilter, EventWhenFilter, ProductTypeFilter, PublishFilter } from "@/lib/project-list-query";
 import {
   parseAwardListQuery,
   parseBannerListQuery,
@@ -146,7 +146,7 @@ function filterBannersByPublish(list: Banner[], publish: PublishFilter): Banner[
 function filterProductsList(
   list: MenuProduct[],
   publish: PublishFilter,
-  productType: "all" | "FOOD" | "DRINK",
+  productType: ProductTypeFilter,
 ): MenuProduct[] {
   let r = list;
   if (publish === "published") {

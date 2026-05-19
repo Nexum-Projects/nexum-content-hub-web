@@ -1,3 +1,7 @@
+import type { MenuProductType } from "@/lib/menu-product-type";
+
+export type { MenuProductType };
+
 export type Project = {
   id: string;
   name: string;
@@ -70,7 +74,7 @@ export type MenuProduct = {
   slug?: string | null;
   description?: string | null;
   imageUrl?: string | null;
-  type: "DRINK" | "FOOD";
+  type: MenuProductType;
   priceCents?: number | null;
   isAvailable?: boolean;
   isActive?: boolean;

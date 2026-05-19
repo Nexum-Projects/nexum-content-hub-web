@@ -25,12 +25,14 @@ export function parsePublishFilter(raw: RawSearchParams, key = "pub"): PublishFi
   return "all";
 }
 
-/** Productos: `ptype` all | FOOD | DRINK */
-export type ProductTypeFilter = "all" | "FOOD" | "DRINK";
+import { isMenuProductType, type MenuProductType } from "@/lib/menu-product-type";
+
+/** Productos: `ptype` all | MenuProductType */
+export type ProductTypeFilter = "all" | MenuProductType;
 
 export function parseProductTypeFilter(raw: RawSearchParams): ProductTypeFilter {
   const v = spFirst(raw, "ptype")?.toUpperCase();
-  if (v === "FOOD" || v === "DRINK") {
+  if (isMenuProductType(v)) {
     return v;
   }
   return "all";

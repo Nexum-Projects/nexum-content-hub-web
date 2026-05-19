@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { EventItem, MenuProduct } from "@/app/actions/content";
+import { humanizeMenuProductType } from "@/lib/menu-product-type";
 
 export function publishBadge(isPublished?: boolean) {
   if (isPublished) {
@@ -20,7 +21,7 @@ export function featuredBadge(isFeatured?: boolean) {
 }
 
 export function productTypeBadge(type: MenuProduct["type"]) {
-  return <Badge variant="secondary">{type === "DRINK" ? "Bebida" : "Comida"}</Badge>;
+  return <Badge variant="secondary">{humanizeMenuProductType(type)}</Badge>;
 }
 
 export function eventStatusBadge(status?: EventItem["status"]) {

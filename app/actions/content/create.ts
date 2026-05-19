@@ -11,6 +11,7 @@ import type { ActionResponse } from "../types";
 import type { ProjectMemberRole, User } from "./types";
 import { Storage } from "../storage";
 import { guatemalaLocalInputToUtcIso } from "@/lib/datetime-guatemala";
+import { DEFAULT_MENU_PRODUCT_TYPE, isMenuProductType } from "@/lib/menu-product-type";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
 function asString(formData: FormData, key: string) {
@@ -82,7 +83,7 @@ async function uploadImageFile(projectId: string, formData: FormData, folder: Im
   }
 
   const file = formData.get("imageFile");
-  if (file instanceof File && file.name) {
+  if (file instanceof File && file.name && file.size > 0) {
     const { path } = await Storage.upload({
       file,
       folder,
@@ -350,18 +351,29 @@ export async function createProduct(projectId: string, formData: FormData) {
 
 async function productPayload(projectId: string, formData: FormData) {
   const priceCents = asPriceCents(formData, "price");
+  const typeRaw = asString(formData, "type");
+  const type = isMenuProductType(typeRaw) ? typeRaw : DEFAULT_MENU_PRODUCT_TYPE;
+  const imageUrl = await uploadProductImage(projectId, formData);
+
+  if (!imageUrl) {
+    throw new Error("Sube una imagen del producto antes de guardar.");
+  }
+
+  const name = asString(formData, "name");
+  if (!name) {
+    throw new Error("El nombre del producto es requerido.");
+  }
 
   return {
-    name: asString(formData, "name"),
+    name,
     description: asString(formData, "description"),
-    imageUrl: await uploadProductImage(projectId, formData),
-    type: asString(formData, "type") ?? "DRINK",
+    imageUrl,
+    type,
     ...(typeof priceCents === "number" ? { priceCents } : {}),
     isAvailable: true,
     isActive: true,
     isPublished: asBoolean(formData, "isPublished"),
     isFeatured: asBoolean(formData, "isFeatured"),
-    sortOrder: asNumber(formData, "sortOrder") ?? await nextSortOrder(projectId, "menu-products"),
   };
 }
 
@@ -548,7 +560,7 @@ async function productUpdatePayload(projectId: string, formData: FormData) {
     name: asString(formData, "name"),
     description: asString(formData, "description"),
     imageUrl: await uploadProductImage(projectId, formData),
-    type: asString(formData, "type") ?? "DRINK",
+    type: asString(formData, "type") ?? DEFAULT_MENU_PRODUCT_TYPE,
     priceCents: typeof priceCents === "number" ? priceCents : null,
     isAvailable: asBooleanWithDefault(formData, "isAvailable", true),
     isActive: asBooleanWithDefault(formData, "isActive", true),

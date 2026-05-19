@@ -34,6 +34,12 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 
+import {
+  DEFAULT_MENU_PRODUCT_TYPE,
+  humanizeMenuProductType,
+  MENU_PRODUCT_TYPES,
+} from "@/lib/menu-product-type";
+
 import { createProductFromForm } from "@/app/actions/content";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +76,7 @@ const productSchema = z
       .custom<File>((file) => file instanceof File, "Selecciona una imagen")
       .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
       .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
-    type: z.enum(["DRINK", "FOOD"]),
+    type: z.enum(MENU_PRODUCT_TYPES),
     hasPrice: z.boolean(),
     price: optionalPriceGtq,
     isPublished: z.boolean(),
@@ -92,7 +98,7 @@ type ProductFormValues = {
   name: string;
   description?: string;
   imageFile: File;
-  type: "DRINK" | "FOOD";
+  type: (typeof MENU_PRODUCT_TYPES)[number];
   hasPrice: boolean;
   price?: number;
   isPublished: boolean;
@@ -477,7 +483,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
     defaultValues: {
       name: "",
       description: "",
-      type: "DRINK",
+      type: DEFAULT_MENU_PRODUCT_TYPE,
       hasPrice: false,
       price: undefined,
       isPublished: false,
@@ -489,7 +495,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
   const previewName = values.name?.trim() || "Nombre del producto";
   const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del producto.</p>";
   const productStatus = values.isPublished ? "Publicado" : "Borrador";
-  const productType = values.type === "FOOD" ? "Comida" : "Bebida";
+  const productType = humanizeMenuProductType(values.type);
 
   useEffect(() => {
     if (values.hasPrice === false) {
@@ -564,7 +570,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
           <div>
             <h1 className="text-2xl font-semibold leading-7">Nuevo producto</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Agrega comida o bebida al menu de la landing page con imagen, precio y estado de publicacion.
+              Agrega un producto al menu de la landing page con imagen, precio y estado de publicacion.
             </p>
           </div>
         </div>
@@ -591,8 +597,11 @@ export function ProductForm({ projectId }: { projectId: string }) {
                   Tipo
                 </label>
                 <Select id="type" {...register("type")}>
-                  <option value="DRINK">Bebida</option>
-                  <option value="FOOD">Comida</option>
+                  {MENU_PRODUCT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {humanizeMenuProductType(t)}
+                    </option>
+                  ))}
                 </Select>
               </div>
 

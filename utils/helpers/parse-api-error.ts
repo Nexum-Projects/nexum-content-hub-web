@@ -4,12 +4,23 @@ export type HumanizedError = {
 };
 
 type ApiErrorResponse = {
-  code?: string;
+  code?: string | { name?: string };
   message?: string;
   statusCode?: number;
   type?: string;
   details?: Record<string, unknown>;
 };
+
+function formatFieldErrors(details?: Record<string, unknown>): string | undefined {
+  const fieldErrors = details?.fieldErrors;
+  if (!fieldErrors || typeof fieldErrors !== "object") {
+    return undefined;
+  }
+
+  return Object.entries(fieldErrors as Record<string, string>)
+    .map(([field, msg]) => `${field}: ${msg}`)
+    .join(" · ");
+}
 
 const knownMessages: Record<string, HumanizedError> = {
   "Invalid credentials": {
@@ -47,9 +58,23 @@ export function parseApiError(error: unknown): HumanizedError {
     return knownMessages[error] ?? { title: "Error", description: error };
   }
 
+  if (error instanceof Error && error.message) {
+    return {
+      title: "No se pudo completar la accion",
+      description: error.message,
+    };
+  }
+
   if (error && typeof error === "object") {
     const apiError = error as ApiErrorResponse;
-    const message = apiError.message ?? apiError.code;
+    const fieldErrorText = formatFieldErrors(apiError.details);
+    const code =
+      typeof apiError.code === "string"
+        ? apiError.code
+        : typeof apiError.code === "object" && apiError.code?.name
+          ? apiError.code.name
+          : undefined;
+    const message = apiError.message ?? fieldErrorText ?? code;
 
     if (message && knownMessages[message]) {
       return knownMessages[message];
@@ -60,9 +85,17 @@ export function parseApiError(error: unknown): HumanizedError {
         return knownMessages["Email already exists"];
       }
 
+      if (message === "Data integrity violation" || code === "CONFLICT_DATA_INTEGRITY_VIOLATION") {
+        return {
+          title: "No se pudo guardar",
+          description:
+            "Los datos no cumplen las reglas de la base de datos. Si acabas de actualizar los tipos de producto, ejecuta las migraciones del API (V8) y reinicia el backend.",
+        };
+      }
+
       return {
         title: apiError.statusCode === 401 ? "No autorizado" : "No se pudo completar la accion",
-        description: message,
+        description: fieldErrorText ?? message,
       };
     }
   }

@@ -19,6 +19,7 @@ import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filte
 import { ResourceRowActions } from "@/components/resource-lists/resource-row-actions";
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { cn } from "@/lib/utils";
+import { MENU_PRODUCT_TYPE_LABELS, MENU_PRODUCT_TYPES } from "@/lib/menu-product-type";
 import { MENU_PRODUCT_SORT_FIELDS } from "@/lib/project-list-query";
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 
@@ -166,8 +167,11 @@ export function ProductsListClient({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="FOOD">Comida</SelectItem>
-                    <SelectItem value="DRINK">Bebida</SelectItem>
+                    {MENU_PRODUCT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {MENU_PRODUCT_TYPE_LABELS[t]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

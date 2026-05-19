@@ -20,6 +20,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import {
+  DEFAULT_MENU_PRODUCT_TYPE,
+  humanizeMenuProductType,
+  MENU_PRODUCT_TYPES,
+} from "@/lib/menu-product-type";
+
+import {
   updateAwardFromForm,
   updateBannerFromForm,
   updateEventFromForm,
@@ -93,7 +99,7 @@ const productEditSchema = z.object({
   name: z.string().trim().min(1, "El nombre es requerido.").max(160, "Maximo 160 caracteres."),
   description: z.string().optional(),
   imageFile: optionalImageFile,
-  type: z.enum(["DRINK", "FOOD"]),
+  type: z.enum(MENU_PRODUCT_TYPES),
   hasPrice: z.boolean(),
   price: z
     .string()
@@ -582,7 +588,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       name: product.name ?? "",
       description: product.description ?? "",
       imageFile: undefined,
-      type: product.type ?? "DRINK",
+      type: product.type ?? DEFAULT_MENU_PRODUCT_TYPE,
       hasPrice: typeof product.priceCents === "number",
       price: priceFromCents(product.priceCents),
       isPublished: Boolean(product.isPublished),
@@ -648,8 +654,11 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
         <div className="space-y-2">
           <label className="text-sm font-medium">Tipo</label>
           <Select {...form.register("type")}>
-            <option value="DRINK">Bebida</option>
-            <option value="FOOD">Comida</option>
+            {MENU_PRODUCT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {humanizeMenuProductType(t)}
+              </option>
+            ))}
           </Select>
         </div>
         <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
