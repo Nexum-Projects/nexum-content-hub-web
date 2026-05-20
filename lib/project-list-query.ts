@@ -177,6 +177,73 @@ export function parseMediaListQuery(raw: RawSearchParams) {
   };
 }
 
+/** Botones de accion: `atype` all | INSTAGRAM | FACEBOOK | EMAIL | UBER | WAZE */
+export type ActionButtonTypeFilter = "all" | "INSTAGRAM" | "FACEBOOK" | "EMAIL" | "UBER" | "WAZE";
+
+export function parseActionButtonTypeFilter(raw: RawSearchParams): ActionButtonTypeFilter {
+  const v = spFirst(raw, "atype")?.toUpperCase();
+  if (v === "INSTAGRAM" || v === "FACEBOOK" || v === "EMAIL" || v === "UBER" || v === "WAZE") {
+    return v;
+  }
+  return "all";
+}
+
+export const ACTION_BUTTON_SORT_FIELDS = ["type", "value", "sortOrder", "createdAt", "updatedAt"] as const;
+export type ActionButtonSortField = (typeof ACTION_BUTTON_SORT_FIELDS)[number];
+
+export function parseActionButtonListQuery(raw: RawSearchParams) {
+  return {
+    page: parsePositiveInt(spFirst(raw, "page"), 1),
+    limit: coerceListLimit(spFirst(raw, "limit")),
+    query: (spFirst(raw, "query") ?? "").trim() || undefined,
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), ACTION_BUTTON_SORT_FIELDS, "sortOrder"),
+    order: parseOrder(spFirst(raw, "order")),
+    publish: parsePublishFilter(raw),
+    actionType: parseActionButtonTypeFilter(raw),
+  };
+}
+
+/** Horarios: `day` all | WeekDay */
+export type OpeningHourDayFilter =
+  | "all"
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export function parseOpeningHourDayFilter(raw: RawSearchParams): OpeningHourDayFilter {
+  const v = spFirst(raw, "day")?.toUpperCase();
+  if (
+    v === "MONDAY" ||
+    v === "TUESDAY" ||
+    v === "WEDNESDAY" ||
+    v === "THURSDAY" ||
+    v === "FRIDAY" ||
+    v === "SATURDAY" ||
+    v === "SUNDAY"
+  ) {
+    return v;
+  }
+  return "all";
+}
+
+export const OPENING_HOUR_SORT_FIELDS = ["day", "startTime", "endTime", "createdAt", "updatedAt"] as const;
+export type OpeningHourSortField = (typeof OPENING_HOUR_SORT_FIELDS)[number];
+
+export function parseOpeningHourListQuery(raw: RawSearchParams) {
+  return {
+    page: parsePositiveInt(spFirst(raw, "page"), 1),
+    limit: coerceListLimit(spFirst(raw, "limit")),
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), OPENING_HOUR_SORT_FIELDS, "day"),
+    order: parseOrder(spFirst(raw, "order")),
+    publish: parsePublishFilter(raw),
+    day: parseOpeningHourDayFilter(raw),
+  };
+}
+
 export type ListRequestParams = {
   pagination: boolean;
   page: number;

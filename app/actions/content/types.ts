@@ -133,6 +133,30 @@ export type MediaItem = {
   updatedAt?: string;
 };
 
+export type ActionButton = {
+  id: string;
+  projectId?: string;
+  type: "INSTAGRAM" | "FACEBOOK" | "EMAIL" | "UBER" | "WAZE";
+  value: string;
+  sortOrder?: number;
+  isActive?: boolean;
+  isPublished?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type OpeningHour = {
+  id: string;
+  projectId?: string;
+  day: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+  startTime: string;
+  endTime: string;
+  isActive?: boolean;
+  isPublished?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type DataResponse<T> = {
   data: T[];
   meta?: {

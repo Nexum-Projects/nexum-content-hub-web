@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   ChevronRight,
+  Clock,
   Contact,
   FolderKanban,
   Home,
@@ -16,6 +17,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  MousePointerClick,
   Package,
   Settings,
   Shield,
@@ -387,6 +389,8 @@ export function DashboardShell({
       { label: "Eventos", href: `${base}/events`, icon: FolderKanban },
       { label: "Logros / Premios", href: `${base}/awards`, icon: Trophy },
       { label: "Medios", href: `${base}/media`, icon: Package },
+      { label: "Horario de atencion", href: `${base}/opening-hours`, icon: Clock },
+      { label: "Botones de accion", href: `${base}/action-buttons`, icon: MousePointerClick },
     ];
 
     if (showMembersNav) {

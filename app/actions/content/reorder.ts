@@ -97,3 +97,14 @@ export async function reorderMedia(projectId: string, items: ReorderItem[]): Act
 
   return result;
 }
+
+export async function reorderActionButtons(projectId: string, items: ReorderItem[]): ActionResponse<null> {
+  const result = await reorder(`/admin/projects/${projectId}/action-buttons/reorder`, items);
+
+  if (result.status === "success") {
+    revalidatePath(`/dashboard/projects/${projectId}/action-buttons`);
+    revalidatePath(`/dashboard/projects/${projectId}/action-buttons/order`);
+  }
+
+  return result;
+}

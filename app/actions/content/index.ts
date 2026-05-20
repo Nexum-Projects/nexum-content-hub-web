@@ -33,6 +33,8 @@ export {
   deleteUser,
 } from "./delete-entities";
 export {
+  fetchActionButtonsForReorder,
+  fetchActionButtonsPage,
   fetchAwardsForReorder,
   fetchBannersForReorder,
   fetchAwardsPage,
@@ -43,8 +45,23 @@ export {
   fetchMediaPage,
   fetchMenuProductsForReorder,
   fetchMenuProductsPage,
+  fetchOpeningHoursPage,
 } from "./fetch-paginated-lists";
+export {
+  createActionButton,
+  deactivateActionButton,
+  publishActionButton,
+  unpublishActionButton,
+  updateActionButton,
+} from "./action-buttons";
 export { createMediaFromForm, deactivateMedia, publishMedia, unpublishMedia } from "./media";
+export {
+  createOpeningHour,
+  deactivateOpeningHour,
+  publishOpeningHour,
+  unpublishOpeningHour,
+  updateOpeningHour,
+} from "./opening-hours";
 export {
   assertCanViewProjectMembers,
   canViewProjectMembers,
@@ -59,19 +76,21 @@ export {
 } from "./get-resource-detail";
 export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
-export { reorderAwards, reorderBanners, reorderEvents, reorderMedia, reorderMenuProducts } from "./reorder";
+export { reorderActionButtons, reorderAwards, reorderBanners, reorderEvents, reorderMedia, reorderMenuProducts } from "./reorder";
 export { getDashboardData, getProjectContent, getProjectDashboardSummary, getProjectMembers, getProjectSummary, getProjects, getUsers };
 export type { ProjectDashboardSummary } from "./get-project-dashboard-summary";
 export type { ProjectSummary } from "./get-project-summary";
 export type { PaginatedPayload } from "./paginated-list-types";
 export type {
   Award,
+  ActionButton,
   Banner,
   BannerButton,
   DashboardData,
   EventItem,
   MediaItem,
   MenuProduct,
+  OpeningHour,
   Project,
   ProjectMember,
   User,

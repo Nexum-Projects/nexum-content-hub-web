@@ -4,16 +4,18 @@ import { isAxiosError } from "axios";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
-import type { Award, Banner, DataResponse, EventItem, MediaItem, MenuProduct } from "./types";
+import type { ActionButton, Award, Banner, DataResponse, EventItem, MediaItem, MenuProduct, OpeningHour } from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 import type { AwardScopeFilter, EventWhenFilter, ProductTypeFilter, PublishFilter } from "@/lib/project-list-query";
 import {
+  parseActionButtonListQuery,
   parseAwardListQuery,
   parseBannerListQuery,
   parseEventListQuery,
   parseMediaListQuery,
   parseMenuProductListQuery,
+  parseOpeningHourListQuery,
   type RawSearchParams,
   toListRequestParams,
 } from "@/lib/project-list-query";
@@ -124,6 +126,18 @@ export async function fetchBannersForReorder(projectId: string): ActionResponse<
 export async function fetchMediaForReorder(projectId: string): ActionResponse<MediaItem[]> {
   try {
     const items = await getAllSorted<MediaItem>(`/admin/projects/${projectId}/media`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchActionButtonsForReorder(projectId: string): ActionResponse<ActionButton[]> {
+  try {
+    const items = await getAllSorted<ActionButton>(`/admin/projects/${projectId}/action-buttons`, {
       order: "ASC",
       orderBy: "sortOrder",
     });
@@ -380,6 +394,48 @@ export async function fetchMediaPage(
     // El API ya soporta los filtros; este fallback conserva consistencia si algun entorno ignora query params booleanos/enums.
     const filtered = filterMediaList(items, parsed.publish, parsed.mediaType);
     return { status: "success", data: { items: filtered, meta } };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchActionButtonsPage(
+  projectId: string,
+  rawSearchParams: RawSearchParams,
+): ActionResponse<PaginatedPayload<ActionButton>> {
+  const parsed = parseActionButtonListQuery(rawSearchParams);
+  const url = `/admin/projects/${projectId}/action-buttons`;
+
+  try {
+    const params = {
+      ...toListRequestParams(parsed),
+      ...(parsed.actionType !== "all" ? { type: parsed.actionType } : {}),
+      ...(parsed.publish === "published" ? { isPublished: true } : {}),
+      ...(parsed.publish === "draft" ? { isPublished: false } : {}),
+    };
+    const { items, meta } = await getPage<ActionButton>(url, params);
+    return { status: "success", data: { items, meta } };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchOpeningHoursPage(
+  projectId: string,
+  rawSearchParams: RawSearchParams,
+): ActionResponse<PaginatedPayload<OpeningHour>> {
+  const parsed = parseOpeningHourListQuery(rawSearchParams);
+  const url = `/admin/projects/${projectId}/opening-hours`;
+
+  try {
+    const params = {
+      ...toListRequestParams({ ...parsed, query: undefined }),
+      ...(parsed.day !== "all" ? { day: parsed.day } : {}),
+      ...(parsed.publish === "published" ? { isPublished: true } : {}),
+      ...(parsed.publish === "draft" ? { isPublished: false } : {}),
+    };
+    const { items, meta } = await getPage<OpeningHour>(url, params);
+    return { status: "success", data: { items, meta } };
   } catch (error) {
     return catchListError(error);
   }
