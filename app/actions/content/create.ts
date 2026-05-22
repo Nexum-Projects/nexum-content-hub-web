@@ -64,6 +64,22 @@ function asPriceCents(formData: FormData, key: string) {
   return typeof value === "number" ? Math.round(value * 100) : undefined;
 }
 
+function asEventLocation(formData: FormData) {
+  const latitude = asNumber(formData, "locationLatitude");
+  const longitude = asNumber(formData, "locationLongitude");
+  const fullAddress = asString(formData, "locationFullAddress");
+
+  if (typeof latitude !== "number" || typeof longitude !== "number" || !fullAddress) {
+    return undefined;
+  }
+
+  return {
+    latitude,
+    longitude,
+    fullAddress,
+  };
+}
+
 /** Fecha/hora introducida en el panel como civil en America/Guatemala → ISO UTC para el API. */
 function asOffsetDateTime(formData: FormData, key: string) {
   const value = asString(formData, key);
@@ -419,6 +435,7 @@ export async function createEvent(projectId: string, formData: FormData) {
 async function eventPayload(projectId: string, formData: FormData) {
   const priceCents = asPriceCents(formData, "price");
   const capacity = asNumber(formData, "capacity");
+  const location = asEventLocation(formData);
 
   return {
     title: asString(formData, "title"),
@@ -426,7 +443,7 @@ async function eventPayload(projectId: string, formData: FormData) {
     imageUrl: await uploadEventImage(projectId, formData),
     startDate: asOffsetDateTime(formData, "startDate"),
     endDate: asOffsetDateTime(formData, "endDate"),
-    location: asString(formData, "location"),
+    ...(location ? { location } : {}),
     ...(typeof capacity === "number" ? { capacity } : {}),
     ...(typeof priceCents === "number" ? { priceCents } : {}),
     status: asString(formData, "status") ?? "ACTIVE",
@@ -573,6 +590,7 @@ async function productUpdatePayload(projectId: string, formData: FormData) {
 async function eventUpdatePayload(projectId: string, formData: FormData) {
   const capacity = asNumber(formData, "capacity");
   const priceCents = asPriceCents(formData, "price");
+  const location = asEventLocation(formData);
 
   return {
     title: asString(formData, "title"),
@@ -580,7 +598,7 @@ async function eventUpdatePayload(projectId: string, formData: FormData) {
     imageUrl: await uploadEventImage(projectId, formData),
     startDate: asOffsetDateTime(formData, "startDate"),
     endDate: asOffsetDateTime(formData, "endDate") ?? null,
-    location: asString(formData, "location") ?? null,
+    location: formData.get("removeLocation") === "on" ? null : location,
     capacity: typeof capacity === "number" ? capacity : null,
     priceCents: typeof priceCents === "number" ? priceCents : null,
     status: asString(formData, "status") ?? "ACTIVE",

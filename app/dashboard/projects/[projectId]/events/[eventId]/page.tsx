@@ -131,7 +131,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
               </div>
               <div className="md:col-span-2">
                 <p className="text-sm font-medium text-muted-foreground">Ubicacion</p>
-                <p className="mt-1 text-sm">{e.location?.trim() || "—"}</p>
+                <p className="mt-1 text-sm">{e.location?.fullAddress?.trim() || "—"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Capacidad / cupo</p>
@@ -220,7 +220,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
                     </p>
                     <p className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      {e.location?.trim() || "Ubicacion por definir"}
+                      {e.location?.fullAddress?.trim() || "Ubicacion por definir"}
                     </p>
                     <p>
                       {formatPrice(e.priceCents)}

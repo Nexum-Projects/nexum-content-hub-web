@@ -39,6 +39,7 @@ import { BannerImageRecommendation } from "@/components/banners/banner-image-rec
 import { FieldError, ContentImageUpload, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
+import { EventLocationPicker, type EventLocationValue } from "@/components/events/event-location-picker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,15 @@ const productEditSchema = z.object({
   }
 });
 
+const locationSchema = z
+  .object({
+    latitude: z.number(),
+    longitude: z.number(),
+    fullAddress: z.string().trim().min(1, "La direccion es requerida."),
+  })
+  .nullable()
+  .optional();
+
 const eventEditSchema = z
   .object({
     title: z.string().trim().min(1, "El titulo es requerido.").max(180, "Maximo 180 caracteres."),
@@ -125,7 +135,8 @@ const eventEditSchema = z
     imageFile: optionalImageFile,
     startDate: z.string().trim().min(1, "La fecha de inicio es requerida."),
     endDate: z.string().trim().optional(),
-    location: z.string().trim().max(255, "Maximo 255 caracteres.").optional(),
+    hasLocation: z.boolean(),
+    location: locationSchema,
     hasCapacity: z.boolean(),
     capacity: z
       .string()
@@ -162,6 +173,13 @@ const eventEditSchema = z
         code: "custom",
         message: "Ingresa el precio o desactiva la opcion.",
         path: ["price"],
+      });
+    }
+    if (value.hasLocation && !value.location) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona una ubicacion o desactiva la opcion.",
+        path: ["location"],
       });
     }
   });
@@ -208,8 +226,30 @@ function appendOptional(formData: FormData, key: string, value?: string | null) 
   }
 }
 
+function appendEventLocation(formData: FormData, location: EventLocationValue) {
+  formData.append("locationLatitude", String(location.latitude));
+  formData.append("locationLongitude", String(location.longitude));
+  formData.append("locationFullAddress", location.fullAddress);
+}
+
 function priceFromCents(priceCents?: number | null) {
   return typeof priceCents === "number" ? (priceCents / 100).toFixed(2) : "";
+}
+
+function eventLocationValue(event: EventItem): EventLocationValue | null {
+  if (
+    typeof event.location?.latitude !== "number" ||
+    typeof event.location?.longitude !== "number" ||
+    !event.location?.fullAddress
+  ) {
+    return null;
+  }
+
+  return {
+    latitude: event.location.latitude,
+    longitude: event.location.longitude,
+    fullAddress: event.location.fullAddress,
+  };
 }
 
 function SaveFooter({
@@ -698,6 +738,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
 export function EventEditForm({ event, projectId }: { event: EventItem; projectId: string }) {
   const router = useRouter();
   const [previewUrl, setPreviewUrl] = useStateOrCurrent(event.imageUrl);
+  const initialLocation = eventLocationValue(event);
   const form = useForm<EventEditValues>({
     resolver: zodResolver(eventEditSchema),
     defaultValues: {
@@ -706,7 +747,8 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
       imageFile: undefined,
       startDate: utcIsoToGuatemalaLocalForm(event.startDate),
       endDate: utcIsoToGuatemalaLocalForm(event.endDate),
-      location: event.location ?? "",
+      hasLocation: Boolean(event.location),
+      location: initialLocation,
       hasCapacity: typeof event.capacity === "number",
       capacity: typeof event.capacity === "number" ? String(event.capacity) : "",
       hasPrice: typeof event.priceCents === "number",
@@ -732,6 +774,12 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
     }
   }, [form, values.hasPrice]);
 
+  useEffect(() => {
+    if (!values.hasLocation) {
+      form.setValue("location", null, { shouldDirty: false, shouldValidate: true });
+    }
+  }, [form, values.hasLocation]);
+
   async function onSubmit(data: EventEditValues) {
     const formData = new FormData();
     formData.append("title", data.title);
@@ -739,7 +787,11 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
     appendImage(formData, data.imageFile, event.imageUrl);
     formData.append("startDate", data.startDate);
     appendOptional(formData, "endDate", data.endDate);
-    appendOptional(formData, "location", data.location);
+    if (data.hasLocation && data.location) {
+      appendEventLocation(formData, data.location);
+    } else {
+      formData.append("removeLocation", "on");
+    }
     if (data.hasCapacity) {
       appendOptional(formData, "capacity", data.capacity);
     }
@@ -815,9 +867,39 @@ export function EventEditForm({ event, projectId }: { event: EventItem; projectI
           />
           <FieldError message={form.formState.errors.endDate?.message} />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Ubicacion</label>
-          <Input placeholder="Ej. Terraza principal" {...form.register("location")} />
+        <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+          <Controller
+            control={form.control}
+            name="hasLocation"
+            render={({ field }) => (
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Definir ubicacion</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Desactivalo para remover la ubicacion del evento.
+                  </p>
+                </div>
+                <Switch checked={field.value} disabled={form.formState.isSubmitting} onClick={() => field.onChange(!field.value)} type="button" />
+              </div>
+            )}
+          />
+          {values.hasLocation ? (
+            <Controller
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <EventLocationPicker
+                  disabled={form.formState.isSubmitting}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
+              )}
+            />
+          ) : (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Al guardar se quitara la ubicacion de este evento.
+            </p>
+          )}
           <FieldError message={form.formState.errors.location?.message} />
         </div>
         <div className="space-y-2">

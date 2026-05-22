@@ -18,6 +18,9 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalNonEmptyString,
   SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
   SUPABASE_STORAGE_BUCKET_NAME: optionalNonEmptyString,
+  GOOGLE_MAPS_KEY: optionalNonEmptyString,
+  GOOGLE_MAPS_API_URL: optionalUrl,
+  GOOGLE_MAPS_SEARCH_API_URL: optionalUrl,
 });
 
 export const env = EnvSchema.parse({
@@ -28,6 +31,9 @@ export const env = EnvSchema.parse({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_STORAGE_BUCKET_NAME: process.env.SUPABASE_STORAGE_BUCKET_NAME,
+  GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY,
+  GOOGLE_MAPS_API_URL: process.env.GOOGLE_MAPS_API_URL,
+  GOOGLE_MAPS_SEARCH_API_URL: process.env.GOOGLE_MAPS_SEARCH_API_URL,
 });
 
 export function getSupabaseEnv() {

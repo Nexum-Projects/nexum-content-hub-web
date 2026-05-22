@@ -14,6 +14,7 @@ import { createEventFromForm } from "@/app/actions/content";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { ContentImageUpload, FieldError, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
 import { EventDateTimePicker } from "@/components/events/event-datetime-picker";
+import { EventLocationPicker, type EventLocationValue } from "@/components/events/event-location-picker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,15 @@ const optionalCapacity = z
       .optional(),
   );
 
+const locationSchema = z
+  .object({
+    latitude: z.number(),
+    longitude: z.number(),
+    fullAddress: z.string().trim().min(1, "La direccion es requerida"),
+  })
+  .nullable()
+  .optional();
+
 const eventSchema = z
   .object({
     title: z.string().min(1, "El titulo es requerido").max(180, "Maximo 180 caracteres"),
@@ -62,7 +72,8 @@ const eventSchema = z
       .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
     startDate: z.string().min(1, "La fecha de inicio es requerida"),
     endDate: z.string().optional(),
-    location: z.string().max(255, "Maximo 255 caracteres").optional(),
+    hasLocation: z.boolean(),
+    location: locationSchema,
     hasCapacity: z.boolean(),
     hasPrice: z.boolean(),
     capacity: optionalCapacity,
@@ -105,6 +116,14 @@ const eventSchema = z
         });
       }
     }
+
+    if (data.hasLocation && !data.location) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona una ubicacion o desactiva la opcion.",
+        path: ["location"],
+      });
+    }
   });
 
 type EventFormValues = {
@@ -113,7 +132,8 @@ type EventFormValues = {
   imageFile: File;
   startDate: string;
   endDate?: string;
-  location?: string;
+  hasLocation: boolean;
+  location?: EventLocationValue | null;
   hasCapacity: boolean;
   hasPrice: boolean;
   capacity?: number;
@@ -154,7 +174,8 @@ export function EventForm({ projectId }: { projectId: string }) {
       description: "",
       startDate: "",
       endDate: "",
-      location: "",
+      hasLocation: false,
+      location: null,
       hasCapacity: false,
       hasPrice: false,
       capacity: undefined,
@@ -178,6 +199,13 @@ export function EventForm({ projectId }: { projectId: string }) {
       setValue("price", undefined, { shouldValidate: true });
     }
   }, [values.hasPrice, setValue]);
+
+  useEffect(() => {
+    if (values.hasLocation === false) {
+      setValue("location", null, { shouldValidate: true });
+    }
+  }, [values.hasLocation, setValue]);
+
   const previewTitle = values.title?.trim() || "Titulo del evento";
   const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del evento.</p>";
 
@@ -207,7 +235,11 @@ export function EventForm({ projectId }: { projectId: string }) {
     formData.append("imageFile", data.imageFile);
     formData.append("startDate", data.startDate);
     if (data.endDate?.trim()) formData.append("endDate", data.endDate);
-    if (data.location?.trim()) formData.append("location", data.location);
+    if (data.hasLocation && data.location) {
+      formData.append("locationLatitude", String(data.location.latitude));
+      formData.append("locationLongitude", String(data.location.longitude));
+      formData.append("locationFullAddress", data.location.fullAddress);
+    }
     if (data.hasCapacity && typeof data.capacity === "number") formData.append("capacity", String(data.capacity));
     if (data.hasPrice && typeof data.price === "number") formData.append("price", String(data.price));
     formData.append("status", "ACTIVE");
@@ -346,9 +378,35 @@ export function EventForm({ projectId }: { projectId: string }) {
                   )}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="location">Ubicacion</label>
-                <Input id="location" placeholder="Ej. Salon principal" {...register("location")} />
+              <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+                <Controller
+                  control={control}
+                  name="hasLocation"
+                  render={({ field }) => (
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">Definir ubicacion</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Activa esta opcion para guardar una direccion con coordenadas.
+                        </p>
+                      </div>
+                      <Switch checked={field.value} onClick={() => field.onChange(!field.value)} type="button" />
+                    </div>
+                  )}
+                />
+                {values.hasLocation ? (
+                  <Controller
+                    control={control}
+                    name="location"
+                    render={({ field }) => (
+                      <EventLocationPicker onChange={field.onChange} value={field.value} />
+                    )}
+                  />
+                ) : (
+                  <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                    Se guardara sin ubicacion.
+                  </p>
+                )}
                 <FieldError message={errors.location?.message} />
               </div>
 
@@ -513,7 +571,7 @@ export function EventForm({ projectId }: { projectId: string }) {
                   </div>
                   <div className="grid gap-2 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" />{formatDate(values.startDate)}</p>
-                    <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />{values.location?.trim() || "Ubicacion por definir"}</p>
+                    <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />{values.location?.fullAddress?.trim() || "Ubicacion por definir"}</p>
                     <p>
                       {values.hasPrice ? formatPrice(values.price) : "Sin precio"}
                       {values.hasCapacity && typeof values.capacity === "number" ? ` · Cupo ${values.capacity}` : ""}

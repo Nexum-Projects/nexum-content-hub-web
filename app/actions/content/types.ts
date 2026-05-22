@@ -93,7 +93,7 @@ export type EventItem = {
   imageUrl?: string | null;
   startDate?: string;
   endDate?: string | null;
-  location?: string | null;
+  location?: EventLocation | null;
   capacity?: number | null;
   priceCents?: number | null;
   status?: "ACTIVE" | "CANCELLED" | "FINISHED";
@@ -101,6 +101,16 @@ export type EventItem = {
   isPublished?: boolean;
   isFeatured?: boolean;
   sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type EventLocation = {
+  id?: string;
+  eventId?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  fullAddress?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };

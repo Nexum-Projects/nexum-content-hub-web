@@ -27,7 +27,7 @@ import { useProjectListNavigation } from "./use-project-list-navigation";
 const DEFAULT_ORDER_BY = "sortOrder";
 
 function subtitle(e: EventItem) {
-  return e.location?.trim() || e.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 80) || "Sin detalle";
+  return e.location?.fullAddress?.trim() || e.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 80) || "Sin detalle";
 }
 
 export function EventsListClient({
