@@ -167,6 +167,22 @@ export type OpeningHour = {
   updatedAt?: string;
 };
 
+export type ProjectLocation = {
+  id: string;
+  projectId?: string;
+  title: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  latitude: number;
+  longitude: number;
+  fullAddress: string;
+  isActive?: boolean;
+  isPublished?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type DataResponse<T> = {
   data: T[];
   meta?: {

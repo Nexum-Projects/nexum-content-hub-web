@@ -4,7 +4,7 @@ import { isAxiosError } from "axios";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
-import type { Award, Banner, EventItem, MenuProduct, ProjectMember, User } from "./types";
+import type { Award, Banner, EventItem, MenuProduct, ProjectLocation, ProjectMember, User } from "./types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
 async function getDetail<T>(url: string): ActionResponse<T> {
@@ -48,6 +48,10 @@ export async function getEventDetail(projectId: string, eventId: string): Action
 
 export async function getAwardDetail(projectId: string, awardId: string): ActionResponse<Award> {
   return getDetail<Award>(`/admin/projects/${projectId}/awards/${awardId}`);
+}
+
+export async function getLocationDetail(projectId: string, locationId: string): ActionResponse<ProjectLocation> {
+  return getDetail<ProjectLocation>(`/admin/projects/${projectId}/locations/${locationId}`);
 }
 
 export async function getUserDetail(userId: string): ActionResponse<User> {

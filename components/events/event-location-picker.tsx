@@ -261,16 +261,18 @@ export function EventLocationPicker({ disabled, onChange, value }: Props) {
 
   useEffect(() => {
     if (open) {
-      const nextCenter = toMapCenter(value);
-      setCenter(nextCenter);
-      setQuery(value?.fullAddress ?? "");
-      setResults([]);
-      setFeedback(null);
-      setMapError(null);
-      setSelectedLocation(value ?? null);
-      mapRef.current?.setCenter(nextCenter);
-      mapRef.current?.setZoom(value ? 17 : 14);
-      return;
+      const timeout = window.setTimeout(() => {
+        const nextCenter = toMapCenter(value);
+        setCenter(nextCenter);
+        setQuery(value?.fullAddress ?? "");
+        setResults([]);
+        setFeedback(null);
+        setMapError(null);
+        setSelectedLocation(value ?? null);
+        mapRef.current?.setCenter(nextCenter);
+        mapRef.current?.setZoom(value ? 17 : 14);
+      }, 0);
+      return () => window.clearTimeout(timeout);
     }
 
     mapRef.current = null;
@@ -350,9 +352,11 @@ export function EventLocationPicker({ disabled, onChange, value }: Props) {
 
     const normalizedQuery = query.trim();
     if (normalizedQuery.length < 3) {
-      setResults([]);
-      setFeedback(null);
-      return;
+      const timeout = window.setTimeout(() => {
+        setResults([]);
+        setFeedback(null);
+      }, 0);
+      return () => window.clearTimeout(timeout);
     }
 
     const timeout = window.setTimeout(() => {
@@ -466,7 +470,7 @@ export function EventLocationPicker({ disabled, onChange, value }: Props) {
             </Button>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Selecciona una direccion desde Google Maps.</p>
+          <p className="text-sm text-muted-foreground">Selecciona una direccion.</p>
         )}
       </div>
 

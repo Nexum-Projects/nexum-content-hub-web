@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, ImagePlus, MapPin, Pencil, Star } from "lucide-react";
+import { ArrowLeft, CalendarDays, ExternalLink, ImagePlus, MapPin, Pencil, Star } from "lucide-react";
 
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 import { getEventDetail } from "@/app/actions/content/get-resource-detail";
@@ -13,6 +13,10 @@ import { formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
 import { humanizeEventStatus } from "@/utils/helpers/humanize-enum";
 import { sanitizeHtmlForDisplay } from "@/utils/helpers/sanitize-html-display";
 
+function googleMapsHref(latitude: number, longitude: number) {
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
 export default async function EventDetailPage({ params }: { params: Promise<{ projectId: string; eventId: string }> }) {
   const { projectId, eventId } = await params;
   const res = await getEventDetail(projectId, eventId);
@@ -23,6 +27,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
   const previewHtml =
     sanitizeHtmlForDisplay(e.description) || "<p>Descripcion breve del evento.</p>";
   const statusLabel = humanizeEventStatus(e.status ?? "ACTIVE");
+  const hasMapLocation = typeof e.location?.latitude === "number" && typeof e.location?.longitude === "number";
+  const mapHref = hasMapLocation ? googleMapsHref(Number(e.location?.latitude), Number(e.location?.longitude)) : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -132,6 +138,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ pr
               <div className="md:col-span-2">
                 <p className="text-sm font-medium text-muted-foreground">Ubicacion</p>
                 <p className="mt-1 text-sm">{e.location?.fullAddress?.trim() || "—"}</p>
+                {mapHref ? (
+                  <Button asChild className="mt-3 rounded-lg" variant="outline">
+                    <a href={mapHref} rel="noopener noreferrer" target="_blank">
+                      <ExternalLink className="h-4 w-4" />
+                      Abrir en Google Maps
+                    </a>
+                  </Button>
+                ) : null}
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Capacidad / cupo</p>

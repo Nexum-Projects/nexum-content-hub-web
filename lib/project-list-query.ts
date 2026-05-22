@@ -244,6 +244,21 @@ export function parseOpeningHourListQuery(raw: RawSearchParams) {
   };
 }
 
+export const LOCATION_SORT_FIELDS = ["title", "fullAddress", "sortOrder", "createdAt", "updatedAt"] as const;
+export type LocationSortField = (typeof LOCATION_SORT_FIELDS)[number];
+
+export function parseLocationListQuery(raw: RawSearchParams) {
+  const rawOrder = spFirst(raw, "order");
+  return {
+    page: parsePositiveInt(spFirst(raw, "page"), 1),
+    limit: coerceListLimit(spFirst(raw, "limit")),
+    query: (spFirst(raw, "query") ?? "").trim() || undefined,
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), LOCATION_SORT_FIELDS, "sortOrder"),
+    order: rawOrder ? parseOrder(rawOrder) : "ASC",
+    publish: parsePublishFilter(raw),
+  };
+}
+
 export type ListRequestParams = {
   pagination: boolean;
   page: number;

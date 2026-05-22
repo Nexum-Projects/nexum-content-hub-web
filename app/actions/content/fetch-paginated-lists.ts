@@ -4,7 +4,17 @@ import { isAxiosError } from "axios";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
-import type { ActionButton, Award, Banner, DataResponse, EventItem, MediaItem, MenuProduct, OpeningHour } from "./types";
+import type {
+  ActionButton,
+  Award,
+  Banner,
+  DataResponse,
+  EventItem,
+  MediaItem,
+  MenuProduct,
+  OpeningHour,
+  ProjectLocation,
+} from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 import type { AwardScopeFilter, EventWhenFilter, ProductTypeFilter, PublishFilter } from "@/lib/project-list-query";
@@ -13,6 +23,7 @@ import {
   parseAwardListQuery,
   parseBannerListQuery,
   parseEventListQuery,
+  parseLocationListQuery,
   parseMediaListQuery,
   parseMenuProductListQuery,
   parseOpeningHourListQuery,
@@ -138,6 +149,18 @@ export async function fetchMediaForReorder(projectId: string): ActionResponse<Me
 export async function fetchActionButtonsForReorder(projectId: string): ActionResponse<ActionButton[]> {
   try {
     const items = await getAllSorted<ActionButton>(`/admin/projects/${projectId}/action-buttons`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchLocationsForReorder(projectId: string): ActionResponse<ProjectLocation[]> {
+  try {
+    const items = await getAllSorted<ProjectLocation>(`/admin/projects/${projectId}/locations`, {
       order: "ASC",
       orderBy: "sortOrder",
     });
@@ -435,6 +458,26 @@ export async function fetchOpeningHoursPage(
       ...(parsed.publish === "draft" ? { isPublished: false } : {}),
     };
     const { items, meta } = await getPage<OpeningHour>(url, params);
+    return { status: "success", data: { items, meta } };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchLocationsPage(
+  projectId: string,
+  rawSearchParams: RawSearchParams,
+): ActionResponse<PaginatedPayload<ProjectLocation>> {
+  const parsed = parseLocationListQuery(rawSearchParams);
+  const url = `/admin/projects/${projectId}/locations`;
+
+  try {
+    const params = {
+      ...toListRequestParams(parsed),
+      ...(parsed.publish === "published" ? { isPublished: true } : {}),
+      ...(parsed.publish === "draft" ? { isPublished: false } : {}),
+    };
+    const { items, meta } = await getPage<ProjectLocation>(url, params);
     return { status: "success", data: { items, meta } };
   } catch (error) {
     return catchListError(error);

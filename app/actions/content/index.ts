@@ -41,6 +41,8 @@ export {
   fetchBannersPage,
   fetchEventsForReorder,
   fetchEventsPage,
+  fetchLocationsForReorder,
+  fetchLocationsPage,
   fetchMediaForReorder,
   fetchMediaPage,
   fetchMenuProductsForReorder,
@@ -63,6 +65,13 @@ export {
   updateOpeningHour,
 } from "./opening-hours";
 export {
+  createLocationFromForm,
+  deactivateLocation,
+  publishLocation,
+  unpublishLocation,
+  updateLocationFromForm,
+} from "./locations";
+export {
   assertCanViewProjectMembers,
   canViewProjectMembers,
 } from "./can-view-project-members";
@@ -70,13 +79,22 @@ export {
   getAwardDetail,
   getBannerDetail,
   getEventDetail,
+  getLocationDetail,
   getMenuProductDetail,
   getProjectMemberDetail,
   getUserDetail,
 } from "./get-resource-detail";
 export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
-export { reorderActionButtons, reorderAwards, reorderBanners, reorderEvents, reorderMedia, reorderMenuProducts } from "./reorder";
+export {
+  reorderActionButtons,
+  reorderAwards,
+  reorderBanners,
+  reorderEvents,
+  reorderLocations,
+  reorderMedia,
+  reorderMenuProducts,
+} from "./reorder";
 export { getDashboardData, getProjectContent, getProjectDashboardSummary, getProjectMembers, getProjectSummary, getProjects, getUsers };
 export type { ProjectDashboardSummary } from "./get-project-dashboard-summary";
 export type { ProjectSummary } from "./get-project-summary";
@@ -92,6 +110,7 @@ export type {
   MenuProduct,
   OpeningHour,
   Project,
+  ProjectLocation,
   ProjectMember,
   User,
 } from "./types";

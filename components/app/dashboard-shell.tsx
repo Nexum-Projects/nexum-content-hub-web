@@ -15,6 +15,7 @@ import {
   ImageIcon,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
   Moon,
   MousePointerClick,
@@ -389,6 +390,7 @@ export function DashboardShell({
       { label: "Eventos", href: `${base}/events`, icon: FolderKanban },
       { label: "Logros / Premios", href: `${base}/awards`, icon: Trophy },
       { label: "Medios", href: `${base}/media`, icon: Package },
+      { label: "Ubicaciones", href: `${base}/locations`, icon: MapPin },
       { label: "Horario de atencion", href: `${base}/opening-hours`, icon: Clock },
       { label: "Botones de accion", href: `${base}/action-buttons`, icon: MousePointerClick },
     ];

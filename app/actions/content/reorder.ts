@@ -108,3 +108,14 @@ export async function reorderActionButtons(projectId: string, items: ReorderItem
 
   return result;
 }
+
+export async function reorderLocations(projectId: string, items: ReorderItem[]): ActionResponse<null> {
+  const result = await reorder(`/admin/projects/${projectId}/locations/reorder`, items);
+
+  if (result.status === "success") {
+    revalidatePath(`/dashboard/projects/${projectId}/locations`);
+    revalidatePath(`/dashboard/projects/${projectId}/locations/order`);
+  }
+
+  return result;
+}

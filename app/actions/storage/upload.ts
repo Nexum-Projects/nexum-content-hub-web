@@ -4,7 +4,7 @@ import { getSupabaseEnv } from "@/utils/env";
 import { normalizeText } from "@/utils/helpers/normalize-text";
 import { createAdminClient } from "@/utils/supabase/admin";
 
-type StorageFolder = "BANNERS" | "PRODUCTS" | "EVENTS" | "AWARDS" | "PROJECTS" | "MEDIA" | "USERS";
+type StorageFolder = "BANNERS" | "PRODUCTS" | "EVENTS" | "AWARDS" | "PROJECTS" | "MEDIA" | "USERS" | "LOCATIONS";
 const STORAGE_ROOT_FOLDER = "nexum-content-hub";
 
 type UploadParams = {
