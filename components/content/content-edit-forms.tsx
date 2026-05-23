@@ -370,7 +370,7 @@ function PreviewCard({
   const html = sanitizeHtml(description);
 
   return (
-    <Card className="sticky top-24 rounded-xl border shadow-sm">
+    <Card className="sticky top-24 h-fit self-start rounded-xl border shadow-sm">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -481,7 +481,7 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <HeaderActions backHref={detailHref} title="Banners / Editar banner" />
-      <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <Card className="rounded-xl border shadow-sm">
             <CardHeader>
@@ -1123,7 +1123,7 @@ function ContentEntityForm<T extends CommonEditValues>({
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <HeaderActions backHref={detailHref} title={titleText} />
-      <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
+      <form className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_480px]" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <Card className="rounded-xl border shadow-sm">
             <CardHeader>
