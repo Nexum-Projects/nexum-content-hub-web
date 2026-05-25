@@ -1,6 +1,7 @@
+import type { ActionButtonType } from "@/lib/action-button-type";
 import type { MenuProductType } from "@/lib/menu-product-type";
 
-export type { MenuProductType };
+export type { ActionButtonType, MenuProductType };
 
 export type Project = {
   id: string;
@@ -146,7 +147,7 @@ export type MediaItem = {
 export type ActionButton = {
   id: string;
   projectId?: string;
-  type: "INSTAGRAM" | "FACEBOOK" | "EMAIL" | "UBER" | "WAZE";
+  type: ActionButtonType;
   value: string;
   sortOrder?: number;
   isActive?: boolean;

@@ -37,13 +37,16 @@ import { publishBadge } from "@/components/resource-lists/entity-badges";
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { ListPaginationFooter } from "@/components/resource-lists/list-pagination-footer";
 import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filters-sheet";
+import {
+  ACTION_BUTTON_TYPES,
+  DEFAULT_ACTION_BUTTON_TYPE,
+  humanizeActionButtonType,
+} from "@/lib/action-button-type";
 import { ACTION_BUTTON_SORT_FIELDS } from "@/lib/project-list-query";
 import { cn } from "@/lib/utils";
-import { humanizeActionButtonType } from "@/utils/helpers/humanize-enum";
 import { SortHeaderButton } from "./sort-header-button";
 import { useProjectListNavigation } from "./use-project-list-navigation";
 
-const ACTION_BUTTON_TYPES: ActionButton["type"][] = ["INSTAGRAM", "FACEBOOK", "EMAIL", "UBER", "WAZE"];
 const DEFAULT_ORDER_BY = "sortOrder";
 
 type FormState = {
@@ -53,7 +56,7 @@ type FormState = {
 };
 
 const EMPTY_FORM: FormState = {
-  type: "INSTAGRAM",
+  type: DEFAULT_ACTION_BUTTON_TYPE,
   value: "",
   isPublished: false,
 };
@@ -305,7 +308,7 @@ export function ActionButtonsListClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? "Editar boton de accion" : "Nuevo boton de accion"}</DialogTitle>
-            <DialogDescription>Configura accesos rapidos como redes sociales, correo o navegacion.</DialogDescription>
+            <DialogDescription>Configura accesos rapidos a redes sociales, WhatsApp o correo.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

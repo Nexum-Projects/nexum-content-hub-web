@@ -25,6 +25,7 @@ export function parsePublishFilter(raw: RawSearchParams, key = "pub"): PublishFi
   return "all";
 }
 
+import { isActionButtonType, type ActionButtonType } from "@/lib/action-button-type";
 import { isMenuProductType, type MenuProductType } from "@/lib/menu-product-type";
 
 /** Productos: `ptype` all | MenuProductType */
@@ -177,12 +178,12 @@ export function parseMediaListQuery(raw: RawSearchParams) {
   };
 }
 
-/** Botones de accion: `atype` all | INSTAGRAM | FACEBOOK | EMAIL | UBER | WAZE */
-export type ActionButtonTypeFilter = "all" | "INSTAGRAM" | "FACEBOOK" | "EMAIL" | "UBER" | "WAZE";
+/** Botones de accion: `atype` all | ActionButtonType */
+export type ActionButtonTypeFilter = "all" | ActionButtonType;
 
 export function parseActionButtonTypeFilter(raw: RawSearchParams): ActionButtonTypeFilter {
   const v = spFirst(raw, "atype")?.toUpperCase();
-  if (v === "INSTAGRAM" || v === "FACEBOOK" || v === "EMAIL" || v === "UBER" || v === "WAZE") {
+  if (isActionButtonType(v)) {
     return v;
   }
   return "all";

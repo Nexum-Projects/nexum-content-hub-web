@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { ActionButton } from "@/app/actions/content";
 import { reorderActionButtons } from "@/app/actions/content";
 import { Badge } from "@/components/ui/badge";
-import { humanizeActionButtonType } from "@/utils/helpers/humanize-enum";
+import { humanizeActionButtonType } from "@/lib/action-button-type";
 import { ReorderableList } from "./reorderable-list";
 
 export function ActionButtonsReorderClient({ items, projectId }: { items: ActionButton[]; projectId: string }) {

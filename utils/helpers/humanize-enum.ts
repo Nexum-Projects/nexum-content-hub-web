@@ -20,21 +20,15 @@ const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
   FINISHED: "Finalizado",
 };
 
+export type { ActionButtonType } from "@/lib/action-button-type";
+export { humanizeActionButtonType } from "@/lib/action-button-type";
+
 export type BannerButtonVariant = "PRIMARY" | "SECONDARY";
-export type ActionButtonType = "INSTAGRAM" | "FACEBOOK" | "EMAIL" | "UBER" | "WAZE";
 export type WeekDay = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
 
 const BANNER_BUTTON_VARIANT_LABELS: Record<BannerButtonVariant, string> = {
   PRIMARY: "Principal",
   SECONDARY: "Secundario",
-};
-
-const ACTION_BUTTON_TYPE_LABELS: Record<ActionButtonType, string> = {
-  INSTAGRAM: "Instagram",
-  FACEBOOK: "Facebook",
-  EMAIL: "Correo",
-  UBER: "Uber",
-  WAZE: "Waze",
 };
 
 const WEEK_DAY_LABELS: Record<WeekDay, string> = {
@@ -71,13 +65,6 @@ export function humanizeEventStatus(status: string | null | undefined): string {
 export function humanizeBannerButtonVariant(variant: string | null | undefined): string {
   const key = (variant ?? "PRIMARY") as BannerButtonVariant;
   return BANNER_BUTTON_VARIANT_LABELS[key] ?? String(variant ?? "PRIMARY");
-}
-
-export function humanizeActionButtonType(type: string | null | undefined): string {
-  if (!type) {
-    return "Sin tipo";
-  }
-  return ACTION_BUTTON_TYPE_LABELS[type as ActionButtonType] ?? type;
 }
 
 export function humanizeWeekDay(day: string | null | undefined): string {
