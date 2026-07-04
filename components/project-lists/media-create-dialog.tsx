@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import Image from "next/image";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { createMediaFromForm } from "@/app/actions/content";
+import { ContentImageUpload } from "@/components/content/content-form-controls";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,69 +21,121 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/radix-select";
 import { Switch } from "@/components/ui/switch";
+import {
+  describeServerActionClientError,
+  MAX_SERVER_ACTION_IMAGE_BYTES,
+  MAX_SERVER_ACTION_IMAGE_LABEL,
+  validateImageFile,
+} from "@/lib/upload-limits";
 
 export function MediaCreateDialog({ projectId }: { projectId: string }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
+  const videoUrlRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"IMAGE" | "VIDEO">("IMAGE");
   const [isPublic, setIsPublic] = useState(true);
-  const [selectedImageName, setSelectedImageName] = useState<string | null>(null);
-  const [selectedImagePreviewUrl, setSelectedImagePreviewUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | undefined>();
+  const [imageError, setImageError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    return () => {
-      if (selectedImagePreviewUrl) {
-        URL.revokeObjectURL(selectedImagePreviewUrl);
-      }
-    };
-  }, [selectedImagePreviewUrl]);
 
   function reset() {
     setType("IMAGE");
     setIsPublic(true);
-    setSelectedImageName(null);
-    setSelectedImagePreviewUrl(null);
-    formRef.current?.reset();
+    setImageFile(undefined);
+    setImageError(undefined);
+    if (videoUrlRef.current) {
+      videoUrlRef.current.value = "";
+    }
   }
 
   function handleTypeChange(value: "IMAGE" | "VIDEO") {
     setType(value);
-    setSelectedImageName(null);
-    setSelectedImagePreviewUrl(null);
-    formRef.current?.reset();
+    setImageFile(undefined);
+    setImageError(undefined);
+    if (videoUrlRef.current) {
+      videoUrlRef.current.value = "";
+    }
+  }
+
+  function handleImageValidation(message: string | undefined) {
+    setImageError(message);
+    if (message) {
+      toast.error("Imagen no valida", { description: message });
+    }
   }
 
   function handleImageChange(file: File | undefined) {
-    setSelectedImageName(file?.name ?? null);
-    setSelectedImagePreviewUrl(file ? URL.createObjectURL(file) : null);
+    setImageFile(file);
+    if (!file) {
+      setImageError(undefined);
+    }
   }
 
-  function onSubmit(formData: FormData) {
-    formData.set("type", type);
-    if (isPublic) {
-      formData.set("isPublic", "on");
-    } else {
-      formData.delete("isPublic");
-    }
+  function submitForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    startTransition(async () => {
-      const result = await createMediaFromForm(projectId, formData);
-
-      if (result.status === "error") {
-        toast.error(result.errors[0]?.title ?? "No se pudo crear el medio", {
-          description: result.errors[0]?.message,
-        });
+    if (type === "IMAGE") {
+      if (!imageFile) {
+        const message = "Selecciona una imagen para subirla a la biblioteca.";
+        setImageError(message);
+        toast.error("Imagen requerida", { description: message });
         return;
       }
 
-      toast.success("Medio creado", {
-        description: type === "IMAGE" ? "La imagen ya esta disponible en la biblioteca." : "El video ya esta disponible en la biblioteca.",
+      const validationMessage = validateImageFile(imageFile, {
+        maxBytes: MAX_SERVER_ACTION_IMAGE_BYTES,
+        maxBytesLabel: MAX_SERVER_ACTION_IMAGE_LABEL,
       });
-      setOpen(false);
-      reset();
-      router.refresh();
+      if (validationMessage) {
+        setImageError(validationMessage);
+        toast.error("Imagen no valida", { description: validationMessage });
+        return;
+      }
+    }
+
+    const formData = new FormData();
+    formData.set("type", type);
+    if (isPublic) {
+      formData.set("isPublic", "on");
+    }
+
+    if (type === "IMAGE" && imageFile) {
+      formData.set("imageFile", imageFile);
+    } else {
+      const videoUrl = videoUrlRef.current?.value.trim();
+      if (!videoUrl) {
+        toast.error("URL requerida", { description: "Ingresa la URL del video." });
+        return;
+      }
+      formData.set("value", videoUrl);
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await createMediaFromForm(projectId, formData);
+
+        if (result.status === "error") {
+          toast.error(result.errors[0]?.title ?? "No se pudo crear el medio", {
+            description: result.errors[0]?.message,
+          });
+          return;
+        }
+
+        toast.success("Medio creado", {
+          description:
+            type === "IMAGE"
+              ? "La imagen ya esta disponible en la biblioteca."
+              : "El video ya esta disponible en la biblioteca.",
+        });
+        setOpen(false);
+        reset();
+        router.refresh();
+      } catch (error) {
+        console.error("[media-client] unexpected create error", error);
+        toast.error("No se pudo crear el medio", {
+          description: describeServerActionClientError(error),
+        });
+      }
     });
   }
 
@@ -111,7 +163,7 @@ export function MediaCreateDialog({ projectId }: { projectId: string }) {
           </DialogDescription>
         </DialogHeader>
 
-        <form action={onSubmit} className="space-y-5" ref={formRef}>
+        <form className="space-y-5" onSubmit={submitForm}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Tipo de medio</Label>
@@ -137,48 +189,28 @@ export function MediaCreateDialog({ projectId }: { projectId: string }) {
 
           {type === "IMAGE" ? (
             <div className="space-y-3">
-              <Label htmlFor="imageFile">Imagen</Label>
-              <label
-                className="grid min-h-44 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed bg-muted/20 text-center transition-colors hover:border-primary/60 hover:bg-muted/40"
-                htmlFor="imageFile"
-              >
-                {selectedImagePreviewUrl ? (
-                  <span className="grid w-full gap-3 p-3">
-                    <span className="relative block aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-                      <Image
-                        alt={selectedImageName ?? "Vista previa de la imagen seleccionada"}
-                        className="object-cover"
-                        fill
-                        sizes="(min-width: 640px) 512px, 100vw"
-                        src={selectedImagePreviewUrl}
-                        unoptimized
-                      />
-                    </span>
-                    <span className="block text-sm font-medium">{selectedImageName}</span>
-                    <span className="block text-xs text-muted-foreground">Haz clic para cambiar la imagen.</span>
-                  </span>
-                ) : (
-                  <span className="space-y-2 p-6">
-                    <ImagePlus className="mx-auto h-8 w-8 text-primary" />
-                    <span className="block text-sm font-medium">Selecciona una imagen desde tu equipo</span>
-                    <span className="block text-xs text-muted-foreground">JPG, PNG o WEBP. Maximo 5MB.</span>
-                  </span>
-                )}
-              </label>
-              <Input
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                id="imageFile"
-                name="imageFile"
-                onChange={(event) => handleImageChange(event.target.files?.[0])}
-                required={type === "IMAGE"}
-                type="file"
+              <div>
+                <Label>Imagen</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  En produccion el limite es {MAX_SERVER_ACTION_IMAGE_LABEL} para evitar errores al subir.
+                </p>
+              </div>
+              <ContentImageUpload
+                emptyLabel="Selecciona una imagen desde tu equipo"
+                error={imageError}
+                file={imageFile}
+                formatDescription={`JPG, PNG o WEBP · Maximo ${MAX_SERVER_ACTION_IMAGE_LABEL}`}
+                maxBytes={MAX_SERVER_ACTION_IMAGE_BYTES}
+                maxBytesLabel={MAX_SERVER_ACTION_IMAGE_LABEL}
+                onChange={handleImageChange}
+                onPreviewUrlChange={() => {}}
+                onValidationError={handleImageValidation}
               />
             </div>
           ) : (
             <div className="space-y-2">
               <Label htmlFor="value">URL del video</Label>
-              <Input id="value" name="value" placeholder="https://..." required type="url" />
+              <Input id="value" name="value" placeholder="https://..." ref={videoUrlRef} required type="url" />
               <p className="text-xs text-muted-foreground">Puede ser una URL publica de video o embed.</p>
             </div>
           )}
@@ -187,7 +219,7 @@ export function MediaCreateDialog({ projectId }: { projectId: string }) {
             <Button disabled={isPending} onClick={() => setOpen(false)} type="button" variant="outline">
               Cancelar
             </Button>
-            <Button disabled={isPending} type="submit">
+            <Button disabled={isPending || (type === "IMAGE" && Boolean(imageError))} type="submit">
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
               {isPending ? "Creando…" : "Crear medio"}
             </Button>
