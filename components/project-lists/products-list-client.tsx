@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/radix-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { featuredBadge, productTypeBadge, publishBadge } from "@/components/resource-lists/entity-badges";
+import { featuredBadge, productCategoryBadge, productTypeBadge, publishBadge } from "@/components/resource-lists/entity-badges";
 import { ListEmptyState } from "@/components/resource-lists/list-empty-state";
 import { ListPaginationFooter } from "@/components/resource-lists/list-pagination-footer";
 import { ListThumbnail, listPlaceholderGradientClass } from "@/components/resource-lists/list-thumbnail";
@@ -19,7 +19,13 @@ import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filte
 import { ResourceRowActions } from "@/components/resource-lists/resource-row-actions";
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { cn } from "@/lib/utils";
-import { MENU_PRODUCT_TYPE_LABELS, MENU_PRODUCT_TYPES } from "@/lib/menu-product-type";
+import {
+  MENU_PRODUCT_CATEGORIES,
+  MENU_PRODUCT_CATEGORY_LABELS,
+  MENU_PRODUCT_TYPE_LABELS,
+  MENU_PRODUCT_TYPES,
+  humanizeProductMeasurementUnit,
+} from "@/lib/menu-product-type";
 import { MENU_PRODUCT_SORT_FIELDS } from "@/lib/project-list-query";
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 
@@ -30,6 +36,13 @@ const DEFAULT_ORDER_BY = "sortOrder";
 
 function subtitle(p: MenuProduct) {
   return p.slug?.trim() || p.description?.replace(/<[^>]*>/g, " ").trim().slice(0, 90) || "Sin detalle";
+}
+
+function formatMeasurement(p: MenuProduct) {
+  if (typeof p.measurementValue !== "number" || !Number.isFinite(p.measurementValue) || !p.measurementUnit) {
+    return null;
+  }
+  return `${p.measurementValue} ${humanizeProductMeasurementUnit(p.measurementUnit)}`;
 }
 
 export function ProductsListClient({
@@ -51,6 +64,7 @@ export function ProductsListClient({
   const query = searchParams.get("query") ?? "";
   const pub = searchParams.get("pub") ?? "all";
   const ptype = searchParams.get("ptype") ?? "all";
+  const pcat = searchParams.get("pcat") ?? "all";
   const [searchDraft, setSearchDraft] = useState(query);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const caretRef = useRef<number | null>(null);
@@ -103,11 +117,12 @@ export function ProductsListClient({
   };
 
   const clearFilters = () => {
-    pushParams({ query: null, pub: null, ptype: null, page: "1" });
+    pushParams({ query: null, pub: null, ptype: null, pcat: null, page: "1" });
   };
 
-  const isFiltered = Boolean(query.trim()) || pub !== "all" || ptype !== "all";
-  const activeFiltersCount = (query.trim() ? 1 : 0) + (pub !== "all" ? 1 : 0) + (ptype !== "all" ? 1 : 0);
+  const isFiltered = Boolean(query.trim()) || pub !== "all" || ptype !== "all" || pcat !== "all";
+  const activeFiltersCount =
+    (query.trim() ? 1 : 0) + (pub !== "all" ? 1 : 0) + (ptype !== "all" ? 1 : 0) + (pcat !== "all" ? 1 : 0);
 
   if (!listError && meta.totalObjects === 0 && !isFiltered) {
     return (
@@ -175,6 +190,22 @@ export function ProductsListClient({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Categoria de menu</p>
+                <Select disabled={isPending} onValueChange={(v) => pushParams({ pcat: v === "all" ? null : v })} value={pcat}>
+                  <SelectTrigger className="h-9 rounded-lg text-sm">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {MENU_PRODUCT_CATEGORIES.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {MENU_PRODUCT_CATEGORY_LABELS[category]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </ResourceFiltersSheet>
         </div>
@@ -217,6 +248,7 @@ export function ProductsListClient({
                       onSort={handleSort}
                     />
                   </TableHead>
+                  <TableHead>Medida</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Destacado</TableHead>
                   <TableHead>
@@ -243,12 +275,15 @@ export function ProductsListClient({
               <TableBody>
                 {products.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={9}>
+                    <TableCell className="h-28 text-center text-muted-foreground" colSpan={10}>
                       Sin resultados con los filtros actuales.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  products.map((p) => (
+                  products.map((p) => {
+                    const measurementLabel = formatMeasurement(p);
+
+                    return (
                     <TableRow className="text-sm" key={p.id}>
                       <TableCell>
                         <ListThumbnail alt={p.name} seed={p.id} src={p.imageUrl} />
@@ -257,8 +292,14 @@ export function ProductsListClient({
                         <p className="font-medium text-foreground">{p.name}</p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{subtitle(p)}</p>
                       </TableCell>
-                      <TableCell>{productTypeBadge(p.type)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {productTypeBadge(p.type)}
+                          {productCategoryBadge(p.menuCategory)}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground tabular-nums">{formatPrice(p.priceCents)}</TableCell>
+                      <TableCell className="text-muted-foreground tabular-nums">{measurementLabel}</TableCell>
                       <TableCell>{publishBadge(p.isPublished)}</TableCell>
                       <TableCell>
                         {featuredBadge(p.isFeatured) ?? (
@@ -285,7 +326,8 @@ export function ProductsListClient({
                         />
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -295,7 +337,10 @@ export function ProductsListClient({
             {products.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Sin resultados.</p>
             ) : (
-              products.map((p) => (
+              products.map((p) => {
+                const measurementLabel = formatMeasurement(p);
+
+                return (
                 <Card className="rounded-xl border border-border bg-card p-4 shadow-sm" key={p.id}>
                   <div className="flex gap-3">
                     <ListThumbnail alt={p.name} seed={p.id} src={p.imageUrl} />
@@ -304,10 +349,12 @@ export function ProductsListClient({
                       <p className="line-clamp-2 text-xs text-muted-foreground">{subtitle(p)}</p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         {productTypeBadge(p.type)}
+                        {productCategoryBadge(p.menuCategory)}
                         {publishBadge(p.isPublished)}
                         {featuredBadge(p.isFeatured)}
                       </div>
                       <p className="text-xs text-muted-foreground">{formatPrice(p.priceCents)}</p>
+                      {measurementLabel ? <p className="text-xs text-muted-foreground">{measurementLabel}</p> : null}
                       <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 pt-1 text-[11px] text-muted-foreground">
                         <span>
                           <span className="font-medium text-foreground/80">Creación:</span>{" "}
@@ -334,7 +381,8 @@ export function ProductsListClient({
                     />
                   </div>
                 </Card>
-              ))
+                );
+              })
             )}
           </div>
         </TabsContent>
@@ -344,7 +392,10 @@ export function ProductsListClient({
             {products.length === 0 ? (
               <p className="col-span-full py-8 text-center text-sm text-muted-foreground">Sin resultados.</p>
             ) : (
-              products.map((p) => (
+              products.map((p) => {
+                const measurementLabel = formatMeasurement(p);
+
+                return (
                 <Card className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm" key={p.id}>
                   <div
                     className={cn(
@@ -363,10 +414,12 @@ export function ProductsListClient({
                     <p className="line-clamp-2 font-medium leading-snug">{p.name}</p>
                     <div className="flex flex-wrap gap-1">
                       {productTypeBadge(p.type)}
+                      {productCategoryBadge(p.menuCategory)}
                       {publishBadge(p.isPublished)}
                       {featuredBadge(p.isFeatured)}
                     </div>
                     <p className="text-sm text-muted-foreground">{formatPrice(p.priceCents)}</p>
+                    {measurementLabel ? <p className="text-sm text-muted-foreground">{measurementLabel}</p> : null}
                     <div className="grid grid-cols-1 gap-0.5 text-[11px] text-muted-foreground sm:grid-cols-2">
                       <span>
                         <span className="font-medium text-foreground/80">Creación:</span>{" "}
@@ -392,7 +445,8 @@ export function ProductsListClient({
                     </div>
                   </div>
                 </Card>
-              ))
+                );
+              })
             )}
           </div>
         </TabsContent>

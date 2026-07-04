@@ -6,7 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import type { MenuProduct } from "@/app/actions/content";
-import { humanizeMenuProductType } from "@/lib/menu-product-type";
+import { humanizeMenuProductCategory, humanizeMenuProductType } from "@/lib/menu-product-type";
 import { reorderMenuProducts } from "@/app/actions/content";
 import { Badge } from "@/components/ui/badge";
 import { ReorderableList } from "./reorderable-list";
@@ -62,6 +62,7 @@ export function ProductsReorderClient({ items, projectId }: { items: MenuProduct
               <p className="truncate text-sm font-medium">{item.name}</p>
               <Badge variant={item.isPublished ? "success" : "warning"}>{item.isPublished ? "Publicado" : "Borrador"}</Badge>
               <Badge variant="secondary">{humanizeMenuProductType(item.type)}</Badge>
+              {item.menuCategory ? <Badge variant="outline">{humanizeMenuProductCategory(item.menuCategory)}</Badge> : null}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Posicion actual: {position}</p>
           </div>

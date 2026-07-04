@@ -4,11 +4,12 @@ import { ArrowLeft, ImagePlus, Pencil, Star } from "lucide-react";
 
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 import { getMenuProductDetail } from "@/app/actions/content/get-resource-detail";
-import { featuredBadge, productTypeBadge, publishBadge } from "@/components/resource-lists/entity-badges";
+import { featuredBadge, productCategoryBadge, productTypeBadge, publishBadge } from "@/components/resource-lists/entity-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTimeGuatemala } from "@/lib/datetime-guatemala";
+import { humanizeProductMeasurementUnit } from "@/lib/menu-product-type";
 import { sanitizeHtmlForDisplay } from "@/utils/helpers/sanitize-html-display";
 
 export default async function ProductDetailPage({
@@ -26,6 +27,10 @@ export default async function ProductDetailPage({
     sanitizeHtmlForDisplay(p.description) || "<p>Descripcion breve del producto.</p>";
   const priceLabel = formatPrice(p.priceCents);
   const priceDefined = p.priceCents != null && Number.isFinite(p.priceCents);
+  const measurementLabel =
+    typeof p.measurementValue === "number" && Number.isFinite(p.measurementValue) && p.measurementUnit
+      ? `${p.measurementValue} ${humanizeProductMeasurementUnit(p.measurementUnit)}`
+      : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -83,6 +88,7 @@ export default async function ProductDetailPage({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {productTypeBadge(p.type)}
+                {productCategoryBadge(p.menuCategory)}
                 {publishBadge(p.isPublished)}
                 {featuredBadge(p.isFeatured)}
               </div>
@@ -96,6 +102,12 @@ export default async function ProductDetailPage({
                   {priceLabel}
                 </p>
               </div>
+              {measurementLabel ? (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Medida</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{measurementLabel}</p>
+                </div>
+              ) : null}
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Descripcion</p>
                 {sanitizeHtmlForDisplay(p.description) ? (
@@ -185,6 +197,7 @@ export default async function ProductDetailPage({
                 <div className="space-y-3 p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     {productTypeBadge(p.type)}
+                    {productCategoryBadge(p.menuCategory)}
                     {publishBadge(p.isPublished)}
                   </div>
                   <div>
@@ -201,6 +214,7 @@ export default async function ProductDetailPage({
                   >
                     {priceLabel}
                   </p>
+                  {measurementLabel ? <p className="text-sm text-muted-foreground">{measurementLabel}</p> : null}
                 </div>
               </div>
             </CardContent>

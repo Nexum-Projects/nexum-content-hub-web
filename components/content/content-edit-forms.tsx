@@ -21,8 +21,12 @@ import { z } from "zod";
 
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
+  humanizeMenuProductCategory,
   humanizeMenuProductType,
+  humanizeProductMeasurementUnit,
+  MENU_PRODUCT_CATEGORIES,
   MENU_PRODUCT_TYPES,
+  PRODUCT_MEASUREMENT_UNITS,
 } from "@/lib/menu-product-type";
 
 import {
@@ -101,6 +105,14 @@ const productEditSchema = z.object({
   description: z.string().optional(),
   imageFile: optionalImageFile,
   type: z.enum(MENU_PRODUCT_TYPES),
+  menuCategory: z.enum(MENU_PRODUCT_CATEGORIES).optional(),
+  hasMeasurement: z.boolean(),
+  measurementValue: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^\d+(\.\d{1,2})?$/.test(value), "Usa una cantidad valida, por ejemplo 340."),
+  measurementUnit: z.enum(PRODUCT_MEASUREMENT_UNITS).optional(),
   hasPrice: z.boolean(),
   price: z
     .string()
@@ -116,6 +128,29 @@ const productEditSchema = z.object({
       message: "Ingresa el precio o desactiva la opcion.",
       path: ["price"],
     });
+  }
+  if (value.type === "MENU_ITEM" && !value.menuCategory) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Selecciona la categoria del menu.",
+      path: ["menuCategory"],
+    });
+  }
+  if (value.hasMeasurement) {
+    if (!value.measurementValue?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Ingresa la cantidad o desactiva la opcion.",
+        path: ["measurementValue"],
+      });
+    }
+    if (!value.measurementUnit) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona la unidad de medida.",
+        path: ["measurementUnit"],
+      });
+    }
   }
 });
 
@@ -629,6 +664,10 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       description: product.description ?? "",
       imageFile: undefined,
       type: product.type ?? DEFAULT_MENU_PRODUCT_TYPE,
+      menuCategory: product.menuCategory ?? "HOT_DRINKS",
+      hasMeasurement: typeof product.measurementValue === "number",
+      measurementValue: typeof product.measurementValue === "number" ? String(product.measurementValue) : "",
+      measurementUnit: product.measurementUnit ?? "GRAMS",
       hasPrice: typeof product.priceCents === "number",
       price: priceFromCents(product.priceCents),
       isPublished: Boolean(product.isPublished),
@@ -645,12 +684,27 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
     }
   }, [form, values.hasPrice]);
 
+  useEffect(() => {
+    if (!values.hasMeasurement) {
+      form.setValue("measurementValue", "", { shouldDirty: false, shouldValidate: true });
+    }
+  }, [form, values.hasMeasurement]);
+
   async function onSubmit(data: ProductEditValues) {
     const formData = new FormData();
     formData.append("name", data.name);
     appendOptional(formData, "description", data.description);
     appendImage(formData, data.imageFile, product.imageUrl);
     formData.append("type", data.type);
+    if (data.type === "MENU_ITEM" && data.menuCategory) {
+      formData.append("menuCategory", data.menuCategory);
+    }
+    if (data.hasMeasurement) {
+      appendOptional(formData, "measurementValue", data.measurementValue);
+      if (data.measurementUnit) {
+        formData.append("measurementUnit", data.measurementUnit);
+      }
+    }
     if (data.hasPrice) {
       appendOptional(formData, "price", data.price);
     }
@@ -700,6 +754,60 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
               </option>
             ))}
           </Select>
+        </div>
+        {values.type === "MENU_ITEM" ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Categoria del menu</label>
+            <Select {...form.register("menuCategory")}>
+              {MENU_PRODUCT_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {humanizeMenuProductCategory(category)}
+                </option>
+              ))}
+            </Select>
+            <FieldError message={form.formState.errors.menuCategory?.message} />
+          </div>
+        ) : null}
+        <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
+          <Controller
+            control={form.control}
+            name="hasMeasurement"
+            render={({ field }) => (
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Definir medida o cantidad</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Usalo para bolsas de cafe, unidades o presentaciones con medida.
+                  </p>
+                </div>
+                <Switch checked={field.value} disabled={form.formState.isSubmitting} onClick={() => field.onChange(!field.value)} type="button" />
+              </div>
+            )}
+          />
+          {values.hasMeasurement ? (
+            <div className="grid gap-3 pt-1 sm:grid-cols-[1fr_160px]">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Cantidad</label>
+                <Input inputMode="decimal" placeholder="Ej. 340" {...form.register("measurementValue")} />
+                <FieldError message={form.formState.errors.measurementValue?.message} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Unidad</label>
+                <Select {...form.register("measurementUnit")}>
+                  {PRODUCT_MEASUREMENT_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {humanizeProductMeasurementUnit(unit)}
+                    </option>
+                  ))}
+                </Select>
+                <FieldError message={form.formState.errors.measurementUnit?.message} />
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Se guardara sin medida o presentacion definida.
+            </p>
+          )}
         </div>
         <div className="space-y-3 rounded-xl border p-4 md:col-span-2">
           <Controller

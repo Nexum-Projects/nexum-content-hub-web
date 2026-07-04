@@ -1,7 +1,7 @@
 import type { ActionButtonType } from "@/lib/action-button-type";
-import type { MenuProductType } from "@/lib/menu-product-type";
+import type { MenuProductCategory, MenuProductType, ProductMeasurementUnit } from "@/lib/menu-product-type";
 
-export type { ActionButtonType, MenuProductType };
+export type { ActionButtonType, MenuProductCategory, MenuProductType, ProductMeasurementUnit };
 
 export type Project = {
   id: string;
@@ -76,6 +76,9 @@ export type MenuProduct = {
   description?: string | null;
   imageUrl?: string | null;
   type: MenuProductType;
+  menuCategory?: MenuProductCategory | null;
+  measurementValue?: number | null;
+  measurementUnit?: ProductMeasurementUnit | null;
   priceCents?: number | null;
   isAvailable?: boolean;
   isActive?: boolean;

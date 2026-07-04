@@ -14,8 +14,8 @@ export const fallbackBanners: Banner[] = [
 ];
 
 export const fallbackProducts: MenuProduct[] = [
-  { id: "1", name: "Latte Vainilla", type: "HOT_DRINKS", description: "Espuma cremosa y vainilla natural.", priceCents: 3000, isPublished: true, isAvailable: true, isFeatured: true },
-  { id: "2", name: "Croissant de almendra", type: "PLATES", description: "Horneado del dia.", priceCents: 2200, isPublished: true, isAvailable: true },
+  { id: "1", name: "Latte Vainilla", type: "MENU_ITEM", menuCategory: "HOT_DRINKS", description: "Espuma cremosa y vainilla natural.", priceCents: 3000, isPublished: true, isAvailable: true, isFeatured: true },
+  { id: "2", name: "Bolsa de cafe", type: "PACKAGED_COFFEE", measurementValue: 340, measurementUnit: "GRAMS", description: "Cafe de origen para preparar en casa.", priceCents: 9500, isPublished: true, isAvailable: true },
 ];
 
 export const fallbackEvents: EventItem[] = [

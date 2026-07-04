@@ -17,7 +17,7 @@ import type {
 } from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
-import type { AwardScopeFilter, EventWhenFilter, ProductTypeFilter, PublishFilter } from "@/lib/project-list-query";
+import type { AwardScopeFilter, EventWhenFilter, ProductCategoryFilter, ProductTypeFilter, PublishFilter } from "@/lib/project-list-query";
 import {
   parseActionButtonListQuery,
   parseAwardListQuery,
@@ -184,6 +184,7 @@ function filterProductsList(
   list: MenuProduct[],
   publish: PublishFilter,
   productType: ProductTypeFilter,
+  productCategory: ProductCategoryFilter,
 ): MenuProduct[] {
   let r = list;
   if (publish === "published") {
@@ -193,6 +194,9 @@ function filterProductsList(
   }
   if (productType !== "all") {
     r = r.filter((p) => p.type === productType);
+  }
+  if (productCategory !== "all") {
+    r = r.filter((p) => p.menuCategory === productCategory);
   }
   return r;
 }
@@ -313,7 +317,7 @@ export async function fetchMenuProductsPage(
   const url = `/admin/projects/${projectId}/menu-products`;
 
   try {
-    const clientFilter = parsed.publish !== "all" || parsed.productType !== "all";
+    const clientFilter = parsed.publish !== "all" || parsed.productType !== "all" || parsed.productCategory !== "all";
 
     if (!clientFilter) {
       const params = toListRequestParams(parsed);
@@ -326,7 +330,7 @@ export async function fetchMenuProductsPage(
       orderBy: parsed.orderBy,
       order: parsed.order,
     });
-    const filtered = filterProductsList(all, parsed.publish, parsed.productType);
+    const filtered = filterProductsList(all, parsed.publish, parsed.productType, parsed.productCategory);
     const { items, meta } = paginateInMemory(filtered, parsed.page, parsed.limit);
     return { status: "success", data: { items, meta } };
   } catch (error) {

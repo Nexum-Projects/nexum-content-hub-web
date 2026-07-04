@@ -36,8 +36,12 @@ import { z } from "zod";
 
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
+  humanizeMenuProductCategory,
   humanizeMenuProductType,
+  humanizeProductMeasurementUnit,
+  MENU_PRODUCT_CATEGORIES,
   MENU_PRODUCT_TYPES,
+  PRODUCT_MEASUREMENT_UNITS,
 } from "@/lib/menu-product-type";
 
 import { createProductFromForm } from "@/app/actions/content";
@@ -68,6 +72,11 @@ const optionalPriceGtq = z
   .transform(normalizeOptionalFiniteNumber)
   .pipe(z.number().min(0, "El precio no puede ser negativo").optional());
 
+const optionalMeasurementValue = z
+  .unknown()
+  .transform(normalizeOptionalFiniteNumber)
+  .pipe(z.number().min(0, "La cantidad no puede ser negativa").optional());
+
 const productSchema = z
   .object({
     name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
@@ -77,6 +86,10 @@ const productSchema = z
       .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
       .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
     type: z.enum(MENU_PRODUCT_TYPES),
+    menuCategory: z.enum(MENU_PRODUCT_CATEGORIES).optional(),
+    hasMeasurement: z.boolean(),
+    measurementValue: optionalMeasurementValue,
+    measurementUnit: z.enum(PRODUCT_MEASUREMENT_UNITS).optional(),
     hasPrice: z.boolean(),
     price: optionalPriceGtq,
     isPublished: z.boolean(),
@@ -92,6 +105,29 @@ const productSchema = z
         });
       }
     }
+    if (data.type === "MENU_ITEM" && !data.menuCategory) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona la categoria del menu.",
+        path: ["menuCategory"],
+      });
+    }
+    if (data.hasMeasurement) {
+      if (typeof data.measurementValue !== "number" || !Number.isFinite(data.measurementValue)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Ingresa la cantidad o desactiva la opcion.",
+          path: ["measurementValue"],
+        });
+      }
+      if (!data.measurementUnit) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Selecciona la unidad de medida.",
+          path: ["measurementUnit"],
+        });
+      }
+    }
   });
 
 type ProductFormValues = {
@@ -99,6 +135,10 @@ type ProductFormValues = {
   description?: string;
   imageFile: File;
   type: (typeof MENU_PRODUCT_TYPES)[number];
+  menuCategory?: (typeof MENU_PRODUCT_CATEGORIES)[number];
+  hasMeasurement: boolean;
+  measurementValue?: number;
+  measurementUnit?: (typeof PRODUCT_MEASUREMENT_UNITS)[number];
   hasPrice: boolean;
   price?: number;
   isPublished: boolean;
@@ -484,6 +524,10 @@ export function ProductForm({ projectId }: { projectId: string }) {
       name: "",
       description: "",
       type: DEFAULT_MENU_PRODUCT_TYPE,
+      menuCategory: "HOT_DRINKS",
+      hasMeasurement: false,
+      measurementValue: undefined,
+      measurementUnit: "GRAMS",
       hasPrice: false,
       price: undefined,
       isPublished: false,
@@ -496,12 +540,23 @@ export function ProductForm({ projectId }: { projectId: string }) {
   const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del producto.</p>";
   const productStatus = values.isPublished ? "Publicado" : "Borrador";
   const productType = humanizeMenuProductType(values.type);
+  const productCategory = values.type === "MENU_ITEM" ? humanizeMenuProductCategory(values.menuCategory) : null;
+  const measurementLabel =
+    values.hasMeasurement && typeof values.measurementValue === "number" && values.measurementUnit
+      ? `${values.measurementValue} ${humanizeProductMeasurementUnit(values.measurementUnit)}`
+      : null;
 
   useEffect(() => {
     if (values.hasPrice === false) {
       setValue("price", undefined, { shouldValidate: true });
     }
   }, [values.hasPrice, setValue]);
+
+  useEffect(() => {
+    if (values.hasMeasurement === false) {
+      setValue("measurementValue", undefined, { shouldValidate: true });
+    }
+  }, [values.hasMeasurement, setValue]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -528,6 +583,11 @@ export function ProductForm({ projectId }: { projectId: string }) {
     formData.append("description", data.description ?? "");
     formData.append("imageFile", data.imageFile);
     formData.append("type", data.type);
+    if (data.type === "MENU_ITEM" && data.menuCategory) formData.append("menuCategory", data.menuCategory);
+    if (data.hasMeasurement && typeof data.measurementValue === "number") {
+      formData.append("measurementValue", String(data.measurementValue));
+    }
+    if (data.hasMeasurement && data.measurementUnit) formData.append("measurementUnit", data.measurementUnit);
     if (data.hasPrice && typeof data.price === "number") formData.append("price", String(data.price));
     if (data.isPublished) formData.append("isPublished", "on");
     if (data.isFeatured) formData.append("isFeatured", "on");
@@ -603,6 +663,77 @@ export function ProductForm({ projectId }: { projectId: string }) {
                     </option>
                   ))}
                 </Select>
+              </div>
+
+              {values.type === "MENU_ITEM" ? (
+                <div className="max-w-xs space-y-2">
+                  <label className="text-sm font-medium" htmlFor="menuCategory">
+                    Categoria del menu
+                  </label>
+                  <Select id="menuCategory" {...register("menuCategory")}>
+                    {MENU_PRODUCT_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {humanizeMenuProductCategory(category)}
+                      </option>
+                    ))}
+                  </Select>
+                  <FieldError message={errors.menuCategory?.message} />
+                </div>
+              ) : null}
+
+              <div className="space-y-3 rounded-xl border p-4">
+                <Controller
+                  control={control}
+                  name="hasMeasurement"
+                  render={({ field }) => (
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">Definir medida o cantidad</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Usalo para bolsas de cafe, unidades o presentaciones con medida.
+                        </p>
+                      </div>
+                      <Switch checked={field.value} onClick={() => field.onChange(!field.value)} type="button" />
+                    </div>
+                  )}
+                />
+                {values.hasMeasurement ? (
+                  <div className="grid gap-3 pt-1 sm:grid-cols-[1fr_160px]">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="measurementValue">
+                        Cantidad
+                      </label>
+                      <Input
+                        id="measurementValue"
+                        min="0"
+                        placeholder="Ej. 340"
+                        step="0.01"
+                        type="number"
+                        {...register("measurementValue", {
+                          setValueAs: (value) => {
+                            if (value === "") return undefined;
+                            const n = Number(value);
+                            return Number.isFinite(n) ? n : undefined;
+                          },
+                        })}
+                      />
+                      <FieldError message={errors.measurementValue?.message} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="measurementUnit">
+                        Unidad
+                      </label>
+                      <Select id="measurementUnit" {...register("measurementUnit")}>
+                        {PRODUCT_MEASUREMENT_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {humanizeProductMeasurementUnit(unit)}
+                          </option>
+                        ))}
+                      </Select>
+                      <FieldError message={errors.measurementUnit?.message} />
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-3 rounded-xl border p-4">
@@ -754,6 +885,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
                 <div className="space-y-3 p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">{productType}</Badge>
+                    {productCategory ? <Badge variant="outline">{productCategory}</Badge> : null}
                     <Badge variant={values.isPublished ? "success" : "warning"}>{productStatus}</Badge>
                   </div>
                   <div>
@@ -773,6 +905,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
                   >
                     {values.hasPrice ? formatPrice(values.price) : "Sin precio"}
                   </p>
+                  {measurementLabel ? <p className="text-xs text-muted-foreground">{measurementLabel}</p> : null}
                 </div>
               </div>
 
