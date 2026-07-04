@@ -43,6 +43,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LOCATION_SORT_FIELDS } from "@/lib/project-list-query";
+import {
+  describeServerActionClientError,
+  MAX_SERVER_ACTION_IMAGE_BYTES,
+  MAX_SERVER_ACTION_IMAGE_LABEL,
+  validateImageFile,
+} from "@/lib/upload-limits";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_ORDER_BY = "sortOrder";
@@ -183,16 +189,31 @@ export function LocationsListClient({
       nextErrors.place = "Selecciona la ubicacion en el mapa.";
     }
     if (form.imageFile) {
-      const allowed = ["image/jpeg", "image/png", "image/webp"].includes(form.imageFile.type);
-      if (!allowed) {
-        nextErrors.imageFile = "La imagen debe ser JPG, PNG o WEBP.";
-      } else if (form.imageFile.size > 5 * 1024 * 1024) {
-        nextErrors.imageFile = "La imagen no debe superar 5MB.";
+      const imageError = validateImageFile(form.imageFile, {
+        maxBytes: MAX_SERVER_ACTION_IMAGE_BYTES,
+        maxBytesLabel: MAX_SERVER_ACTION_IMAGE_LABEL,
+      });
+      if (imageError) {
+        nextErrors.imageFile = imageError;
       }
     }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  }
+
+  function handleImageValidation(message: string | undefined) {
+    setErrors((current) => ({ ...current, imageFile: message }));
+    if (message) {
+      toast.error("Imagen no valida", { description: message });
+    }
+  }
+
+  function handleImageChange(file: File | undefined) {
+    setForm((current) => ({ ...current, imageFile: file, removeImage: false }));
+    if (!file) {
+      setErrors((current) => ({ ...current, imageFile: undefined }));
+    }
   }
 
   function buildFormData() {
@@ -259,8 +280,8 @@ export function LocationsListClient({
         refreshListSafely("refresh-after-save");
       } catch (error) {
         console.error("[locations-client] unexpected save error", { projectId, editingId: editing?.id ?? null, error });
-        toast.error("Error inesperado", {
-          description: error instanceof Error ? error.message : "Intenta nuevamente en unos segundos.",
+        toast.error("No se pudo guardar la ubicacion", {
+          description: describeServerActionClientError(error),
         });
       }
     });
@@ -282,8 +303,8 @@ export function LocationsListClient({
         refreshListSafely("refresh-after-action");
       } catch (error) {
         console.error("[locations-client] unexpected action error", error);
-        toast.error("Error inesperado", {
-          description: error instanceof Error ? error.message : "Intenta nuevamente en unos segundos.",
+        toast.error("No se pudo completar la accion", {
+          description: describeServerActionClientError(error),
         });
       }
     });
@@ -449,15 +470,22 @@ export function LocationsListClient({
               <div className="grid gap-4 rounded-xl border p-4">
                 <div>
                   <p className="text-sm font-medium">Imagen opcional</p>
-                  <p className="text-sm text-muted-foreground">Sube una imagen de referencia. JPG, PNG o WEBP. Maximo 5MB.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Sube una imagen de referencia. En produccion el limite es {MAX_SERVER_ACTION_IMAGE_LABEL} para evitar
+                    errores al guardar.
+                  </p>
                 </div>
                 <ContentImageUpload
                   emptyLabel="Puedes crear la ubicacion sin imagen"
                   error={errors.imageFile}
                   file={form.imageFile}
+                  formatDescription={`JPG, PNG o WEBP · Maximo ${MAX_SERVER_ACTION_IMAGE_LABEL}`}
                   key={`${editing?.id ?? "create"}-${form.removeImage ? "removed" : "image"}`}
-                  onChange={(file) => setForm((current) => ({ ...current, imageFile: file, removeImage: false }))}
+                  maxBytes={MAX_SERVER_ACTION_IMAGE_BYTES}
+                  maxBytesLabel={MAX_SERVER_ACTION_IMAGE_LABEL}
+                  onChange={handleImageChange}
                   onPreviewUrlChange={(url) => setForm((current) => ({ ...current, imagePreviewUrl: url }))}
+                  onValidationError={handleImageValidation}
                   remotePreviewUrl={remotePreviewUrl}
                 />
                 {editing?.imageUrl && !form.removeImage ? (

@@ -27,6 +27,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatBytes, validateImageFile } from "@/lib/upload-limits";
 
 export function FieldError({ message }: { message?: string }) {
   if (!message) {
@@ -266,6 +267,9 @@ export function ContentImageUpload({
   accept = "image/jpeg,image/png,image/webp",
   formatDescription = "JPG, PNG o WEBP · Máx. 5MB",
   previewObjectFit = "cover",
+  maxBytes,
+  maxBytesLabel,
+  onValidationError,
 }: {
   emptyLabel?: string;
   error?: string;
@@ -276,6 +280,9 @@ export function ContentImageUpload({
   accept?: string;
   formatDescription?: string;
   previewObjectFit?: "cover" | "contain";
+  maxBytes?: number;
+  maxBytesLabel?: string;
+  onValidationError?: (message: string | undefined) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -294,6 +301,17 @@ export function ContentImageUpload({
     if (!nextFile) {
       return;
     }
+
+    const validationMessage = validateImageFile(nextFile, { maxBytes, maxBytesLabel, accept });
+    if (validationMessage) {
+      onValidationError?.(validationMessage);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      return;
+    }
+
+    onValidationError?.(undefined);
 
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
@@ -315,6 +333,7 @@ export function ContentImageUpload({
     setPreviewUrl(null);
     onPreviewUrlChange(remotePreviewUrl ?? null);
     onChange(undefined);
+    onValidationError?.(undefined);
     if (inputRef.current) {
       inputRef.current.value = "";
     }
@@ -382,7 +401,22 @@ export function ContentImageUpload({
                   <p className="truncate text-sm font-medium">
                     {file?.name ?? (remotePreviewUrl ? "Imagen actual" : "")}
                   </p>
-                  <p className="text-xs text-muted-foreground">{file ? fileSize(file.size) : ""}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {file ? (
+                      maxBytes && file.size > maxBytes * 0.85 ? (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          {fileSize(file.size)} · limite {maxBytesLabel ?? formatBytes(maxBytes)}
+                        </span>
+                      ) : (
+                        <>
+                          {fileSize(file.size)}
+                          {maxBytes ? ` · limite ${maxBytesLabel ?? formatBytes(maxBytes)}` : null}
+                        </>
+                      )
+                    ) : (
+                      ""
+                    )}
+                  </p>
                 </div>
                 <Button onClick={() => inputRef.current?.click()} size="sm" type="button" variant="outline">
                   <Pencil className="h-4 w-4" />

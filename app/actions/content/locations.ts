@@ -8,9 +8,9 @@ import { Storage } from "../storage";
 import type { ActionResponse } from "../types";
 import type { ProjectLocation } from "./types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
+import { MAX_SERVER_ACTION_IMAGE_BYTES, MAX_SERVER_ACTION_IMAGE_LABEL } from "@/lib/upload-limits";
 
 const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 function asString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -107,8 +107,8 @@ function validateLocationImage(file: File) {
   if (!allowedByExt && !allowedByType) {
     throw new Error("La imagen debe ser JPG, PNG o WEBP.");
   }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("La imagen no debe superar 5MB.");
+  if (file.size > MAX_SERVER_ACTION_IMAGE_BYTES) {
+    throw new Error(`La imagen no debe superar ${MAX_SERVER_ACTION_IMAGE_LABEL} en produccion.`);
   }
 }
 
