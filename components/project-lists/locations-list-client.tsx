@@ -219,24 +219,50 @@ export function LocationsListClient({
     return data;
   }
 
+  function refreshListSafely(context: string) {
+    try {
+      router.refresh();
+    } catch (error) {
+      console.error("[locations-client]", context, error);
+      toast.warning("Guardado correctamente", {
+        description: "No se pudo refrescar la lista automaticamente. Recarga la pagina si no ves el cambio.",
+      });
+    }
+  }
+
   function submitForm() {
     if (!validateForm()) {
       return;
     }
 
     startTransition(async () => {
-      const result = editing
-        ? await updateLocationFromForm(projectId, editing.id, buildFormData())
-        : await createLocationFromForm(projectId, buildFormData());
+      try {
+        const result = editing
+          ? await updateLocationFromForm(projectId, editing.id, buildFormData())
+          : await createLocationFromForm(projectId, buildFormData());
 
-      if (result.status === "error") {
-        toast.error(result.errors[0]?.title ?? "No se pudo guardar", { description: result.errors[0]?.message });
-        return;
+        if (!result || result.status === "error") {
+          const firstError = result?.status === "error" ? result.errors[0] : undefined;
+          console.error("[locations-client] save failed", {
+            projectId,
+            editingId: editing?.id ?? null,
+            error: firstError,
+          });
+          toast.error(firstError?.title ?? "No se pudo guardar", {
+            description: firstError?.message ?? "La accion no devolvio una respuesta valida.",
+          });
+          return;
+        }
+
+        toast.success(editing ? "Ubicacion actualizada" : "Ubicacion creada");
+        setDialogOpen(false);
+        refreshListSafely("refresh-after-save");
+      } catch (error) {
+        console.error("[locations-client] unexpected save error", { projectId, editingId: editing?.id ?? null, error });
+        toast.error("Error inesperado", {
+          description: error instanceof Error ? error.message : "Intenta nuevamente en unos segundos.",
+        });
       }
-
-      toast.success(editing ? "Ubicacion actualizada" : "Ubicacion creada");
-      setDialogOpen(false);
-      router.refresh();
     });
   }
 
@@ -245,13 +271,21 @@ export function LocationsListClient({
     success: string,
   ) {
     startTransition(async () => {
-      const result = await action();
-      if (result.status === "error") {
-        toast.error(result.errors[0]?.title ?? "No se pudo completar", { description: result.errors[0]?.message });
-        return;
+      try {
+        const result = await action();
+        if (result.status === "error") {
+          console.error("[locations-client] action failed", result.errors);
+          toast.error(result.errors[0]?.title ?? "No se pudo completar", { description: result.errors[0]?.message });
+          return;
+        }
+        toast.success(success);
+        refreshListSafely("refresh-after-action");
+      } catch (error) {
+        console.error("[locations-client] unexpected action error", error);
+        toast.error("Error inesperado", {
+          description: error instanceof Error ? error.message : "Intenta nuevamente en unos segundos.",
+        });
       }
-      toast.success(success);
-      router.refresh();
     });
   }
 
