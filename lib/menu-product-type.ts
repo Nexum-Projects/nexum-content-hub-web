@@ -13,6 +13,15 @@ export const MENU_PRODUCT_CATEGORIES = [
   "BRUNCH",
   "SEASONAL_FOOD",
   "SEASONAL_DRINK",
+  "ESPRESSO",
+  "MILK_DRINKS",
+  "FILTERED_COFFEE",
+  "COLD_BREW",
+  "SIGNATURE_DRINKS",
+  "NON_COFFEE",
+  "STARTERS",
+  "SANDWICHES",
+  "DESSERTS",
 ] as const;
 
 export type MenuProductType = (typeof MENU_PRODUCT_TYPES)[number];
@@ -37,6 +46,15 @@ export const MENU_PRODUCT_CATEGORY_LABELS: Record<MenuProductCategory, string> =
   BRUNCH: "Brunch",
   SEASONAL_FOOD: "Comida de temporada",
   SEASONAL_DRINK: "Bebida de temporada",
+  ESPRESSO: "Espresso",
+  MILK_DRINKS: "Bebidas con leche",
+  FILTERED_COFFEE: "Café filtrado",
+  COLD_BREW: "Cold brew",
+  SIGNATURE_DRINKS: "Bebidas signature",
+  NON_COFFEE: "Sin café",
+  STARTERS: "Entradas",
+  SANDWICHES: "Sandwiches",
+  DESSERTS: "Postres",
 };
 
 export function isMenuProductType(value: string | undefined | null): value is MenuProductType {
