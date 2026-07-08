@@ -64,6 +64,30 @@ async function removePreviousStorageObjectIfReplaced(formData: FormData, fileKey
   }
 }
 
+async function removePreviousStorageObjectIfRemovedOrReplaced(
+  formData: FormData,
+  fileKey: string,
+  previousUrlKey: string,
+  removeKey = "removeImage",
+) {
+  const previousUrl = asString(formData, previousUrlKey);
+  if (!previousUrl) {
+    return;
+  }
+
+  const removed = asBoolean(formData, removeKey);
+  const replaced = hasUploadedFile(formData, fileKey);
+  if (!removed && !replaced) {
+    return;
+  }
+
+  try {
+    await Storage.removeByPublicUrl(previousUrl);
+  } catch (error) {
+    console.warn("No se pudo eliminar el archivo anterior de Supabase Storage.", error);
+  }
+}
+
 function asPriceCents(formData: FormData, key: string) {
   const value = asNumber(formData, key);
   return typeof value === "number" ? Math.round(value * 100) : undefined;
@@ -588,11 +612,15 @@ async function productUpdatePayload(projectId: string, formData: FormData) {
   const measurementValue = asNumber(formData, "measurementValue");
   const measurementUnitRaw = asString(formData, "measurementUnit");
   const measurementUnit = isProductMeasurementUnit(measurementUnitRaw) ? measurementUnitRaw : undefined;
+  const previousImageUrl = asString(formData, "previousImageUrl") ?? null;
+  const nextUploadedImageUrl = await uploadProductImage(projectId, formData);
+  const removeImage = asBoolean(formData, "removeImage");
+  const imageUrl = removeImage ? null : (nextUploadedImageUrl ?? previousImageUrl ?? null);
 
   return {
     name: asString(formData, "name"),
     description: asString(formData, "description"),
-    imageUrl: await uploadProductImage(projectId, formData),
+    imageUrl,
     type,
     menuCategory: menuCategory ?? null,
     measurementValue: typeof measurementValue === "number" ? measurementValue : null,
@@ -660,7 +688,7 @@ export async function updateBannerFromForm(projectId: string, bannerId: string, 
 export async function updateProductFromForm(projectId: string, productId: string, formData: FormData): ActionResponse<null> {
   try {
     await baseAxios.put(`/admin/projects/${projectId}/menu-products/${productId}`, await productUpdatePayload(projectId, formData));
-    await removePreviousStorageObjectIfReplaced(formData, "imageFile", "previousImageUrl");
+    await removePreviousStorageObjectIfRemovedOrReplaced(formData, "imageFile", "previousImageUrl");
     revalidatePath(`/dashboard/projects/${projectId}/products`);
     revalidatePath(`/dashboard/projects/${projectId}/products/${productId}`);
     revalidatePath(`/dashboard/projects/${projectId}/products/${productId}/edit`);

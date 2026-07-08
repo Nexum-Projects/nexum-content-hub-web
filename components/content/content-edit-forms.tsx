@@ -121,6 +121,7 @@ const productEditSchema = z.object({
     .refine((value) => !value || /^\d+(\.\d{1,2})?$/.test(value), "Usa un precio valido, por ejemplo 35.00."),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
+  removeImage: z.boolean(),
 }).superRefine((value, ctx) => {
   if (value.hasPrice && !value.price?.trim()) {
     ctx.addIssue({
@@ -241,6 +242,31 @@ function appendImage(formData: FormData, file: File | undefined, currentImageUrl
     if (currentImageUrl) {
       formData.append("previousImageUrl", currentImageUrl);
     }
+    return;
+  }
+
+  if (currentImageUrl) {
+    formData.append("imageUrl", currentImageUrl);
+  }
+}
+
+function appendProductImage(
+  formData: FormData,
+  file: File | undefined,
+  currentImageUrl: string | null | undefined,
+  removeImage: boolean,
+) {
+  if (currentImageUrl) {
+    formData.append("previousImageUrl", currentImageUrl);
+  }
+
+  if (file) {
+    formData.append("imageFile", file);
+    return;
+  }
+
+  if (removeImage) {
+    formData.append("removeImage", "on");
     return;
   }
 
@@ -672,6 +698,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       price: priceFromCents(product.priceCents),
       isPublished: Boolean(product.isPublished),
       isFeatured: Boolean(product.isFeatured),
+      removeImage: false,
     },
   });
   const values = useWatch({ control: form.control }) as ProductEditValues;
@@ -694,7 +721,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
     const formData = new FormData();
     formData.append("name", data.name);
     appendOptional(formData, "description", data.description);
-    appendImage(formData, data.imageFile, product.imageUrl);
+    appendProductImage(formData, data.imageFile, product.imageUrl, data.removeImage);
     formData.append("type", data.type);
     if (data.type === "MENU_ITEM" && data.menuCategory) {
       formData.append("menuCategory", data.menuCategory);
@@ -730,12 +757,24 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       detailHref={detailHref}
       listHref={listHref}
       badge="Producto"
+      allowRemoveImage
       currentImageUrl={product.imageUrl}
       description={values.description}
       form={form}
       imageFile={values.imageFile}
+      imageRemoved={values.removeImage}
       imageTitle={product.name}
+      onImageFileChange={(file) => {
+        if (file) {
+          form.setValue("removeImage", false, { shouldDirty: true });
+        }
+      }}
       onImagePreviewChange={setPreviewUrl}
+      onRemoveCurrentImage={() => {
+        form.setValue("removeImage", true, { shouldDirty: true, shouldValidate: true });
+        form.setValue("imageFile", undefined, { shouldDirty: true, shouldValidate: true });
+        setPreviewUrl(null);
+      }}
       onSubmit={onSubmit}
       previewImageUrl={previewUrl}
       published={values.isPublished}
@@ -1209,6 +1248,10 @@ function ContentEntityForm<T extends CommonEditValues>({
   title,
   titlePath,
   titleText,
+  allowRemoveImage = false,
+  imageRemoved = false,
+  onRemoveCurrentImage,
+  onImageFileChange,
 }: {
   detailHref: string;
   listHref: string;
@@ -1227,7 +1270,14 @@ function ContentEntityForm<T extends CommonEditValues>({
   title: string;
   titlePath: Path<T>;
   titleText: string;
+  allowRemoveImage?: boolean;
+  imageRemoved?: boolean;
+  onRemoveCurrentImage?: () => void;
+  onImageFileChange?: (file: File | undefined) => void;
 }) {
+  const visibleCurrentImageUrl = imageRemoved && !imageFile ? null : currentImageUrl;
+  const remotePreviewUrl = imageRemoved || imageFile ? null : (currentImageUrl ?? null);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <HeaderActions backHref={detailHref} title={titleText} />
@@ -1265,17 +1315,32 @@ function ContentEntityForm<T extends CommonEditValues>({
           <Card className="rounded-xl border shadow-sm">
             <CardHeader>
               <CardTitle>Imagen</CardTitle>
-              <CardDescription>JPG, PNG o WEBP. Maximo 5MB. Se reemplazara solo si eliges una nueva imagen.</CardDescription>
+              <CardDescription>
+                {allowRemoveImage
+                  ? "JPG, PNG o WEBP. Maximo 5MB. Puedes eliminar la imagen actual o reemplazarla con una nueva."
+                  : "JPG, PNG o WEBP. Maximo 5MB. Se reemplazara solo si eliges una nueva imagen."}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <CurrentImage imageUrl={currentImageUrl} title={imageTitle} />
+              <CurrentImage imageUrl={visibleCurrentImageUrl} title={imageTitle} />
               <ContentImageUpload
                 emptyLabel="Selecciona una imagen nueva si deseas cambiar la actual."
                 error={getFormError(form.formState.errors, "imageFile" as Path<T>)}
                 file={imageFile}
-                onChange={(file) => form.setValue("imageFile" as Path<T>, file as T[Path<T>], { shouldDirty: true, shouldValidate: true })}
-                onPreviewUrlChange={(url) => onImagePreviewChange(url ?? currentImageUrl ?? null)}
+                key={`${titlePath}-${imageRemoved ? "removed" : "current"}-${imageFile?.name ?? "none"}`}
+                onChange={(file) => {
+                  form.setValue("imageFile" as Path<T>, file as T[Path<T>], { shouldDirty: true, shouldValidate: true });
+                  onImageFileChange?.(file);
+                }}
+                onPreviewUrlChange={(url) => onImagePreviewChange(url ?? remotePreviewUrl ?? null)}
+                remotePreviewUrl={remotePreviewUrl}
               />
+              {allowRemoveImage && currentImageUrl && !imageRemoved && !imageFile ? (
+                <Button className="w-fit" onClick={onRemoveCurrentImage} type="button" variant="outline">
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar imagen actual
+                </Button>
+              ) : null}
             </CardContent>
           </Card>
 
