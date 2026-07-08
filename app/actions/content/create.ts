@@ -381,10 +381,6 @@ async function productPayload(projectId: string, formData: FormData) {
   const measurementUnit = isProductMeasurementUnit(measurementUnitRaw) ? measurementUnitRaw : undefined;
   const imageUrl = await uploadProductImage(projectId, formData);
 
-  if (!imageUrl) {
-    throw new Error("Sube una imagen del producto antes de guardar.");
-  }
-
   const name = asString(formData, "name");
   if (!name) {
     throw new Error("El nombre del producto es requerido.");
@@ -393,7 +389,7 @@ async function productPayload(projectId: string, formData: FormData) {
   return {
     name,
     description: asString(formData, "description"),
-    imageUrl,
+    ...(imageUrl ? { imageUrl } : {}),
     type,
     ...(menuCategory ? { menuCategory } : {}),
     ...(typeof measurementValue === "number" ? { measurementValue } : {}),

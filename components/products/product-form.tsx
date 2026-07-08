@@ -82,9 +82,10 @@ const productSchema = z
     name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
     description: z.string().optional(),
     imageFile: z
-      .custom<File>((file) => file instanceof File, "Selecciona una imagen")
+      .instanceof(File)
       .refine((file) => ACCEPTED_TYPES.includes(file.type), "Usa JPG, PNG o WEBP")
-      .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB"),
+      .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB")
+      .optional(),
     type: z.enum(MENU_PRODUCT_TYPES),
     menuCategory: z.enum(MENU_PRODUCT_CATEGORIES).optional(),
     hasMeasurement: z.boolean(),
@@ -133,7 +134,7 @@ const productSchema = z
 type ProductFormValues = {
   name: string;
   description?: string;
-  imageFile: File;
+  imageFile?: File;
   type: (typeof MENU_PRODUCT_TYPES)[number];
   menuCategory?: (typeof MENU_PRODUCT_CATEGORIES)[number];
   hasMeasurement: boolean;
@@ -581,7 +582,9 @@ export function ProductForm({ projectId }: { projectId: string }) {
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("description", data.description ?? "");
-    formData.append("imageFile", data.imageFile);
+    if (data.imageFile) {
+      formData.append("imageFile", data.imageFile);
+    }
     formData.append("type", data.type);
     if (data.type === "MENU_ITEM" && data.menuCategory) formData.append("menuCategory", data.menuCategory);
     if (data.hasMeasurement && typeof data.measurementValue === "number") {
@@ -630,7 +633,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
           <div>
             <h1 className="text-2xl font-semibold leading-7">Nuevo producto</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Agrega un producto al menu de la landing page con imagen, precio y estado de publicacion.
+              Agrega un producto al menu de la landing page con precio, descripcion y estado de publicacion. La imagen es opcional.
             </p>
           </div>
         </div>
@@ -793,7 +796,9 @@ export function ProductForm({ projectId }: { projectId: string }) {
           <Card>
             <CardHeader>
               <CardTitle>Imagen del producto</CardTitle>
-              <CardDescription>Sube una imagen limpia del producto. Recomendado: 1200x900px o superior.</CardDescription>
+              <CardDescription>
+                Sube una imagen limpia del producto si lo deseas. Recomendado: 1200x900px o superior.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Controller
