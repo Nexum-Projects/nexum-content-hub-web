@@ -9,7 +9,7 @@ import type { ProductCategory } from "./types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 import type { MenuProductType } from "@/lib/menu-product-type";
 
-function mutationError(error: unknown): Extract<ActionResponse<null>, { status: "error" }> {
+function mutationError<T>(error: unknown): Extract<Awaited<ActionResponse<T>>, { status: "error" }> {
   if (isAxiosError(error) && error.response) {
     const humanizedError = parseApiError(error.response.data);
     return {
@@ -53,7 +53,7 @@ export async function fetchProductCategories(
     );
     return { status: "success", data: response.data.data ?? [] };
   } catch (error) {
-    return mutationError(error);
+    return mutationError<ProductCategory[]>(error);
   }
 }
 
@@ -67,7 +67,7 @@ export async function getProductCategoryDetail(
     );
     return { status: "success", data: response.data.data };
   } catch (error) {
-    return mutationError(error);
+    return mutationError<ProductCategory>(error);
   }
 }
 
@@ -88,7 +88,7 @@ export async function createProductCategory(
     revalidatePath(`/dashboard/projects/${projectId}/products`);
     return { status: "success", data: null };
   } catch (error) {
-    return mutationError(error);
+    return mutationError<null>(error);
   }
 }
 
@@ -104,6 +104,6 @@ export async function updateProductCategory(
     revalidatePath(`/dashboard/projects/${projectId}/products`);
     return { status: "success", data: null };
   } catch (error) {
-    return mutationError(error);
+    return mutationError<null>(error);
   }
 }
