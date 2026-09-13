@@ -13,6 +13,7 @@ import type {
   MediaItem,
   MenuProduct,
   OpeningHour,
+  ProductCategory,
   ProjectLocation,
 } from "./types";
 import type { PaginatedPayload } from "./paginated-list-types";
@@ -27,6 +28,7 @@ import {
   parseMediaListQuery,
   parseMenuProductListQuery,
   parseOpeningHourListQuery,
+  parseProductCategoryListQuery,
   type RawSearchParams,
   toListRequestParams,
 } from "@/lib/project-list-query";
@@ -84,6 +86,18 @@ async function getAllSorted<T>(
     },
   });
   return response.data.data ?? [];
+}
+
+export async function fetchProductCategoriesForReorder(projectId: string): ActionResponse<ProductCategory[]> {
+  try {
+    const items = await getAllSorted<ProductCategory>(`/admin/projects/${projectId}/product-categories`, {
+      order: "ASC",
+      orderBy: "sortOrder",
+    });
+    return { status: "success", data: items };
+  } catch (error) {
+    return catchListError(error);
+  }
 }
 
 export async function fetchMenuProductsForReorder(projectId: string): ActionResponse<MenuProduct[]> {
@@ -196,7 +210,7 @@ function filterProductsList(
     r = r.filter((p) => p.type === productType);
   }
   if (productCategory !== "all") {
-    r = r.filter((p) => p.menuCategory === productCategory);
+    r = r.filter((p) => (p.categoryId ?? p.category?.id) === productCategory);
   }
   return r;
 }
@@ -302,6 +316,43 @@ export async function fetchBannersPage(
       order: parsed.order,
     });
     const filtered = filterBannersByPublish(all, parsed.publish);
+    const { items, meta } = paginateInMemory(filtered, parsed.page, parsed.limit);
+    return { status: "success", data: { items, meta } };
+  } catch (error) {
+    return catchListError(error);
+  }
+}
+
+export async function fetchProductCategoriesPage(
+  projectId: string,
+  rawSearchParams: RawSearchParams,
+): ActionResponse<PaginatedPayload<ProductCategory>> {
+  const parsed = parseProductCategoryListQuery(rawSearchParams);
+  const url = `/admin/projects/${projectId}/product-categories`;
+
+  try {
+    const clientFilter = parsed.publish !== "all" || parsed.catalogKind !== "all";
+
+    if (!clientFilter) {
+      const params = toListRequestParams(parsed);
+      const { items, meta } = await getPage<ProductCategory>(url, params);
+      return { status: "success", data: { items, meta } };
+    }
+
+    const all = await getAllSorted<ProductCategory>(url, {
+      query: parsed.query,
+      orderBy: parsed.orderBy,
+      order: parsed.order,
+    });
+    let filtered = all;
+    if (parsed.publish === "published") {
+      filtered = filtered.filter((item) => item.isPublished);
+    } else if (parsed.publish === "draft") {
+      filtered = filtered.filter((item) => !item.isPublished);
+    }
+    if (parsed.catalogKind !== "all") {
+      filtered = filtered.filter((item) => item.catalogKind === parsed.catalogKind);
+    }
     const { items, meta } = paginateInMemory(filtered, parsed.page, parsed.limit);
     return { status: "success", data: { items, meta } };
   } catch (error) {

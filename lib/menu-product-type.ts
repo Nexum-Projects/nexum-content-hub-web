@@ -85,6 +85,21 @@ export function humanizeMenuProductCategory(category: MenuProductCategory | stri
   return "Sin categoria";
 }
 
+export function typeNeedsCategory(type: MenuProductType | string | null | undefined): boolean {
+  return type === "MENU_ITEM" || type === "MERCHANDISE" || type === "PACKAGED_COFFEE";
+}
+
+export function productCategoryLabel(product: {
+  category?: { name?: string | null } | null;
+  menuCategory?: string | null;
+}): string {
+  const name = product.category?.name?.trim();
+  if (name) {
+    return name;
+  }
+  return humanizeMenuProductCategory(product.menuCategory);
+}
+
 export function humanizeProductMeasurementUnit(unit: ProductMeasurementUnit | string | null | undefined): string {
   switch (unit) {
     case "GRAMS":

@@ -36,15 +36,14 @@ import { z } from "zod";
 
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
-  humanizeMenuProductCategory,
   humanizeMenuProductType,
   humanizeProductMeasurementUnit,
-  MENU_PRODUCT_CATEGORIES,
   MENU_PRODUCT_TYPES,
   PRODUCT_MEASUREMENT_UNITS,
+  typeNeedsCategory,
 } from "@/lib/menu-product-type";
 
-import { createProductFromForm } from "@/app/actions/content";
+import { createProductFromForm, type ProductCategory } from "@/app/actions/content";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,7 +86,7 @@ const productSchema = z
       .refine((file) => file.size <= MAX_FILE_SIZE, "La imagen no debe superar 5MB")
       .optional(),
     type: z.enum(MENU_PRODUCT_TYPES),
-    menuCategory: z.enum(MENU_PRODUCT_CATEGORIES).optional(),
+    categoryId: z.string().optional(),
     hasMeasurement: z.boolean(),
     measurementValue: optionalMeasurementValue,
     measurementUnit: z.enum(PRODUCT_MEASUREMENT_UNITS).optional(),
@@ -106,11 +105,11 @@ const productSchema = z
         });
       }
     }
-    if (data.type === "MENU_ITEM" && !data.menuCategory) {
+    if (typeNeedsCategory(data.type) && !data.categoryId) {
       ctx.addIssue({
         code: "custom",
-        message: "Selecciona la categoria del menu.",
-        path: ["menuCategory"],
+        message: "Selecciona la categoria.",
+        path: ["categoryId"],
       });
     }
     if (data.hasMeasurement) {
@@ -136,7 +135,7 @@ type ProductFormValues = {
   description?: string;
   imageFile?: File;
   type: (typeof MENU_PRODUCT_TYPES)[number];
-  menuCategory?: (typeof MENU_PRODUCT_CATEGORIES)[number];
+  categoryId?: string;
   hasMeasurement: boolean;
   measurementValue?: number;
   measurementUnit?: (typeof PRODUCT_MEASUREMENT_UNITS)[number];
@@ -507,7 +506,7 @@ function ProductImageUpload({
   );
 }
 
-export function ProductForm({ projectId }: { projectId: string }) {
+export function ProductForm({ projectId, categories }: { projectId: string; categories: ProductCategory[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -525,7 +524,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
       name: "",
       description: "",
       type: DEFAULT_MENU_PRODUCT_TYPE,
-      menuCategory: "HOT_DRINKS",
+      categoryId: categories.find((item) => item.catalogKind === DEFAULT_MENU_PRODUCT_TYPE)?.id ?? "",
       hasMeasurement: false,
       measurementValue: undefined,
       measurementUnit: "GRAMS",
@@ -541,7 +540,10 @@ export function ProductForm({ projectId }: { projectId: string }) {
   const previewDescription = sanitizeHtml(values.description) || "<p>Descripcion breve del producto.</p>";
   const productStatus = values.isPublished ? "Publicado" : "Borrador";
   const productType = humanizeMenuProductType(values.type);
-  const productCategory = values.type === "MENU_ITEM" ? humanizeMenuProductCategory(values.menuCategory) : null;
+  const categoryOptions = categories.filter((item) => item.catalogKind === values.type);
+  const productCategory = typeNeedsCategory(values.type)
+    ? categoryOptions.find((item) => item.id === values.categoryId)?.name ?? null
+    : null;
   const measurementLabel =
     values.hasMeasurement && typeof values.measurementValue === "number" && values.measurementUnit
       ? `${values.measurementValue} ${humanizeProductMeasurementUnit(values.measurementUnit)}`
@@ -558,6 +560,13 @@ export function ProductForm({ projectId }: { projectId: string }) {
       setValue("measurementValue", undefined, { shouldValidate: true });
     }
   }, [values.hasMeasurement, setValue]);
+
+  useEffect(() => {
+    const options = categories.filter((item) => item.catalogKind === values.type);
+    if (values.categoryId && !options.some((item) => item.id === values.categoryId)) {
+      setValue("categoryId", options[0]?.id ?? "", { shouldValidate: true });
+    }
+  }, [categories, setValue, values.categoryId, values.type]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -586,7 +595,7 @@ export function ProductForm({ projectId }: { projectId: string }) {
       formData.append("imageFile", data.imageFile);
     }
     formData.append("type", data.type);
-    if (data.type === "MENU_ITEM" && data.menuCategory) formData.append("menuCategory", data.menuCategory);
+    if (data.categoryId) formData.append("categoryId", data.categoryId);
     if (data.hasMeasurement && typeof data.measurementValue === "number") {
       formData.append("measurementValue", String(data.measurementValue));
     }
@@ -668,19 +677,30 @@ export function ProductForm({ projectId }: { projectId: string }) {
                 </Select>
               </div>
 
-              {values.type === "MENU_ITEM" ? (
+              {typeNeedsCategory(values.type) ? (
                 <div className="max-w-xs space-y-2">
-                  <label className="text-sm font-medium" htmlFor="menuCategory">
-                    Categoria del menu
+                  <label className="text-sm font-medium" htmlFor="categoryId">
+                    Categoria
                   </label>
-                  <Select id="menuCategory" {...register("menuCategory")}>
-                    {MENU_PRODUCT_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {humanizeMenuProductCategory(category)}
-                      </option>
-                    ))}
-                  </Select>
-                  <FieldError message={errors.menuCategory?.message} />
+                  {categoryOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No hay categorias de este catalogo.{" "}
+                      <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/categories/new`}>
+                        Crear una
+                      </Link>
+                      .
+                    </p>
+                  ) : (
+                    <Select id="categoryId" {...register("categoryId")}>
+                      <option value="">Selecciona una categoria</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                  <FieldError message={errors.categoryId?.message} />
                 </div>
               ) : null}
 

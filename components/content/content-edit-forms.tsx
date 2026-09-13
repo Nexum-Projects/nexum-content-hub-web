@@ -21,12 +21,11 @@ import { z } from "zod";
 
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
-  humanizeMenuProductCategory,
   humanizeMenuProductType,
   humanizeProductMeasurementUnit,
-  MENU_PRODUCT_CATEGORIES,
   MENU_PRODUCT_TYPES,
   PRODUCT_MEASUREMENT_UNITS,
+  typeNeedsCategory,
 } from "@/lib/menu-product-type";
 
 import {
@@ -38,6 +37,7 @@ import {
   type Banner,
   type EventItem,
   type MenuProduct,
+  type ProductCategory,
 } from "@/app/actions/content";
 import { BannerImageRecommendation } from "@/components/banners/banner-image-recommendation";
 import { FieldError, ContentImageUpload, RichTextEditor, sanitizeHtml } from "@/components/content/content-form-controls";
@@ -105,7 +105,7 @@ const productEditSchema = z.object({
   description: z.string().optional(),
   imageFile: optionalImageFile,
   type: z.enum(MENU_PRODUCT_TYPES),
-  menuCategory: z.enum(MENU_PRODUCT_CATEGORIES).optional(),
+  categoryId: z.string().optional(),
   hasMeasurement: z.boolean(),
   measurementValue: z
     .string()
@@ -130,11 +130,11 @@ const productEditSchema = z.object({
       path: ["price"],
     });
   }
-  if (value.type === "MENU_ITEM" && !value.menuCategory) {
+  if (typeNeedsCategory(value.type) && !value.categoryId) {
     ctx.addIssue({
       code: "custom",
-      message: "Selecciona la categoria del menu.",
-      path: ["menuCategory"],
+      message: "Selecciona la categoria.",
+      path: ["categoryId"],
     });
   }
   if (value.hasMeasurement) {
@@ -680,7 +680,15 @@ export function BannerEditForm({ banner, projectId }: { banner: Banner; projectI
   );
 }
 
-export function ProductEditForm({ product, projectId }: { product: MenuProduct; projectId: string }) {
+export function ProductEditForm({
+  product,
+  projectId,
+  categories,
+}: {
+  product: MenuProduct;
+  projectId: string;
+  categories: ProductCategory[];
+}) {
   const router = useRouter();
   const [previewUrl, setPreviewUrl] = useStateOrCurrent(product.imageUrl);
   const form = useForm<ProductEditValues>({
@@ -690,7 +698,7 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
       description: product.description ?? "",
       imageFile: undefined,
       type: product.type ?? DEFAULT_MENU_PRODUCT_TYPE,
-      menuCategory: product.menuCategory ?? "HOT_DRINKS",
+      categoryId: product.categoryId ?? product.category?.id ?? "",
       hasMeasurement: typeof product.measurementValue === "number",
       measurementValue: typeof product.measurementValue === "number" ? String(product.measurementValue) : "",
       measurementUnit: product.measurementUnit ?? "GRAMS",
@@ -723,8 +731,8 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
     appendOptional(formData, "description", data.description);
     appendProductImage(formData, data.imageFile, product.imageUrl, data.removeImage);
     formData.append("type", data.type);
-    if (data.type === "MENU_ITEM" && data.menuCategory) {
-      formData.append("menuCategory", data.menuCategory);
+    if (data.categoryId) {
+      formData.append("categoryId", data.categoryId);
     }
     if (data.hasMeasurement) {
       appendOptional(formData, "measurementValue", data.measurementValue);
@@ -794,17 +802,30 @@ export function ProductEditForm({ product, projectId }: { product: MenuProduct; 
             ))}
           </Select>
         </div>
-        {values.type === "MENU_ITEM" ? (
+        {typeNeedsCategory(values.type) ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Categoria del menu</label>
-            <Select {...form.register("menuCategory")}>
-              {MENU_PRODUCT_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {humanizeMenuProductCategory(category)}
-                </option>
-              ))}
-            </Select>
-            <FieldError message={form.formState.errors.menuCategory?.message} />
+            <label className="text-sm font-medium">Categoria</label>
+            {categories.filter((item) => item.catalogKind === values.type).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay categorias de este catalogo.{" "}
+                <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/categories/new`}>
+                  Crear una
+                </Link>
+                .
+              </p>
+            ) : (
+              <Select {...form.register("categoryId")}>
+                <option value="">Selecciona una categoria</option>
+                {categories
+                  .filter((item) => item.catalogKind === values.type)
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+              </Select>
+            )}
+            <FieldError message={form.formState.errors.categoryId?.message} />
           </div>
         ) : null}
         <div className="space-y-3 rounded-xl border p-4 md:col-span-2">

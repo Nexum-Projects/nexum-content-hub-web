@@ -69,6 +69,21 @@ export type BannerButton = {
   sortOrder?: number | null;
 };
 
+export type ProductCategory = {
+  id: string;
+  projectId?: string;
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  catalogKind: MenuProductType;
+  isActive?: boolean;
+  isPublished?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type MenuProduct = {
   id: string;
   name: string;
@@ -76,6 +91,8 @@ export type MenuProduct = {
   description?: string | null;
   imageUrl?: string | null;
   type: MenuProductType;
+  categoryId?: string | null;
+  category?: Pick<ProductCategory, "id" | "name" | "slug" | "catalogKind"> | null;
   menuCategory?: MenuProductCategory | null;
   measurementValue?: number | null;
   measurementUnit?: ProductMeasurementUnit | null;

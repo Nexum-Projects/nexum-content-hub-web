@@ -13,7 +13,6 @@ import { Storage } from "../storage";
 import { guatemalaLocalInputToUtcIso } from "@/lib/datetime-guatemala";
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
-  isMenuProductCategory,
   isMenuProductType,
   isProductMeasurementUnit,
 } from "@/lib/menu-product-type";
@@ -398,8 +397,7 @@ async function productPayload(projectId: string, formData: FormData) {
   const priceCents = asPriceCents(formData, "price");
   const typeRaw = asString(formData, "type");
   const type = isMenuProductType(typeRaw) ? typeRaw : DEFAULT_MENU_PRODUCT_TYPE;
-  const menuCategoryRaw = asString(formData, "menuCategory");
-  const menuCategory = isMenuProductCategory(menuCategoryRaw) ? menuCategoryRaw : undefined;
+  const categoryId = asString(formData, "categoryId");
   const measurementValue = asNumber(formData, "measurementValue");
   const measurementUnitRaw = asString(formData, "measurementUnit");
   const measurementUnit = isProductMeasurementUnit(measurementUnitRaw) ? measurementUnitRaw : undefined;
@@ -415,7 +413,7 @@ async function productPayload(projectId: string, formData: FormData) {
     description: asString(formData, "description"),
     ...(imageUrl ? { imageUrl } : {}),
     type,
-    ...(menuCategory ? { menuCategory } : {}),
+    ...(categoryId ? { categoryId } : {}),
     ...(typeof measurementValue === "number" ? { measurementValue } : {}),
     ...(measurementUnit ? { measurementUnit } : {}),
     ...(typeof priceCents === "number" ? { priceCents } : {}),
@@ -607,8 +605,7 @@ async function productUpdatePayload(projectId: string, formData: FormData) {
   const priceCents = asPriceCents(formData, "price");
   const typeRaw = asString(formData, "type");
   const type = isMenuProductType(typeRaw) ? typeRaw : DEFAULT_MENU_PRODUCT_TYPE;
-  const menuCategoryRaw = asString(formData, "menuCategory");
-  const menuCategory = isMenuProductCategory(menuCategoryRaw) ? menuCategoryRaw : undefined;
+  const categoryId = asString(formData, "categoryId");
   const measurementValue = asNumber(formData, "measurementValue");
   const measurementUnitRaw = asString(formData, "measurementUnit");
   const measurementUnit = isProductMeasurementUnit(measurementUnitRaw) ? measurementUnitRaw : undefined;
@@ -622,7 +619,7 @@ async function productUpdatePayload(projectId: string, formData: FormData) {
     description: asString(formData, "description"),
     imageUrl,
     type,
-    menuCategory: menuCategory ?? null,
+    categoryId: categoryId ?? null,
     measurementValue: typeof measurementValue === "number" ? measurementValue : null,
     measurementUnit: measurementUnit ?? null,
     priceCents: typeof priceCents === "number" ? priceCents : null,

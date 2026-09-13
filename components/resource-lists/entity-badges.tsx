@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { EventItem, MenuProduct } from "@/app/actions/content";
-import { humanizeMenuProductCategory, humanizeMenuProductType } from "@/lib/menu-product-type";
+import { humanizeMenuProductType, productCategoryLabel } from "@/lib/menu-product-type";
 
 export function publishBadge(isPublished?: boolean) {
   if (isPublished) {
@@ -24,11 +24,12 @@ export function productTypeBadge(type: MenuProduct["type"]) {
   return <Badge variant="secondary">{humanizeMenuProductType(type)}</Badge>;
 }
 
-export function productCategoryBadge(category: MenuProduct["menuCategory"]) {
-  if (!category) {
+export function productCategoryBadge(product: Pick<MenuProduct, "category" | "menuCategory">) {
+  const label = productCategoryLabel(product);
+  if (label === "Sin categoria") {
     return null;
   }
-  return <Badge variant="outline">{humanizeMenuProductCategory(category)}</Badge>;
+  return <Badge variant="outline">{label}</Badge>;
 }
 
 export function eventStatusBadge(status?: EventItem["status"]) {

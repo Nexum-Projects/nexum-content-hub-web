@@ -29,6 +29,7 @@ export {
   deleteBanner,
   deleteEvent,
   deleteMenuProduct,
+  deleteProductCategory,
   deleteProjectMember,
   deleteUser,
 } from "./delete-entities";
@@ -48,6 +49,8 @@ export {
   fetchMenuProductsForReorder,
   fetchMenuProductsPage,
   fetchOpeningHoursPage,
+  fetchProductCategoriesForReorder,
+  fetchProductCategoriesPage,
 } from "./fetch-paginated-lists";
 export {
   createActionButton,
@@ -84,6 +87,12 @@ export {
   getProjectMemberDetail,
   getUserDetail,
 } from "./get-resource-detail";
+export {
+  createProductCategory,
+  fetchProductCategories,
+  getProductCategoryDetail,
+  updateProductCategory,
+} from "./product-categories";
 export { createProjectMember } from "./create-project-member";
 export { updateProjectMember } from "./update-project-member";
 export {
@@ -94,6 +103,7 @@ export {
   reorderLocations,
   reorderMedia,
   reorderMenuProducts,
+  reorderProductCategories,
 } from "./reorder";
 export { getDashboardData, getProjectContent, getProjectDashboardSummary, getProjectMembers, getProjectSummary, getProjects, getUsers };
 export type { ProjectDashboardSummary } from "./get-project-dashboard-summary";
@@ -109,6 +119,7 @@ export type {
   MediaItem,
   MenuProduct,
   OpeningHour,
+  ProductCategory,
   Project,
   ProjectLocation,
   ProjectMember,

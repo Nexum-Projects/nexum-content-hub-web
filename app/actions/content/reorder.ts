@@ -43,6 +43,17 @@ async function reorder(url: string, items: ReorderItem[]): ActionResponse<null> 
   }
 }
 
+export async function reorderProductCategories(projectId: string, items: ReorderItem[]): ActionResponse<null> {
+  const result = await reorder(`/admin/projects/${projectId}/product-categories/reorder`, items);
+
+  if (result.status === "success") {
+    revalidatePath(`/dashboard/projects/${projectId}/categories`);
+    revalidatePath(`/dashboard/projects/${projectId}/categories/order`);
+  }
+
+  return result;
+}
+
 export async function reorderMenuProducts(projectId: string, items: ReorderItem[]): ActionResponse<null> {
   const result = await reorder(`/admin/projects/${projectId}/menu-products/reorder`, items);
 

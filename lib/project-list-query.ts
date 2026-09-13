@@ -26,11 +26,13 @@ export function parsePublishFilter(raw: RawSearchParams, key = "pub"): PublishFi
 }
 
 import { isActionButtonType, type ActionButtonType } from "@/lib/action-button-type";
-import { isMenuProductCategory, isMenuProductType, type MenuProductCategory, type MenuProductType } from "@/lib/menu-product-type";
+import { isMenuProductType, type MenuProductType } from "@/lib/menu-product-type";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Productos: `ptype` all | MenuProductType */
 export type ProductTypeFilter = "all" | MenuProductType;
-export type ProductCategoryFilter = "all" | MenuProductCategory;
+export type ProductCategoryFilter = "all" | string;
 
 export function parseProductTypeFilter(raw: RawSearchParams): ProductTypeFilter {
   const v = spFirst(raw, "ptype")?.toUpperCase();
@@ -41,8 +43,8 @@ export function parseProductTypeFilter(raw: RawSearchParams): ProductTypeFilter 
 }
 
 export function parseProductCategoryFilter(raw: RawSearchParams): ProductCategoryFilter {
-  const v = spFirst(raw, "pcat")?.toUpperCase();
-  if (isMenuProductCategory(v)) {
+  const v = spFirst(raw, "pcat");
+  if (v && UUID_RE.test(v)) {
     return v;
   }
   return "all";
@@ -116,6 +118,21 @@ export function parseBannerListQuery(raw: RawSearchParams) {
 
 export const MENU_PRODUCT_SORT_FIELDS = ["name", "type", "menuCategory", "priceCents", "sortOrder", "createdAt", "updatedAt"] as const;
 export type MenuProductSortField = (typeof MENU_PRODUCT_SORT_FIELDS)[number];
+
+export const PRODUCT_CATEGORY_SORT_FIELDS = ["name", "catalogKind", "sortOrder", "createdAt", "updatedAt"] as const;
+export type ProductCategorySortField = (typeof PRODUCT_CATEGORY_SORT_FIELDS)[number];
+
+export function parseProductCategoryListQuery(raw: RawSearchParams) {
+  return {
+    page: parsePositiveInt(spFirst(raw, "page"), 1),
+    limit: coerceListLimit(spFirst(raw, "limit")),
+    query: (spFirst(raw, "query") ?? "").trim() || undefined,
+    orderBy: pickOrderBy(spFirst(raw, "orderBy"), PRODUCT_CATEGORY_SORT_FIELDS, "sortOrder"),
+    order: parseOrder(spFirst(raw, "order")),
+    publish: parsePublishFilter(raw),
+    catalogKind: parseProductTypeFilter(raw),
+  };
+}
 
 export function parseMenuProductListQuery(raw: RawSearchParams) {
   return {
