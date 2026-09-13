@@ -23,6 +23,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Tags,
   Trophy,
   User,
   Users,
@@ -387,6 +388,7 @@ export function DashboardShell({
     const items: NavItem[] = [
       { label: "Banners", href: `${base}/banners`, icon: ImageIcon },
       { label: "Menú / Productos", href: `${base}/products`, icon: Utensils },
+      { label: "Categorías", href: `${base}/categories`, icon: Tags },
       { label: "Eventos", href: `${base}/events`, icon: FolderKanban },
       { label: "Logros / Premios", href: `${base}/awards`, icon: Trophy },
       { label: "Medios", href: `${base}/media`, icon: Package },

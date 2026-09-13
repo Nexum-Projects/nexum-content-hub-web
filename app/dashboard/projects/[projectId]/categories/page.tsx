@@ -2,12 +2,11 @@ import { Suspense } from "react";
 import { GripVertical, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { fetchMenuProductsPage } from "@/app/actions/content/fetch-paginated-lists";
-import { fetchProductCategories } from "@/app/actions/content";
+import { fetchProductCategoriesPage } from "@/app/actions/content/fetch-paginated-lists";
 import getProjectSummary from "@/app/actions/content/get-project-summary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProductsListClient } from "@/components/project-lists/products-list-client";
+import { CategoriesListClient } from "@/components/project-lists/categories-list-client";
 import { ProjectListPanelSkeleton } from "@/components/project-lists/project-list-panel-skeleton";
 import { DEFAULT_LIST_LIMIT, type RawSearchParams } from "@/lib/project-list-query";
 
@@ -24,7 +23,7 @@ function emptyMeta() {
   };
 }
 
-export default async function ProductsPage({
+export default async function CategoriesPage({
   params,
   searchParams,
 }: {
@@ -34,38 +33,37 @@ export default async function ProductsPage({
   const { projectId } = await params;
   const sp = await searchParams;
 
-  const [projectRes, listRes, categoriesRes] = await Promise.all([
+  const [projectRes, listRes] = await Promise.all([
     getProjectSummary(projectId),
-    fetchMenuProductsPage(projectId, sp),
-    fetchProductCategories(projectId),
+    fetchProductCategoriesPage(projectId, sp),
   ]);
 
   const project = projectRes.status === "success" ? projectRes.data : fallbackProjects[0];
-  const products = listRes.status === "success" ? listRes.data.items : [];
+  const categories = listRes.status === "success" ? listRes.data.items : [];
   const meta = listRes.status === "success" ? listRes.data.meta : emptyMeta();
   const listError = listRes.status === "error" ? listRes.errors[0]?.message ?? "No se pudo cargar la lista." : null;
-  const createHref = `/dashboard/projects/${projectId}/products/new`;
-  const orderHref = `/dashboard/projects/${projectId}/products/order`;
+  const createHref = `/dashboard/projects/${projectId}/categories/new`;
+  const orderHref = `/dashboard/projects/${projectId}/categories/order`;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Menu / Productos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Comida y bebida para {project.name}.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Categorias</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Catalogo de menu y mercancia para {project.name}.</p>
           <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
             <Link href={orderHref}>
               <GripVertical className="h-4 w-4" />
-              Ordenar productos
+              Ordenar categorias
             </Link>
           </Button>
           <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm">
             <Link href={createHref}>
               <Plus className="h-4 w-4" />
-              Nuevo producto
+              Nueva categoria
             </Link>
           </Button>
         </div>
@@ -78,12 +76,11 @@ export default async function ProductsPage({
         </CardHeader>
         <CardContent>
           <Suspense fallback={<ProjectListPanelSkeleton />}>
-            <ProductsListClient
-              categories={categoriesRes.status === "success" ? categoriesRes.data : []}
+            <CategoriesListClient
+              categories={categories}
               createHref={createHref}
               listError={listError}
               meta={meta}
-              products={products}
               projectId={projectId}
             />
           </Suspense>

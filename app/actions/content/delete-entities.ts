@@ -37,6 +37,20 @@ export async function deleteBanner(projectId: string, bannerId: string): ActionR
   }
 }
 
+export async function deleteProductCategory(projectId: string, categoryId: string): ActionResponse<null> {
+  try {
+    const response = await baseAxios.delete<{ data?: StorageBackedResource }>(
+      `/admin/projects/${projectId}/product-categories/${categoryId}`,
+    );
+    await removeStorageObjectByUrl(response.data.data?.imageUrl);
+    revalidatePath(`/dashboard/projects/${projectId}/categories`);
+    revalidatePath(`/dashboard/projects/${projectId}/products`);
+    return { status: "success", data: null };
+  } catch (error) {
+    return errorDeleteResponse(error);
+  }
+}
+
 export async function deleteMenuProduct(projectId: string, productId: string): ActionResponse<null> {
   try {
     const response = await baseAxios.delete<{ data?: StorageBackedResource }>(`/admin/projects/${projectId}/menu-products/${productId}`);

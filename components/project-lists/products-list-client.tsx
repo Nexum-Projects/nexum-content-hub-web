@@ -3,7 +3,7 @@
 import { ImageIcon, LayoutGrid, PanelLeft, Search, UtensilsCrossed } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { MenuProduct } from "@/app/actions/content";
+import type { MenuProduct, ProductCategory } from "@/app/actions/content";
 import type { PaginatedPayload } from "@/app/actions/content/paginated-list-types";
 import { deleteMenuProduct } from "@/app/actions/content/delete-entities";
 import { Card } from "@/components/ui/card";
@@ -20,8 +20,6 @@ import { ResourceRowActions } from "@/components/resource-lists/resource-row-act
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
 import { cn } from "@/lib/utils";
 import {
-  MENU_PRODUCT_CATEGORIES,
-  MENU_PRODUCT_CATEGORY_LABELS,
   MENU_PRODUCT_TYPE_LABELS,
   MENU_PRODUCT_TYPES,
   humanizeProductMeasurementUnit,
@@ -51,12 +49,14 @@ export function ProductsListClient({
   meta,
   listError,
   createHref,
+  categories,
 }: {
   projectId: string;
   products: MenuProduct[];
   meta: PaginatedPayload<MenuProduct>["meta"];
   listError?: string | null;
   createHref: string;
+  categories: ProductCategory[];
 }) {
   const basePath = `/dashboard/projects/${projectId}/products`;
   const { pushParams, isPending, searchParams } = useProjectListNavigation(basePath);
@@ -198,9 +198,9 @@ export function ProductsListClient({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas</SelectItem>
-                    {MENU_PRODUCT_CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {MENU_PRODUCT_CATEGORY_LABELS[category]}
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -295,7 +295,10 @@ export function ProductsListClient({
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {productTypeBadge(p.type)}
-                          {productCategoryBadge(p.menuCategory)}
+                          {productCategoryBadge({
+                            category: p.category ?? categories.find((item) => item.id === (p.categoryId ?? p.category?.id)) ?? null,
+                            menuCategory: p.menuCategory,
+                          })}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground tabular-nums">{formatPrice(p.priceCents)}</TableCell>
@@ -349,7 +352,10 @@ export function ProductsListClient({
                       <p className="line-clamp-2 text-xs text-muted-foreground">{subtitle(p)}</p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         {productTypeBadge(p.type)}
-                        {productCategoryBadge(p.menuCategory)}
+                        {productCategoryBadge({
+                            category: p.category ?? categories.find((item) => item.id === (p.categoryId ?? p.category?.id)) ?? null,
+                            menuCategory: p.menuCategory,
+                          })}
                         {publishBadge(p.isPublished)}
                         {featuredBadge(p.isFeatured)}
                       </div>
@@ -414,7 +420,10 @@ export function ProductsListClient({
                     <p className="line-clamp-2 font-medium leading-snug">{p.name}</p>
                     <div className="flex flex-wrap gap-1">
                       {productTypeBadge(p.type)}
-                      {productCategoryBadge(p.menuCategory)}
+                      {productCategoryBadge({
+                            category: p.category ?? categories.find((item) => item.id === (p.categoryId ?? p.category?.id)) ?? null,
+                            menuCategory: p.menuCategory,
+                          })}
                       {publishBadge(p.isPublished)}
                       {featuredBadge(p.isFeatured)}
                     </div>

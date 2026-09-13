@@ -88,7 +88,7 @@ export default async function ProductDetailPage({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {productTypeBadge(p.type)}
-                {productCategoryBadge(p.menuCategory)}
+                {productCategoryBadge(p)}
                 {publishBadge(p.isPublished)}
                 {featuredBadge(p.isFeatured)}
               </div>
@@ -197,7 +197,7 @@ export default async function ProductDetailPage({
                 <div className="space-y-3 p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     {productTypeBadge(p.type)}
-                    {productCategoryBadge(p.menuCategory)}
+                    {productCategoryBadge(p)}
                     {publishBadge(p.isPublished)}
                   </div>
                   <div>
