@@ -7,7 +7,7 @@ import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
 import type { ProductCategory } from "./types";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
-import type { MenuProductType } from "@/lib/menu-product-type";
+import type { MenuProductType, MenuSection } from "@/lib/menu-product-type";
 
 function mutationError<T>(error: unknown): Extract<Awaited<ActionResponse<T>>, { status: "error" }> {
   if (isAxiosError(error) && error.response) {
@@ -74,6 +74,7 @@ export async function getProductCategoryDetail(
 type CategoryPayload = {
   name: string;
   catalogKind: MenuProductType;
+  menuSection?: MenuSection | null;
   description?: string | null;
   isPublished?: boolean;
 };

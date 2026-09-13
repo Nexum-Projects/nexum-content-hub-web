@@ -22,15 +22,28 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   DEFAULT_MENU_PRODUCT_TYPE,
   MENU_PRODUCT_TYPES,
+  MENU_SECTIONS,
   humanizeMenuProductType,
+  humanizeMenuSection,
 } from "@/lib/menu-product-type";
 
-const categorySchema = z.object({
-  name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
-  catalogKind: z.enum(MENU_PRODUCT_TYPES),
-  description: z.string().optional(),
-  isPublished: z.boolean(),
-});
+const categorySchema = z
+  .object({
+    name: z.string().min(1, "El nombre es requerido").max(160, "Maximo 160 caracteres"),
+    catalogKind: z.enum(MENU_PRODUCT_TYPES),
+    menuSection: z.enum(MENU_SECTIONS).nullable(),
+    description: z.string().optional(),
+    isPublished: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.catalogKind === "MENU_ITEM" && !data.menuSection) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecciona Bebidas o Comidas.",
+        path: ["menuSection"],
+      });
+    }
+  });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
@@ -52,17 +65,31 @@ export function CategoryForm({
     handleSubmit,
     register,
     reset,
+    setValue,
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: category?.name ?? "",
       catalogKind: category?.catalogKind ?? DEFAULT_MENU_PRODUCT_TYPE,
+      menuSection: category?.menuSection ?? (category?.catalogKind === "MENU_ITEM" || !category ? "DRINKS" : null),
       description: category?.description ?? "",
       isPublished: Boolean(category?.isPublished),
     },
   });
 
   const values = useWatch({ control });
+
+  useEffect(() => {
+    if (values.catalogKind === "MENU_ITEM") {
+      if (!values.menuSection) {
+        setValue("menuSection", "DRINKS");
+      }
+      return;
+    }
+    if (values.menuSection) {
+      setValue("menuSection", null);
+    }
+  }, [setValue, values.catalogKind, values.menuSection]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -80,6 +107,7 @@ export function CategoryForm({
     const payload = {
       name: data.name,
       catalogKind: data.catalogKind,
+      menuSection: data.catalogKind === "MENU_ITEM" ? data.menuSection : null,
       description: data.description?.trim() || null,
       isPublished: data.isPublished,
     };
@@ -161,6 +189,25 @@ export function CategoryForm({
                 <p className="text-xs text-muted-foreground">El catalogo no se puede cambiar despues de crearla.</p>
               ) : null}
             </div>
+            {values.catalogKind === "MENU_ITEM" ? (
+              <div className="max-w-xs space-y-2">
+                <label className="text-sm font-medium" htmlFor="menuSection">
+                  Seccion del menu <span className="text-destructive">*</span>
+                </label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  id="menuSection"
+                  {...register("menuSection")}
+                >
+                  {MENU_SECTIONS.map((section) => (
+                    <option key={section} value={section}>
+                      {humanizeMenuSection(section)}
+                    </option>
+                  ))}
+                </select>
+                <FieldError message={errors.menuSection?.message} />
+              </div>
+            ) : null}
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="description">
                 Descripcion
@@ -197,6 +244,9 @@ export function CategoryForm({
             <Tags className="h-3 w-3" />
             {humanizeMenuProductType(values.catalogKind)}
           </Badge>
+          {values.catalogKind === "MENU_ITEM" && values.menuSection ? (
+            <Badge variant="secondary">{humanizeMenuSection(values.menuSection)}</Badge>
+          ) : null}
         </div>
       </form>
     </div>

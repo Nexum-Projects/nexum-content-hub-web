@@ -541,9 +541,8 @@ export function ProductForm({ projectId, categories }: { projectId: string; cate
   const productStatus = values.isPublished ? "Publicado" : "Borrador";
   const productType = humanizeMenuProductType(values.type);
   const categoryOptions = categories.filter((item) => item.catalogKind === values.type);
-  const productCategory = typeNeedsCategory(values.type)
-    ? categoryOptions.find((item) => item.id === values.categoryId)?.name ?? null
-    : null;
+  const showCategoryField = typeNeedsCategory(values.type) || categoryOptions.length > 0;
+  const productCategory = categoryOptions.find((item) => item.id === values.categoryId)?.name ?? null;
   const measurementLabel =
     values.hasMeasurement && typeof values.measurementValue === "number" && values.measurementUnit
       ? `${values.measurementValue} ${humanizeProductMeasurementUnit(values.measurementUnit)}`
@@ -677,12 +676,18 @@ export function ProductForm({ projectId, categories }: { projectId: string; cate
                 </Select>
               </div>
 
-              {typeNeedsCategory(values.type) ? (
+              {showCategoryField ? (
                 <div className="max-w-xs space-y-2">
                   <label className="text-sm font-medium" htmlFor="categoryId">
                     Categoria
+                    {typeNeedsCategory(values.type) ? (
+                      <>
+                        {" "}
+                        <span className="text-destructive">*</span>
+                      </>
+                    ) : null}
                   </label>
-                  {categoryOptions.length === 0 ? (
+                  {typeNeedsCategory(values.type) && categoryOptions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       No hay categorias de este catalogo.{" "}
                       <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/categories/new`}>
@@ -692,7 +697,9 @@ export function ProductForm({ projectId, categories }: { projectId: string; cate
                     </p>
                   ) : (
                     <Select id="categoryId" {...register("categoryId")}>
-                      <option value="">Selecciona una categoria</option>
+                      <option value="">
+                        {typeNeedsCategory(values.type) ? "Selecciona una categoria" : "Sin categoria"}
+                      </option>
                       {categoryOptions.map((category) => (
                         <option key={category.id} value={category.id}>
                           {category.name}
