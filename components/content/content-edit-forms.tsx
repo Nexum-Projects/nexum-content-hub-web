@@ -710,6 +710,8 @@ export function ProductEditForm({
     },
   });
   const values = useWatch({ control: form.control }) as ProductEditValues;
+  const categoryOptions = categories.filter((item) => item.catalogKind === values.type);
+  const showCategoryField = typeNeedsCategory(values.type) || categoryOptions.length > 0;
   const detailHref = `/dashboard/projects/${projectId}/products/${product.id}`;
   const listHref = `/dashboard/projects/${projectId}/products`;
 
@@ -802,10 +804,18 @@ export function ProductEditForm({
             ))}
           </Select>
         </div>
-        {typeNeedsCategory(values.type) ? (
+        {showCategoryField ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Categoria</label>
-            {categories.filter((item) => item.catalogKind === values.type).length === 0 ? (
+            <label className="text-sm font-medium">
+              Categoria
+              {typeNeedsCategory(values.type) ? (
+                <>
+                  {" "}
+                  <span className="text-destructive">*</span>
+                </>
+              ) : null}
+            </label>
+            {typeNeedsCategory(values.type) && categoryOptions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No hay categorias de este catalogo.{" "}
                 <Link className="font-medium text-primary hover:underline" href={`/dashboard/projects/${projectId}/categories/new`}>
@@ -815,14 +825,14 @@ export function ProductEditForm({
               </p>
             ) : (
               <Select {...form.register("categoryId")}>
-                <option value="">Selecciona una categoria</option>
-                {categories
-                  .filter((item) => item.catalogKind === values.type)
-                  .map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
+                <option value="">
+                  {typeNeedsCategory(values.type) ? "Selecciona una categoria" : "Sin categoria"}
+                </option>
+                {categoryOptions.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </Select>
             )}
             <FieldError message={form.formState.errors.categoryId?.message} />

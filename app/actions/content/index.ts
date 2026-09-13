@@ -118,6 +118,7 @@ export type {
   EventItem,
   MediaItem,
   MenuProduct,
+  MenuSection,
   OpeningHour,
   ProductCategory,
   Project,

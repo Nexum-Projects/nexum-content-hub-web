@@ -16,7 +16,7 @@ import { ListPaginationFooter } from "@/components/resource-lists/list-paginatio
 import { ResourceFiltersSheet } from "@/components/resource-lists/resource-filters-sheet";
 import { ResourceRowActions } from "@/components/resource-lists/resource-row-actions";
 import { ListDateTimeGT } from "@/components/resource-lists/list-datetime-gt";
-import { MENU_PRODUCT_TYPE_LABELS, MENU_PRODUCT_TYPES } from "@/lib/menu-product-type";
+import { MENU_PRODUCT_TYPE_LABELS, MENU_PRODUCT_TYPES, humanizeMenuSection } from "@/lib/menu-product-type";
 import { PRODUCT_CATEGORY_SORT_FIELDS } from "@/lib/project-list-query";
 
 import { SortHeaderButton } from "./sort-header-button";
@@ -193,7 +193,14 @@ export function CategoriesListClient({
                       <p className="font-medium">{item.name}</p>
                       <p className="text-xs text-muted-foreground">{item.slug}</p>
                     </TableCell>
-                    <TableCell>{productTypeBadge(item.catalogKind)}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {productTypeBadge(item.catalogKind)}
+                        {item.catalogKind === "MENU_ITEM" && item.menuSection ? (
+                          <p className="text-xs text-muted-foreground">{humanizeMenuSection(item.menuSection)}</p>
+                        ) : null}
+                      </div>
+                    </TableCell>
                     <TableCell>{publishBadge(item.isPublished)}</TableCell>
                     <TableCell>
                       <ListDateTimeGT value={item.updatedAt} />

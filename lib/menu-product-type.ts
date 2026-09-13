@@ -28,6 +28,25 @@ export const MENU_PRODUCT_CATEGORIES = [
 export type MenuProductType = (typeof MENU_PRODUCT_TYPES)[number];
 export type MenuProductCategory = (typeof MENU_PRODUCT_CATEGORIES)[number];
 
+export const MENU_SECTIONS = ["DRINKS", "FOOD"] as const;
+export type MenuSection = (typeof MENU_SECTIONS)[number];
+
+export const MENU_SECTION_LABELS: Record<MenuSection, string> = {
+  DRINKS: "Bebidas",
+  FOOD: "Comidas",
+};
+
+export function isMenuSection(value: string | undefined | null): value is MenuSection {
+  return MENU_SECTIONS.includes(value as MenuSection);
+}
+
+export function humanizeMenuSection(section: MenuSection | string | null | undefined): string {
+  if (section && isMenuSection(section)) {
+    return MENU_SECTION_LABELS[section];
+  }
+  return "";
+}
+
 export const PRODUCT_MEASUREMENT_UNITS = ["GRAMS", "KILOGRAMS", "MILLILITERS", "LITERS", "UNITS"] as const;
 export type ProductMeasurementUnit = (typeof PRODUCT_MEASUREMENT_UNITS)[number];
 
@@ -86,7 +105,7 @@ export function humanizeMenuProductCategory(category: MenuProductCategory | stri
 }
 
 export function typeNeedsCategory(type: MenuProductType | string | null | undefined): boolean {
-  return type === "MENU_ITEM" || type === "MERCHANDISE" || type === "PACKAGED_COFFEE";
+  return type === "MENU_ITEM";
 }
 
 export function productCategoryLabel(product: {
