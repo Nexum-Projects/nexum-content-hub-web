@@ -20,4 +20,5 @@ Los planes se nombran `YYYY-MM-DD-<tema>.md`. Llevan versión y changelog.
 
 | Versión | Fecha | Cambio |
 |---------|-------|--------|
+| `v1.1` | 2026-09-13 | Plan de username slug |
 | `v1.0` | 2026-09-13 | Carpeta `docs/plans/` para planes del CMS |

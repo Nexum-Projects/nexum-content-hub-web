@@ -12,6 +12,7 @@ import { NexumLogo } from "@/components/app/nexum-logo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { USERNAME_ERROR, USERNAME_HINT, USERNAME_PATTERN, normalizeUsername } from "@/lib/username";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -26,10 +27,17 @@ export function RegisterForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const trimmedName = name.trim();
-    if (!trimmedName || !email.trim() || !password.trim()) {
+    const username = normalizeUsername(name);
+    if (!username || !email.trim() || !password.trim()) {
       toast.error("Datos incompletos", {
-        description: "Completa nombre, correo y contrasena.",
+        description: "Completa usuario, correo y contrasena.",
+      });
+      return;
+    }
+
+    if (!USERNAME_PATTERN.test(username)) {
+      toast.error("Nombre de usuario invalido", {
+        description: USERNAME_ERROR,
       });
       return;
     }
@@ -49,7 +57,7 @@ export function RegisterForm() {
     setIsLoading(true);
     setError(null);
 
-    const result = await register({ name: trimmedName, email, password });
+    const result = await register({ name: username, email, password });
     setIsLoading(false);
 
     if (result.status === "error") {
@@ -85,17 +93,19 @@ export function RegisterForm() {
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor="name">Nombre de usuario</Label>
             <Input
               id="name"
-              autoComplete="name"
+              autoComplete="username"
               disabled={isLoading}
-              maxLength={150}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ej. Maria Lopez"
+              maxLength={32}
+              onChange={(event) => setName(event.target.value.toLowerCase())}
+              placeholder="Ej. danieltistoj1"
+              spellCheck={false}
               type="text"
               value={name}
             />
+            <p className="text-xs text-muted-foreground">{USERNAME_HINT}</p>
           </div>
 
           <div className="space-y-2">

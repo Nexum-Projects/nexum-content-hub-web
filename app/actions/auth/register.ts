@@ -5,10 +5,11 @@ import { z } from "zod";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
+import { usernameSchema } from "@/lib/username";
 import { parseApiError } from "@/utils/helpers/parse-api-error";
 
 const RegisterSchema = z.object({
-  name: z.string().trim().min(1, "El nombre es requerido").max(150, "Maximo 150 caracteres"),
+  name: usernameSchema,
   email: z.string().email("Ingresa un correo valido"),
   password: z.string().min(6, "Minimo 6 caracteres"),
 });

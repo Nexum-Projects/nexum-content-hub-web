@@ -29,6 +29,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { USERNAME_HINT, usernameSchema } from "@/lib/username";
 import { humanizePlatformRole, humanizeProjectMemberRole } from "@/utils/helpers/humanize-enum";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -74,7 +75,7 @@ function uniqueProjectMemberships<T extends { projectMemberships?: Array<{ proje
 
 const createUserFormSchema = z
   .object({
-    name: z.string().min(1, "El nombre es obligatorio"),
+    name: usernameSchema,
     email: z.string().email("Correo no valido"),
     password: z.string().min(6, "Minimo 6 caracteres"),
     platformRole: z.enum(["USER", "SUPER_ADMIN"]),
@@ -412,16 +413,24 @@ export function AdminUserCreateForm({
         <CardHeader>
           <CardTitle>Información principal</CardTitle>
           <CardDescription>
-            Nombre, correo, contraseña y rol con los que la persona iniciará sesión en el sistema.
+            Usuario, correo, contraseña y rol con los que la persona iniciará sesión en el sistema.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="user-name">
-                Nombre completo <span className="text-destructive">*</span>
+                Nombre de usuario <span className="text-destructive">*</span>
               </label>
-              <Input autoComplete="name" id="user-name" placeholder="Ej. María López" {...register("name")} />
+              <Input
+                autoComplete="username"
+                id="user-name"
+                maxLength={32}
+                placeholder="Ej. maria_hernandez23"
+                spellCheck={false}
+                {...register("name")}
+              />
+              <p className="text-xs text-muted-foreground">{USERNAME_HINT}</p>
               <FieldError message={errors.name?.message} />
             </div>
             <div className="space-y-2">
@@ -508,7 +517,7 @@ export function AdminUserCreateForm({
 }
 
 const editUserFormSchema = z.object({
-  name: z.string().min(1, "El nombre es obligatorio"),
+  name: usernameSchema,
   email: z.string().email("Correo no valido"),
   password: z.string().refine((val) => !val || val.length >= 6, "Minimo 6 caracteres si cambias la contraseña"),
   platformRole: z.enum(["USER", "SUPER_ADMIN"]),
@@ -595,16 +604,23 @@ export function AdminUserEditForm({
         <CardHeader>
           <CardTitle>Información principal</CardTitle>
           <CardDescription>
-            Nombre, correo, contraseña opcional, rol y si la cuenta puede iniciar sesión.
+            Usuario, correo, contraseña opcional, rol y si la cuenta puede iniciar sesión.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="edit-name">
-                Nombre completo <span className="text-destructive">*</span>
+                Nombre de usuario <span className="text-destructive">*</span>
               </label>
-              <Input autoComplete="name" id="edit-name" {...register("name")} />
+              <Input
+                autoComplete="username"
+                id="edit-name"
+                maxLength={32}
+                spellCheck={false}
+                {...register("name")}
+              />
+              <p className="text-xs text-muted-foreground">{USERNAME_HINT}</p>
               <FieldError message={errors.name?.message} />
             </div>
             <div className="space-y-2">
