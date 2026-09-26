@@ -30,7 +30,7 @@ baseAxios.interceptors.response.use(
     // y lleva al login. No se borran aquí porque durante el render de una página Next.js no lo permite.
     // parseApiError deja pasar el redirect por los catch de las acciones (unstable_rethrow).
     if (isAxiosError(error) && error.response?.status === 401) {
-      redirect("/logout");
+      redirect("/logout?reason=session-expired");
     }
 
     return Promise.reject(error);
