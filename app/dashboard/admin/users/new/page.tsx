@@ -31,7 +31,7 @@ export default async function NewUserPage() {
         backLabel="Volver a usuarios"
         breadcrumbCurrent="Nuevo usuario"
         breadcrumbHref="/dashboard/admin/users"
-        description="Crea una cuenta de acceso al panel: define nombre visible, correo, contraseña, foto opcional y permisos."
+        description="Crea una cuenta de acceso al panel: define usuario, correo, contraseña, foto opcional y permisos."
         title="Nuevo usuario"
       />
 
