@@ -1,3 +1,5 @@
+import { unstable_rethrow } from "next/navigation";
+
 export type HumanizedError = {
   title: string;
   description: string;
@@ -54,6 +56,9 @@ const knownMessages: Record<string, HumanizedError> = {
 };
 
 export function parseApiError(error: unknown): HumanizedError {
+  // Los redirect de Next.js (por ejemplo, sesión rechazada en baseAxios) no son errores de la API: se relanzan.
+  unstable_rethrow(error);
+
   if (typeof error === "string") {
     return knownMessages[error] ?? { title: "Error", description: error };
   }

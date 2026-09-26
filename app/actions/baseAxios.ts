@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import axios, { isAxiosError } from "axios";
+import { redirect } from "next/navigation";
 
 import { env } from "@/utils/env";
 import { isJwtExpired } from "@/utils/auth-token";
@@ -25,10 +26,11 @@ baseAxios.interceptors.request.use(async (config) => {
 baseAxios.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Sesión rechazada por el API (firma inválida, usuario desactivado, secreto rotado): /logout borra las cookies
+    // y lleva al login. No se borran aquí porque durante el render de una página Next.js no lo permite.
+    // parseApiError deja pasar el redirect por los catch de las acciones (unstable_rethrow).
     if (isAxiosError(error) && error.response?.status === 401) {
-      const cookieStore = await cookies();
-      cookieStore.delete("session");
-      cookieStore.delete("accessToken");
+      redirect("/logout");
     }
 
     return Promise.reject(error);

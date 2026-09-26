@@ -1,10 +1,13 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  cookieStore.delete("session");
-  cookieStore.delete("accessToken");
-
-  return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"));
+/**
+ * Cierra la sesión: borra las cookies y lleva al login. Es un Route Handler porque las cookies solo se pueden
+ * modificar aquí o en una Server Action (no durante el render de una página).
+ * `baseAxios` redirige aquí cuando el API responde 401.
+ */
+export function GET(request: NextRequest) {
+  const response = NextResponse.redirect(new URL("/login?reason=session-expired", request.url));
+  response.cookies.delete("session");
+  response.cookies.delete("accessToken");
+  return response;
 }
