@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Home,
   ImageIcon,
+  Layers,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -32,11 +33,13 @@ import {
 
 import { logout } from "@/app/actions/auth";
 import { canViewProjectMembers } from "@/app/actions/content/can-view-project-members";
+import { getMyPermissions } from "@/app/actions/content/permissions";
 import { getProjectSummary, getProjects } from "@/app/actions/content";
 import type { Project, ProjectSummary } from "@/app/actions/content";
 import type { SessionClaims } from "@/utils/auth-token";
 import { APP_VERSION } from "@/utils/app-version";
 import { humanizePlatformRole } from "@/utils/helpers/humanize-enum";
+import { canRead, routeAccess, type ResourcePermissions } from "@/lib/cms-resources";
 import { cn, resolveAvatarUrl } from "@/lib/utils";
 import { NexumLogo } from "./nexum-logo";
 import { Button } from "@/components/ui/button";
@@ -345,8 +348,10 @@ export function DashboardShell({
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [projectsList, setProjectsList] = useState<Project[] | null>(null);
   const [currentProject, setCurrentProject] = useState<ProjectSummary | null>(null);
-  /** Miembros del proyecto: solo SUPER_ADMIN o rol de proyecto OWNER/ADMIN (según API). */
+  /** Miembros del proyecto: solo SUPER_ADMIN o rol de proyecto OWNER (según API). */
   const [showMembersNav, setShowMembersNav] = useState(false);
+  /** Permisos por proyecto: mientras no son del proyecto actual, Contenido queda vacío; `permissions: null` si fallaron (no se oculta nada; el API responde 403). */
+  const [navPermissions, setNavPermissions] = useState<{ projectId: string; permissions: ResourcePermissions | null } | null>(null);
 
   const dark = useSyncExternalStore(subscribeTheme, getThemeSnapshot, () => false);
 
@@ -397,12 +402,25 @@ export function DashboardShell({
       { label: "Botones de accion", href: `${base}/action-buttons`, icon: MousePointerClick },
     ];
 
-    if (showMembersNav) {
-      items.push({ label: "Miembros", href: `${base}/members`, icon: Contact });
+    const loaded = navPermissions?.projectId === projectId ? navPermissions : null;
+    if (!loaded) {
+      return [];
     }
 
-    return items;
-  }, [projectId, showMembersNav]);
+    const permissions = loaded.permissions;
+    const visible = permissions
+      ? items.filter((item) => {
+          const route = routeAccess(item.href);
+          return !route || canRead(permissions, route.resource);
+        })
+      : items;
+
+    if (showMembersNav) {
+      visible.push({ label: "Miembros", href: `${base}/members`, icon: Contact });
+    }
+
+    return visible;
+  }, [projectId, showMembersNav, navPermissions]);
 
   const adminItems = useMemo((): NavItem[] => {
     const list: NavItem[] = [];
@@ -412,6 +430,10 @@ export function DashboardShell({
 
     if (isAdmin) {
       list.push({ label: "Usuarios", href: "/dashboard/admin/users", icon: Users });
+    }
+
+    if (isSuperAdmin) {
+      list.push({ label: "Planes", href: "/dashboard/admin/plans", icon: Layers });
     }
 
     return list;
@@ -429,6 +451,11 @@ export function DashboardShell({
       }
 
       setCurrentProject(result.data);
+    });
+    void getMyPermissions(projectId).then((result) => {
+      if (!cancelled) {
+        setNavPermissions({ projectId, permissions: result.status === "success" ? result.data : null });
+      }
     });
 
     return () => {

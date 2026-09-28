@@ -1,4 +1,5 @@
 import type { ActionButtonType } from "@/lib/action-button-type";
+import type { CmsResource } from "@/lib/cms-resources";
 import type { MenuProductCategory, MenuProductType, MenuSection, ProductMeasurementUnit } from "@/lib/menu-product-type";
 
 export type { ActionButtonType, MenuProductCategory, MenuProductType, MenuSection, ProductMeasurementUnit };
@@ -15,6 +16,23 @@ export type Project = {
   avatarUrl?: string | null;
   avatar_url?: string | null;
   isActive?: boolean;
+  /** Plan asignado (obligatorio al crear; solo SUPER_ADMIN lo cambia). */
+  planId?: string | null;
+};
+
+/** Plan: recursos del CMS habilitados para los proyectos que lo usan (API `PlanDTO`). */
+export type Plan = {
+  id: string;
+  name: string;
+  description?: string | null;
+  resources: CmsResource[];
+  isActive?: boolean;
+};
+
+export type PlanPayload = {
+  name: string;
+  description?: string;
+  resources: CmsResource[];
 };
 
 /** Rol del usuario dentro de un proyecto (API `ProjectMember`). */

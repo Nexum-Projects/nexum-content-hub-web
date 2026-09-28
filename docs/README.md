@@ -1,7 +1,7 @@
 # Documentación técnica — nexum-content-hub-front
 
-**Versión:** `v1.0`  
-**Fecha:** 2026-09-13  
+**Versión:** `v1.2`  
+**Fecha:** 2026-09-27  
 **Dirigido a:** equipo de desarrollo Content Hub
 
 ---
@@ -20,5 +20,6 @@ Los planes se nombran `YYYY-MM-DD-<tema>.md`. Llevan versión y changelog.
 
 | Versión | Fecha | Cambio |
 |---------|-------|--------|
+| `v1.2` | 2026-09-27 | Plan de planes y permisos por recurso |
 | `v1.1` | 2026-09-13 | Plan de username slug |
 | `v1.0` | 2026-09-13 | Carpeta `docs/plans/` para planes del CMS |

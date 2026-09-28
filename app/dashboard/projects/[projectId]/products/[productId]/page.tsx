@@ -4,6 +4,7 @@ import { ArrowLeft, ImagePlus, Pencil, Star } from "lucide-react";
 
 import { formatPrice } from "@/app/dashboard/projects/project-components";
 import { getMenuProductDetail } from "@/app/actions/content/get-resource-detail";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { featuredBadge, productCategoryBadge, productTypeBadge, publishBadge } from "@/components/resource-lists/entity-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,12 +44,14 @@ export default async function ProductDetailPage({
             </Link>
           </Button>
           <div className="flex flex-wrap gap-2 sm:justify-end">
-            <Button asChild className="rounded-lg">
-              <Link href={`/dashboard/projects/${projectId}/products/${productId}/edit`}>
-                <Pencil className="h-4 w-4" />
-                Editar
-              </Link>
-            </Button>
+            <WriteOnly>
+              <Button asChild className="rounded-lg">
+                <Link href={`/dashboard/projects/${projectId}/products/${productId}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Link>
+              </Button>
+            </WriteOnly>
           </div>
         </div>
         <div className="space-y-2">

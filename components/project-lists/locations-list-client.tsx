@@ -13,6 +13,7 @@ import {
   unpublishLocation,
   updateLocationFromForm,
 } from "@/app/actions/content";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { EventLocationPicker, type EventLocationValue } from "@/components/events/event-location-picker";
 import { ContentImageUpload, FieldError, RichTextEditor } from "@/components/content/content-form-controls";
 import { DataTableRowActions } from "@/components/resource-lists/data-table-row-actions";
@@ -353,10 +354,12 @@ export function LocationsListClient({
                 </div>
               </div>
             </ResourceFiltersSheet>
-            <Button onClick={openCreate} type="button">
-              <MapPin className="h-4 w-4" />
-              Nueva ubicacion
-            </Button>
+            <WriteOnly>
+              <Button onClick={openCreate} type="button">
+                <MapPin className="h-4 w-4" />
+                Nueva ubicacion
+              </Button>
+            </WriteOnly>
           </div>
         </div>
       </Card>
@@ -400,21 +403,23 @@ export function LocationsListClient({
                       <DataTableRowActions.Item href={`/dashboard/projects/${projectId}/locations/${item.id}`} type="link">
                         <Eye className="mr-2 h-4 w-4" />Ver detalle
                       </DataTableRowActions.Item>
-                      <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
-                        <Edit className="mr-2 h-4 w-4" />Editar
-                      </DataTableRowActions.Item>
-                      {item.isPublished ? (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishLocation(projectId, item.id), "Ubicacion despublicada")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Despublicar
+                      <WriteOnly>
+                        <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
+                          <Edit className="mr-2 h-4 w-4" />Editar
                         </DataTableRowActions.Item>
-                      ) : (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishLocation(projectId, item.id), "Ubicacion publicada")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Publicar
+                        {item.isPublished ? (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishLocation(projectId, item.id), "Ubicacion despublicada")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Despublicar
+                          </DataTableRowActions.Item>
+                        ) : (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishLocation(projectId, item.id), "Ubicacion publicada")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Publicar
+                          </DataTableRowActions.Item>
+                        )}
+                        <DataTableRowActions.Item disabled={saving} onClick={() => setConfirmDeactivate(item)} type="button" variant="destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />Desactivar
                         </DataTableRowActions.Item>
-                      )}
-                      <DataTableRowActions.Item disabled={saving} onClick={() => setConfirmDeactivate(item)} type="button" variant="destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />Desactivar
-                      </DataTableRowActions.Item>
+                      </WriteOnly>
                     </DataTableRowActions>
                   </TableCell>
                 </TableRow>

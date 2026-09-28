@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { fetchBannersPage } from "@/app/actions/content/fetch-paginated-lists";
 import getProjectSummary from "@/app/actions/content/get-project-summary";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannersListClient } from "@/components/project-lists/banners-list-client";
@@ -53,20 +54,22 @@ export default async function BannersPage({
           <p className="mt-1 text-sm text-muted-foreground">Gestiona los banners de {project.name}.</p>
           <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
-            <Link href={orderHref}>
-              <GripVertical className="h-4 w-4" />
-              Ordenar banners
-            </Link>
-          </Button>
-          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm">
-            <Link href={createHref}>
-              <Plus className="h-4 w-4" />
-              Nuevo banner
-            </Link>
-          </Button>
-        </div>
+        <WriteOnly>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
+              <Link href={orderHref}>
+                <GripVertical className="h-4 w-4" />
+                Ordenar banners
+              </Link>
+            </Button>
+            <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm">
+              <Link href={createHref}>
+                <Plus className="h-4 w-4" />
+                Nuevo banner
+              </Link>
+            </Button>
+          </div>
+        </WriteOnly>
       </section>
 
       <Card className="rounded-xl border border-border shadow-sm">

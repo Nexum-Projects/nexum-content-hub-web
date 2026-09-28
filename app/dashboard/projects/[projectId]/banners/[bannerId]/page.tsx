@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 
 import { getBannerDetail } from "@/app/actions/content/get-resource-detail";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { publishBadge } from "@/components/resource-lists/entity-badges";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -40,12 +41,14 @@ export default async function BannerDetailPage({
             </Link>
           </Button>
           <div className="flex flex-wrap gap-2 sm:justify-end">
-            <Button asChild className="rounded-lg">
-              <Link href={`/dashboard/projects/${projectId}/banners/${bannerId}/edit`}>
-                <Pencil className="h-4 w-4" />
-                Editar
-              </Link>
-            </Button>
+            <WriteOnly>
+              <Button asChild className="rounded-lg">
+                <Link href={`/dashboard/projects/${projectId}/banners/${bannerId}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Link>
+              </Button>
+            </WriteOnly>
           </div>
         </div>
         <div className="space-y-2">

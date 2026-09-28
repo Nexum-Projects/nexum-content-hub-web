@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, ImagePlus, MapPin, Navigation, Pencil } from "lucide-react";
 
 import { getLocationDetail } from "@/app/actions/content/get-resource-detail";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { publishBadge } from "@/components/resource-lists/entity-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,12 +42,14 @@ export default async function LocationDetailPage({
               Volver a ubicaciones
             </Link>
           </Button>
-          <Button asChild className="rounded-lg">
-            <Link href={`/dashboard/projects/${projectId}/locations?edit=${locationId}`}>
-              <Pencil className="h-4 w-4" />
-              Editar
-            </Link>
-          </Button>
+          <WriteOnly>
+            <Button asChild className="rounded-lg">
+              <Link href={`/dashboard/projects/${projectId}/locations?edit=${locationId}`}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Link>
+            </Button>
+          </WriteOnly>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">

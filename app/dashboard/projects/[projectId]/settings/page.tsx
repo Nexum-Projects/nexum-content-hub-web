@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { getSession } from "@/app/actions/auth";
+import { getPlans } from "@/app/actions/content/plans";
 import { getProjectContent } from "@/app/actions/content";
 import { ProjectFormPage } from "@/components/projects/project-form-card";
 
@@ -14,7 +15,7 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
   }
 
   const { projectId } = await params;
-  const result = await getProjectContent(projectId);
+  const [result, plans] = await Promise.all([getProjectContent(projectId), getPlans()]);
 
   if (result.status !== "success") {
     notFound();
@@ -36,6 +37,7 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
       description="Ajusta metadatos del sitio visibles en el panel. Solo los super administradores pueden ver y editar esta sección."
       footerHelper="Los cambios se guardan en la API y afectan a todos los usuarios con acceso a este proyecto."
       mode="edit"
+      plans={plans.status === "success" ? plans.data : []}
       project={project}
       projectId={projectId}
       submitLabel="Guardar cambios"

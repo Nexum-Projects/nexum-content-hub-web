@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { fetchMediaPage } from "@/app/actions/content";
 import getProjectSummary from "@/app/actions/content/get-project-summary";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { MediaCreateDialog } from "@/components/project-lists/media-create-dialog";
 import { MediaListClient } from "@/components/project-lists/media-list-client";
 import { ProjectListPanelSkeleton } from "@/components/project-lists/project-list-panel-skeleton";
@@ -53,15 +54,17 @@ export default async function MediaPage({
           <p className="mt-1 text-sm text-muted-foreground">Biblioteca visual para {project.name}.</p>
           <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
-            <Link href={orderHref}>
-              <GripVertical className="h-4 w-4" />
-              Ordenar medios
-            </Link>
-          </Button>
-          <MediaCreateDialog projectId={projectId} />
-        </div>
+        <WriteOnly>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild className="h-10 shrink-0 rounded-lg shadow-sm" variant="outline">
+              <Link href={orderHref}>
+                <GripVertical className="h-4 w-4" />
+                Ordenar medios
+              </Link>
+            </Button>
+            <MediaCreateDialog projectId={projectId} />
+          </div>
+        </WriteOnly>
       </section>
 
       <Card className="rounded-xl border border-border shadow-sm">
