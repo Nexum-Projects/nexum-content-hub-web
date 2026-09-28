@@ -13,6 +13,7 @@ import {
   unpublishOpeningHour,
   updateOpeningHour,
 } from "@/app/actions/content";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -183,10 +184,12 @@ export function OpeningHoursListClient({
                 </div>
               </div>
             </ResourceFiltersSheet>
-            <Button onClick={openCreate} type="button">
-              <Clock className="h-4 w-4" />
-              Nuevo horario
-            </Button>
+            <WriteOnly>
+              <Button onClick={openCreate} type="button">
+                <Clock className="h-4 w-4" />
+                Nuevo horario
+              </Button>
+            </WriteOnly>
           </div>
         </div>
       </Card>
@@ -215,23 +218,25 @@ export function OpeningHoursListClient({
                   <TableCell className="tabular-nums">{displayTime(item.endTime)}</TableCell>
                   <TableCell>{publishBadge(item.isPublished)}</TableCell>
                   <TableCell className="text-right">
-                    <DataTableRowActions>
-                      <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
-                        <Edit className="mr-2 h-4 w-4" />Editar
-                      </DataTableRowActions.Item>
-                      {item.isPublished ? (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishOpeningHour(projectId, item.id), "Horario despublicado")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Despublicar
+                    <WriteOnly>
+                      <DataTableRowActions>
+                        <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
+                          <Edit className="mr-2 h-4 w-4" />Editar
                         </DataTableRowActions.Item>
-                      ) : (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishOpeningHour(projectId, item.id), "Horario publicado")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Publicar
+                        {item.isPublished ? (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishOpeningHour(projectId, item.id), "Horario despublicado")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Despublicar
+                          </DataTableRowActions.Item>
+                        ) : (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishOpeningHour(projectId, item.id), "Horario publicado")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Publicar
+                          </DataTableRowActions.Item>
+                        )}
+                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => deactivateOpeningHour(projectId, item.id), "Horario desactivado")} type="button" variant="destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />Desactivar
                         </DataTableRowActions.Item>
-                      )}
-                      <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => deactivateOpeningHour(projectId, item.id), "Horario desactivado")} type="button" variant="destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />Desactivar
-                      </DataTableRowActions.Item>
-                    </DataTableRowActions>
+                      </DataTableRowActions>
+                    </WriteOnly>
                   </TableCell>
                 </TableRow>
               ))

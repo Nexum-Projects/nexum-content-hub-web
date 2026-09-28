@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
+import { useCanWrite } from "@/components/app/project-permissions";
 import { cn } from "@/lib/utils";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -43,6 +44,7 @@ export function ResourceRowActions({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const canWrite = useCanWrite();
 
   const runDelete = () => {
     startTransition(async () => {
@@ -63,21 +65,25 @@ export function ResourceRowActions({
           <Eye className="mr-2 h-4 w-4" />
           Ver
         </DataTableRowActions.Item>
-        <DataTableRowActions.Item href={editHref} type="link">
-          <Pencil className="mr-2 h-4 w-4" />
-          Editar
-        </DataTableRowActions.Item>
-        <DataTableRowActions.Separator />
-        <DataTableRowActions.Item
-          disabled={pending}
-          isLoading={pending}
-          type="button"
-          variant="destructive"
-          onClick={() => setConfirmOpen(true)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Eliminar
-        </DataTableRowActions.Item>
+        {canWrite ? (
+          <>
+            <DataTableRowActions.Item href={editHref} type="link">
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </DataTableRowActions.Item>
+            <DataTableRowActions.Separator />
+            <DataTableRowActions.Item
+              disabled={pending}
+              isLoading={pending}
+              type="button"
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar
+            </DataTableRowActions.Item>
+          </>
+        ) : null}
       </DataTableRowActions>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

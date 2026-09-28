@@ -13,6 +13,7 @@ import {
   unpublishActionButton,
   updateActionButton,
 } from "@/app/actions/content";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -234,10 +235,12 @@ export function ActionButtonsListClient({
                 </div>
               </div>
             </ResourceFiltersSheet>
-            <Button onClick={openCreate} type="button">
-              <MousePointerClick className="h-4 w-4" />
-              Nuevo boton
-            </Button>
+            <WriteOnly>
+              <Button onClick={openCreate} type="button">
+                <MousePointerClick className="h-4 w-4" />
+                Nuevo boton
+              </Button>
+            </WriteOnly>
           </div>
         </div>
       </Card>
@@ -271,23 +274,25 @@ export function ActionButtonsListClient({
                   <TableCell>{publishBadge(item.isPublished)}</TableCell>
                   <TableCell><ListDateTimeGT value={item.createdAt} /></TableCell>
                   <TableCell className="text-right">
-                    <DataTableRowActions>
-                      <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
-                        <Edit className="mr-2 h-4 w-4" />Editar
-                      </DataTableRowActions.Item>
-                      {item.isPublished ? (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishActionButton(projectId, item.id), "Boton despublicado")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Despublicar
+                    <WriteOnly>
+                      <DataTableRowActions>
+                        <DataTableRowActions.Item onClick={() => openEdit(item)} type="button">
+                          <Edit className="mr-2 h-4 w-4" />Editar
                         </DataTableRowActions.Item>
-                      ) : (
-                        <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishActionButton(projectId, item.id), "Boton publicado")} type="button">
-                          <Power className="mr-2 h-4 w-4" />Publicar
+                        {item.isPublished ? (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => unpublishActionButton(projectId, item.id), "Boton despublicado")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Despublicar
+                          </DataTableRowActions.Item>
+                        ) : (
+                          <DataTableRowActions.Item disabled={saving} onClick={() => runAction(() => publishActionButton(projectId, item.id), "Boton publicado")} type="button">
+                            <Power className="mr-2 h-4 w-4" />Publicar
+                          </DataTableRowActions.Item>
+                        )}
+                        <DataTableRowActions.Item disabled={saving} onClick={() => setConfirmDeactivate(item)} type="button" variant="destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />Desactivar
                         </DataTableRowActions.Item>
-                      )}
-                      <DataTableRowActions.Item disabled={saving} onClick={() => setConfirmDeactivate(item)} type="button" variant="destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />Desactivar
-                      </DataTableRowActions.Item>
-                    </DataTableRowActions>
+                      </DataTableRowActions>
+                    </WriteOnly>
                   </TableCell>
                 </TableRow>
               ))

@@ -3,6 +3,7 @@ import { GripVertical, MapPin } from "lucide-react";
 
 import { fetchLocationsPage, getProjectSummary } from "@/app/actions/content";
 import type { RawSearchParams } from "@/lib/project-list-query";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { LocationsListClient } from "@/components/project-lists/locations-list-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,12 +38,14 @@ export default async function LocationsPage({
             <p className="mt-1 text-sm text-muted-foreground">Administra direcciones, coordenadas e imagenes de tus sucursales.</p>
             <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
           </div>
-          <Button asChild variant="outline">
-            <Link href={`/dashboard/projects/${projectId}/locations/order`}>
-              <GripVertical className="h-4 w-4" />
-              Ordenar ubicaciones
-            </Link>
-          </Button>
+          <WriteOnly>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/projects/${projectId}/locations/order`}>
+                <GripVertical className="h-4 w-4" />
+                Ordenar ubicaciones
+              </Link>
+            </Button>
+          </WriteOnly>
         </CardContent>
       </Card>
 

@@ -307,6 +307,7 @@ export async function createProject(formData: FormData) {
   await baseAxios.post(ADMIN_PROJECTS_PATH, {
     name: asString(formData, "name"),
     domain: asString(formData, "domain"),
+    planId: asString(formData, "planId"),
     logoUrl,
     avatarUrl,
     isActive: true,
@@ -333,6 +334,7 @@ export async function updateProject(projectId: string, formData: FormData) {
   await baseAxios.put(adminProjectDetailPath(projectId), {
     name: asString(formData, "name"),
     domain: asString(formData, "domain"),
+    planId: asString(formData, "planId"),
     logoUrl,
     avatarUrl,
     isActive: true,

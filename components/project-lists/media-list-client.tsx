@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import type { MediaItem } from "@/app/actions/content";
 import type { PaginatedPayload } from "@/app/actions/content/paginated-list-types";
 import { deactivateMedia, publishMedia, unpublishMedia } from "@/app/actions/content";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -400,32 +401,34 @@ function MediaActions({ item, onOpen, projectId }: { item: MediaItem; onOpen: ()
           <Copy className="mr-2 h-4 w-4" />
           Copiar URL
         </DataTableRowActions.Item>
-        <DataTableRowActions.Separator />
-        {item.isPublic ? (
-          <DataTableRowActions.Item
-            disabled={pending}
-            isLoading={pending}
-            onClick={() => runAction(() => unpublishMedia(projectId, item.id), "Medio despublicado")}
-            type="button"
-          >
-            <Power className="mr-2 h-4 w-4" />
-            Despublicar
+        <WriteOnly>
+          <DataTableRowActions.Separator />
+          {item.isPublic ? (
+            <DataTableRowActions.Item
+              disabled={pending}
+              isLoading={pending}
+              onClick={() => runAction(() => unpublishMedia(projectId, item.id), "Medio despublicado")}
+              type="button"
+            >
+              <Power className="mr-2 h-4 w-4" />
+              Despublicar
+            </DataTableRowActions.Item>
+          ) : (
+            <DataTableRowActions.Item
+              disabled={pending}
+              isLoading={pending}
+              onClick={() => runAction(() => publishMedia(projectId, item.id), "Medio publicado")}
+              type="button"
+            >
+              <Power className="mr-2 h-4 w-4" />
+              Publicar
+            </DataTableRowActions.Item>
+          )}
+          <DataTableRowActions.Item disabled={pending} isLoading={pending} onClick={() => setConfirmDeactivate(true)} type="button" variant="destructive">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Desactivar
           </DataTableRowActions.Item>
-        ) : (
-          <DataTableRowActions.Item
-            disabled={pending}
-            isLoading={pending}
-            onClick={() => runAction(() => publishMedia(projectId, item.id), "Medio publicado")}
-            type="button"
-          >
-            <Power className="mr-2 h-4 w-4" />
-            Publicar
-          </DataTableRowActions.Item>
-        )}
-        <DataTableRowActions.Item disabled={pending} isLoading={pending} onClick={() => setConfirmDeactivate(true)} type="button" variant="destructive">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Desactivar
-        </DataTableRowActions.Item>
+        </WriteOnly>
       </DataTableRowActions>
 
       <AlertDialog open={confirmDeactivate} onOpenChange={setConfirmDeactivate}>

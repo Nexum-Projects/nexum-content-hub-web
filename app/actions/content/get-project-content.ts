@@ -1,6 +1,7 @@
 "use server";
 
 import { isAxiosError } from "axios";
+import { unstable_rethrow } from "next/navigation";
 
 import baseAxios from "../baseAxios";
 import type { ActionResponse } from "../types";
@@ -15,14 +16,24 @@ async function list<T>(url: string) {
   return response.data.data ?? [];
 }
 
+/** Las listas pueden responder 403 según el plan y los permisos del miembro: se muestran vacías en vez de fallar todo. */
+async function listOrEmpty<T>(url: string) {
+  try {
+    return await list<T>(url);
+  } catch (error) {
+    unstable_rethrow(error);
+    return [];
+  }
+}
+
 export default async function getProjectContent(projectId: string): ActionResponse<DashboardData> {
   try {
     const [projectResponse, banners, products, events, awards] = await Promise.all([
       baseAxios.get<{ data: Project }>(`/admin/projects/${projectId}`),
-      list<Banner>(`/admin/projects/${projectId}/banners`),
-      list<MenuProduct>(`/admin/projects/${projectId}/menu-products`),
-      list<EventItem>(`/admin/projects/${projectId}/events`),
-      list<Award>(`/admin/projects/${projectId}/awards`),
+      listOrEmpty<Banner>(`/admin/projects/${projectId}/banners`),
+      listOrEmpty<MenuProduct>(`/admin/projects/${projectId}/menu-products`),
+      listOrEmpty<EventItem>(`/admin/projects/${projectId}/events`),
+      listOrEmpty<Award>(`/admin/projects/${projectId}/awards`),
     ]);
 
     return {

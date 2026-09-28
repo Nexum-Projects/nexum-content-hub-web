@@ -145,7 +145,10 @@ export function AssignProjectMemberDialog({ projectId, candidates, usersLoaded }
     }
 
     toast.success("Miembro asignado", {
-      description: `${selected?.name ?? "Usuario"} ya tiene acceso a este proyecto.`,
+      description:
+        role === "OWNER"
+          ? `${selected?.name ?? "Usuario"} ya tiene acceso total a este proyecto.`
+          : `${selected?.name ?? "Usuario"} empieza sin acceso al contenido: asígnale permisos desde Editar.`,
     });
     setOpen(false);
     resetForm();

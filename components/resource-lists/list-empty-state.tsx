@@ -1,6 +1,9 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
+import { WriteOnly } from "@/components/app/project-permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -27,9 +30,11 @@ export function ListEmptyState({
           <p className="text-base font-semibold text-foreground">{title}</p>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <Button asChild className="rounded-lg">
-          <Link href={actionHref}>{actionLabel}</Link>
-        </Button>
+        <WriteOnly>
+          <Button asChild className="rounded-lg">
+            <Link href={actionHref}>{actionLabel}</Link>
+          </Button>
+        </WriteOnly>
       </CardContent>
     </Card>
   );

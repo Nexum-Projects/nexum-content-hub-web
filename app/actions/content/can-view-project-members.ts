@@ -7,8 +7,8 @@ import { getSession } from "@/app/actions/auth";
 import getProjectMembers from "./get-project-members";
 
 /**
- * Solo pueden gestionar miembros del proyecto los SUPER_ADMIN de plataforma
- * o usuarios con rol de proyecto OWNER o ADMIN (misma regla que `ProjectAccessMode.MANAGE` en el API).
+ * Solo pueden gestionar miembros del proyecto los SUPER_ADMIN de plataforma o el OWNER del proyecto
+ * (`ProjectAccessMode.MANAGE` en el API). Se decide por el resultado de `GET /members`: al resto le responde 403.
  */
 export async function canViewProjectMembers(projectId: string): Promise<boolean> {
   const session = await getSession();

@@ -49,6 +49,38 @@ const knownMessages: Record<string, HumanizedError> = {
     title: "Enlace expirado",
     description: "El enlace de recuperacion no es valido o ya caduco. Solicita uno nuevo.",
   },
+  "Resource is not included in the project plan": {
+    title: "Sin acceso",
+    description: "El plan del proyecto no incluye esta sección.",
+  },
+  "User does not have permission on this resource": {
+    title: "Sin permiso",
+    description: "No tienes permiso sobre esta sección. Pide acceso al propietario del proyecto.",
+  },
+  "Plan is assigned to active projects": {
+    title: "Plan en uso",
+    description: "No se puede eliminar: hay proyectos activos que usan este plan.",
+  },
+  "Plan name already exists": {
+    title: "Nombre en uso",
+    description: "Ya existe un plan con ese nombre (también cuentan los planes eliminados).",
+  },
+  "Plan is required": {
+    title: "Falta el plan",
+    description: "Selecciona un plan para el proyecto.",
+  },
+  "Plan not found": {
+    title: "Plan no encontrado",
+    description: "El plan no existe o fue eliminado.",
+  },
+  "Some resources are not included in the project plan": {
+    title: "Recursos fuera del plan",
+    description: "Algunas secciones ya no están en el plan del proyecto. Recarga la página.",
+  },
+  "Owner permissions cannot be changed": {
+    title: "No permitido",
+    description: "Los permisos de un propietario no se editan: tiene acceso total.",
+  },
   "User not found": {
     title: "Usuario no encontrado",
     description: "No existe ningun usuario con ese identificador en la plataforma.",
@@ -99,7 +131,12 @@ export function parseApiError(error: unknown): HumanizedError {
       }
 
       return {
-        title: apiError.statusCode === 401 ? "No autorizado" : "No se pudo completar la accion",
+        title:
+          apiError.statusCode === 401
+            ? "No autorizado"
+            : apiError.statusCode === 403
+              ? "Sin permiso"
+              : "No se pudo completar la accion",
         description: fieldErrorText ?? message,
       };
     }

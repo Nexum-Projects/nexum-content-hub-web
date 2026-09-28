@@ -3,6 +3,7 @@ import { GripVertical, MousePointerClick } from "lucide-react";
 
 import { fetchActionButtonsPage, getProjectSummary } from "@/app/actions/content";
 import type { RawSearchParams } from "@/lib/project-list-query";
+import { WriteOnly } from "@/components/app/project-permissions";
 import { ActionButtonsListClient } from "@/components/project-lists/action-buttons-list-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,12 +38,14 @@ export default async function ActionButtonsPage({
             <p className="mt-1 text-sm text-muted-foreground">Administra accesos rapidos como redes, correo y navegación.</p>
             <p className="mt-3 text-sm font-medium text-primary">{meta.totalObjects} resultados</p>
           </div>
-          <Button asChild variant="outline">
-            <Link href={`/dashboard/projects/${projectId}/action-buttons/order`}>
-              <GripVertical className="h-4 w-4" />
-              Ordenar botones
-            </Link>
-          </Button>
+          <WriteOnly>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/projects/${projectId}/action-buttons/order`}>
+                <GripVertical className="h-4 w-4" />
+                Ordenar botones
+              </Link>
+            </Button>
+          </WriteOnly>
         </CardContent>
       </Card>
 

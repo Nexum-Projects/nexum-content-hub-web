@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import type { Project } from "@/app/actions/content/types";
+import type { Plan, Project } from "@/app/actions/content/types";
 import { createProject, updateProject } from "@/app/actions/content";
 import { FormSaveActions } from "@/components/forms/form-save-actions";
 import { ContentImageUpload, FieldError } from "@/components/content/content-form-controls";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 const MAX_RASTER_BYTES = 5 * 1024 * 1024;
 const MAX_SVG_BYTES = 2 * 1024 * 1024;
@@ -42,6 +43,7 @@ const projectFormSchema = z
   .object({
     name: z.string().min(1, "El nombre es obligatorio"),
     domain: z.string().optional(),
+    planId: z.string().min(1, "Selecciona un plan"),
     logoFile: z.custom<File | undefined>().optional(),
     iconFile: z.custom<File | undefined>().optional(),
   })
@@ -88,6 +90,7 @@ export function ProjectFormPage({
   submitLabel,
   project,
   projectId,
+  plans,
 }: {
   mode: "create" | "edit";
   cancelHref: string;
@@ -102,6 +105,8 @@ export function ProjectFormPage({
   submitLabel: string;
   project?: Project | null;
   projectId?: string;
+  /** Planes activos; el plan es obligatorio al crear y define las secciones habilitadas del proyecto. */
+  plans: Plan[];
 }) {
   const isEdit = mode === "edit";
   const p = project;
@@ -113,6 +118,7 @@ export function ProjectFormPage({
     defaultValues: {
       name: p?.name ?? "",
       domain: p?.domain ?? "",
+      planId: p?.planId ?? "",
       logoFile: undefined,
       iconFile: undefined,
     },
@@ -129,6 +135,7 @@ export function ProjectFormPage({
     const fd = new FormData();
     fd.append("name", values.name);
     fd.append("domain", values.domain?.trim() ?? "");
+    fd.append("planId", values.planId);
     if (values.logoFile) {
       fd.append("logoFile", values.logoFile);
     }
@@ -201,7 +208,7 @@ export function ProjectFormPage({
           <CardHeader>
             <CardTitle>Datos del proyecto</CardTitle>
             <CardDescription>
-              {isEdit ? "Nombre y dominio del proyecto." : "Nombre, dominio opcional y archivos de marca."}
+              {isEdit ? "Nombre, dominio y plan del proyecto." : "Nombre, dominio opcional, plan y archivos de marca."}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 sm:grid-cols-2">
@@ -211,6 +218,25 @@ export function ProjectFormPage({
             </Field>
             <Field label="Dominio">
               <Input {...register("domain")} placeholder="ejemplo.com" />
+            </Field>
+            <Field label="Plan">
+              <Select {...register("planId")}>
+                <option value="">Selecciona un plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </Select>
+              <FieldError message={errors.planId?.message} />
+              {plans.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No hay planes activos.{" "}
+                  <Link className="font-medium text-primary hover:underline" href="/dashboard/admin/plans/new">
+                    Crear plan
+                  </Link>
+                </p>
+              ) : null}
             </Field>
           </CardContent>
         </Card>
